@@ -1,0 +1,190 @@
+########################################
+# Name: orthowire.agxPy
+# Description:
+#
+#  This script simulates an orthodontic wire modelled as a cable in AGX
+#
+
+########################################
+#  First we need to load script plugins
+#  We want graphics, so agxOSG is our choice.
+########################################
+
+# AGX Dynamics imports
+import agx
+import agxPython
+import agxCollide
+import agxOSG
+import agxIO
+import agxSDK
+import agxUtil
+import agxCable
+import agxRender
+
+# Python modules
+import sys
+import math
+
+from agx_utils import createBody
+from agx_utils import createHelpText
+
+STEP = 0.01
+
+def getAction(obj):
+    currentPosition = obj.getPosition()
+    cmd = input()
+    newPosition = currentPosition +  executeAction(int(cmd))
+    obj.setPosition(newPosition)
+
+def initCamera(app):
+    # eye = agx.Vec3(13.0626, -21.7972, 16.2597)
+    # center = agx.Vec3(12.6736, -21.0046, 15.79)
+    # up = agx.Vec3(-0.206903, 0.421624, 0.88285)
+    eye = agx.Vec3(0, math.pi, 0) # these should be angles?
+    center = agx.Vec3(0, 0, 0.5) # translation?
+    up = agx.Vec3(0, 0, 1) # have no idea...
+
+    app.setCameraHome(eye, center, up)
+    print("InitCamera")
+    #app.setEnableDebugRenderer(True)
+
+
+def cableRenderer(sim, root, cable):
+    counter = 0
+    iterator = cable.begin()
+    while not iterator.isEnd():
+        beginPosition = iterator.getBeginPosition()
+        endPosition = iterator.getEndPosition()
+
+        counter = counter + 1
+        #print("Segment {} extends from {} to {}.".format(counter, beginPosition.x(), endPosition.x()))
+
+        segmentRenderer = agxOSG.createVisual(iterator.getGeometry(), root)
+        agxOSG.setDiffuseColor(segmentRenderer, agxRender.Color(0.0, 1.0, 0.0,   1.0))
+
+        iterator.inc()
+
+
+########################################
+# A function that creates a scene
+########################################
+def buildScene1(sim, app, root):
+    print("BuildScene1 started")
+    # Parameters
+    radius = 0.001       # meters
+    resolution = 100     # segments per meter
+    youngsModulus = 1e10 # Giga Pascals
+    yieldPoint = 1e8     # Newton meters
+
+    # By default the gravity vector is 0,0,-9.81 with a uniform gravity field. (we CAN change that
+    # too by creating an agx.PointGravityField for example).
+    # AGX uses a right-hand coordinate system (That is Z defines UP. X is right, and Y is into the screen)
+    G = agx.Vec3(0, 0, 0) # remove gravity
+    sim.setUniformGravity(G)
+
+    dt = sim.getTimeStep()  # What is the current delta-t (timestep) that is used in the simulation?
+    sim.setTimeStep(1 / 60)  # We can change the timestep if we want to
+    print("Timestep = {}".format(dt))
+
+    # add text to screen
+    createHelpText(sim, app)
+
+    # Create a ground plane
+    ground, groundGeom = createBody(sim, root, name="Ground", shape=agxCollide.Box(0.4, 0.4, 0.01), position=agx.Vec3(0, 0, -0.01), motionControl=agx.RigidBody.STATIC)
+
+    # Create a wall
+    wall, wallGeom = createBody(sim, root, name="Wall", shape=agxCollide.Box(0.01, 0.4, 0.4), position=agx.Vec3(-0.39, 0, 0.4), motionControl=agx.RigidBody.STATIC)
+    #wallGeom.setEnableCollisions(True)
+    # Create cable
+    cable = agxCable.Cable(radius, resolution)
+
+    startTransform = agx.AffineMatrix4x4()
+    startTransform.setTranslate(0 + radius, 0, 0)
+    startTransform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())
+    cable.add(agxCable.BodyFixedNode(wall, startTransform)) # fix cable to wall
+
+    # In order to add slack:
+    #cable.add(agxCable.FreeNode(agx.Vec3( 0, 0.2, 0.2)))
+
+    # Set cable properties
+    properties = cable.getCableProperties()
+    properties.setYoungsModulus(youngsModulus, agxCable.BEND)
+    properties.setYoungsModulus(youngsModulus, agxCable.STRETCH)
+
+    plasticity = agxCable.CablePlasticity()
+    plasticity.setYieldPoint(yieldPoint, agxCable.BEND) # sets torque required for permanent deformation
+    # NOTE: Strech direction is always elastic
+    cable.addComponent(plasticity)
+
+    # Create attachment object
+    obj, objGeom = createBody(sim, root, name="Object", shape=agxCollide.Box(4*radius, 4*radius, 4*radius), position=agx.Vec3(0.2, 0, 0.4), color=agxRender.Color(1.0, 0.0, 0.0,  1.0), motionControl=agx.RigidBody.KINEMATICS)
+    tipTransform = agx.AffineMatrix4x4()
+    tipTransform.setTranslate(2*radius, 0, 0)
+    tipTransform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())
+    cable.add(agxCable.BodyFixedNode(obj, tipTransform)) # fix cable to object
+
+    # Make attachement object a sensor
+    # last_link = cable.End()
+    # last_link.setSensor(True)
+
+    sim.add(cable)
+
+    cableRenderer(sim, root, cable)
+
+    # Save simulation to file:
+    if (not agxIO.writeFile("gym_agx/envs/assets/bend_wire.aagx", sim)):
+        print("Unable to save simulation!")
+
+    # Lets make a small simulation loop and simulate for two seconds
+    # t = sim.getTimeStamp()  # Get the current time from the simulation. Most probably 0 as its a new sim.
+    # while (t <= 0.2):
+    #     sim.stepForward()  # Step the simulation forward
+    #     t = sim.getTimeStamp()
+    #     print(t)
+    #     keyboard(obj)
+
+
+# Entry point if script is launched using agxViewer
+def buildScene():
+    # sim - A pointer to an instance of a agxSDK::Simulation
+    # app - A pointer to an instance of a agxOSG::ExampleApplication
+    # root - A pointer to an instance of agxOSG::Group
+    sim = agxPython.getContext().environment.getSimulation()
+    app = agxPython.getContext().environment.getApplication()
+    root = agxPython.getContext().environment.getSceneRoot()
+
+    app.setEnableDebugRenderer(False)
+    app.setEnableOSGRenderer(True)
+
+    initCamera(app)
+
+    # We just call buildScene1 to create a scene
+    buildScene1(sim, app, root)
+
+def main(args):
+    # Create an application with graphics etc.
+    app = agxOSG.ExampleApplication()
+
+    # Create a command line parser. sys.executable will point to python executable
+    # in this case, because getArgumentName(0) needs to match the C argv[0] which
+    # is the name of the program running
+    argParser = agxIO.ArgumentParser([sys.executable] + args)
+
+    app.addScene(argParser.getArgumentName(1), "buildScene", ord('1'), False)
+    print("Scene added to app")
+
+    # Call the init method of this simulation
+    # It will setup the viewer, windows etc.
+    if app.init(argParser):
+        app.run()
+        print("Left app.Run")
+    else:
+        print("An error occurred while initializing ExampleApplication.")
+
+
+# Entry point when this script is loaded with python
+if agxPython.getContext() is None:
+    init = agx.AutoInit()
+    print("AutoInit")
+    main(sys.argv)
+    print("Left main!")
