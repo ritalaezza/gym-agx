@@ -1,8 +1,9 @@
 ########################################
-# Name: orthowire.agxPy
+# Name: bend_wire.agxPy
 # Description:
 #
-#  This script simulates an orthodontic wire modelled as a cable in AGX
+# This script simulates a wire attached on one end and controllable on the other
+# modelled as a cable in AGX
 #
 
 ########################################
@@ -28,13 +29,6 @@ import math
 from agx_utils import createBody
 from agx_utils import createHelpText
 
-STEP = 0.01
-
-def getAction(obj):
-    currentPosition = obj.getPosition()
-    cmd = input()
-    newPosition = currentPosition +  executeAction(int(cmd))
-    obj.setPosition(newPosition)
 
 def initCamera(app):
     # eye = agx.Vec3(13.0626, -21.7972, 16.2597)
@@ -46,7 +40,6 @@ def initCamera(app):
 
     app.setCameraHome(eye, center, up)
     print("InitCamera")
-    #app.setEnableDebugRenderer(True)
 
 
 def cableRenderer(sim, root, cable):
@@ -69,7 +62,6 @@ def cableRenderer(sim, root, cable):
 # A function that creates a scene
 ########################################
 def buildScene1(sim, app, root):
-    print("BuildScene1 started")
     # Parameters
     radius = 0.001       # meters
     resolution = 100     # segments per meter
@@ -84,7 +76,6 @@ def buildScene1(sim, app, root):
 
     dt = sim.getTimeStep()  # What is the current delta-t (timestep) that is used in the simulation?
     sim.setTimeStep(1 / 60)  # We can change the timestep if we want to
-    print("Timestep = {}".format(dt))
 
     # add text to screen
     createHelpText(sim, app)
@@ -135,14 +126,6 @@ def buildScene1(sim, app, root):
     if (not agxIO.writeFile("gym_agx/envs/assets/bend_wire.aagx", sim)):
         print("Unable to save simulation!")
 
-    # Lets make a small simulation loop and simulate for two seconds
-    # t = sim.getTimeStamp()  # Get the current time from the simulation. Most probably 0 as its a new sim.
-    # while (t <= 0.2):
-    #     sim.stepForward()  # Step the simulation forward
-    #     t = sim.getTimeStamp()
-    #     print(t)
-    #     keyboard(obj)
-
 
 # Entry point if script is launched using agxViewer
 def buildScene():
@@ -161,6 +144,7 @@ def buildScene():
     # We just call buildScene1 to create a scene
     buildScene1(sim, app, root)
 
+
 def main(args):
     # Create an application with graphics etc.
     app = agxOSG.ExampleApplication()
@@ -171,13 +155,11 @@ def main(args):
     argParser = agxIO.ArgumentParser([sys.executable] + args)
 
     app.addScene(argParser.getArgumentName(1), "buildScene", ord('1'), False)
-    print("Scene added to app")
 
     # Call the init method of this simulation
     # It will setup the viewer, windows etc.
     if app.init(argParser):
         app.run()
-        print("Left app.Run")
     else:
         print("An error occurred while initializing ExampleApplication.")
 
@@ -185,6 +167,4 @@ def main(args):
 # Entry point when this script is loaded with python
 if agxPython.getContext() is None:
     init = agx.AutoInit()
-    print("AutoInit")
     main(sys.argv)
-    print("Left main!")
