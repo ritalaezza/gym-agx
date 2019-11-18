@@ -1,0 +1,3 @@
+# Reclassifies `.agxPy` files as Python:
+*.agxPy linguist-language=Python
+
