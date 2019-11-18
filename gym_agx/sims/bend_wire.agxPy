@@ -24,11 +24,11 @@ import agxRender
 
 # Python modules
 import sys
+import os
 import math
 
-from agx_utils import createBody
-from agx_utils import createHelpText
-
+from utils.agx_utils import createHelpText
+from utils.agx_utils import createBody
 
 def initCamera(app):
     # eye = agx.Vec3(13.0626, -21.7972, 16.2597)
@@ -39,7 +39,6 @@ def initCamera(app):
     up = agx.Vec3(0, 0, 1) # have no idea...
 
     app.setCameraHome(eye, center, up)
-    print("InitCamera")
 
 
 def cableRenderer(sim, root, cable):
@@ -123,7 +122,10 @@ def buildScene1(sim, app, root):
     cableRenderer(sim, root, cable)
 
     # Save simulation to file:
-    if (not agxIO.writeFile("gym_agx/envs/assets/bend_wire.aagx", sim)):
+    file_directory = os.path.dirname(os.path.abspath(__file__))
+    package_directory = os.path.split(file_directory)[0]
+    file = os.path.join(package_directory, 'envs/assets', 'bend_wire.aagx')
+    if (not agxIO.writeFile(file, sim)):
         print("Unable to save simulation!")
 
 

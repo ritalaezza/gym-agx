@@ -1,6 +1,6 @@
-# Name: tutorial_utils.py
+# Name: agx_utils.py
 
-# Description: contains some utility functions being used in various tutorials.
+# Description: contains some utility functions being used in various simulations.
 #
 # Never assume any dependency modules already being
 # imported somewhere else!

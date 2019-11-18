@@ -3,10 +3,9 @@ from gym import utils
 from gym_agx.envs.agx_env import AgxEnv
 
 
-class BendWireEnv(AgxEnv, utils.EzPickle):
+class BendWireEnv(AgxEnv):
     def __init__(self):
         AgxEnv.__init__(self, 'bend_wire.agx', 5)
-        utils.EzPickle.__init__(self)
 
     def step(self, a):
         print("step")
