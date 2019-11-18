@@ -1,7 +1,0 @@
-README.md
-setup.py
-gym_agx.egg-info/PKG-INFO
-gym_agx.egg-info/SOURCES.txt
-gym_agx.egg-info/dependency_links.txt
-gym_agx.egg-info/requires.txt
-gym_agx.egg-info/top_level.txt
