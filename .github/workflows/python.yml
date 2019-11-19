@@ -1,3 +1,7 @@
+name: Python
+
+on: [push]
+
 jobs:
   build:
 
