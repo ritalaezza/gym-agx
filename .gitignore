@@ -2,4 +2,4 @@
 gym_agx.egg-info/
 
 # Ignore all pycache folders
-!**/__pycache__/
+__pycache__/ 
