@@ -4,10 +4,10 @@ This project contains a set of environments, using AGX Dynamics as the simulatio
 
 ## Getting Started
 
-To install the environment, just go to the gym-agx folder and run the command:
+To install the environment, just go to the folder containing the gym-agx folder and run the command:
 
 ```
-pip install -e 
+pip install -e gym-agx
 ```
 
 This will install the gym environment. Now, you can use your gym environment with the following:
