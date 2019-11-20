@@ -1,3 +1,4 @@
+import gym
 from gym.envs.registration import register
 
 # This format is true today, but it's *not* an official spec.
@@ -6,6 +7,7 @@ from gym.envs.registration import register
 def _merge(a, b):
     a.update(b)
     return a
+
 
 for reward_type in ['sparse', 'dense']:
     suffix = 'Dense' if reward_type == 'dense' else ''

@@ -10,6 +10,7 @@ import agxOSG
 import agxSDK
 import agxPython
 
+
 #
 # Write help text indicating how to start simulation
 # textTable is a table with strings that will be drawn
@@ -91,6 +92,7 @@ def createBody(sim, root, shape, **args):
     sim.add(body)
 
     return body, geometry
+
 
 #
 # Write information to screen from lambda functions during the simulation

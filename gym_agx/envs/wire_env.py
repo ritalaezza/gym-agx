@@ -119,7 +119,7 @@ class WireEnv(agx_env.AgxEnv):
         # self.sim.forward()
 
     def _reset_sim(self):
-        #TODO: how to reset simulation from code?
+        # TODO: how to reset simulation from code?
         # self.sim.set_state(self.initial_state)
         #
         # # Randomize start position of object.

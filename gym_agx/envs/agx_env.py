@@ -53,14 +53,12 @@ class AgxEnv(gym.GoalEnv):
         self.scene_path = scene_fullpath
         self.n_substeps = n_substeps
 
+        # TODO: Understand these steps:
         if agxPython.getContext() is None:
             init = agx.AutoInit()
-
-        # TODO: Understand these steps:
         self.app = agxOSG.ExampleApplication()
         self.argParser = agxIO.ArgumentParser([sys.executable] + sys.argv)
         self.app.addScene(self.argParser.getArgumentName(1), "_build_scene", ord('1'), True)
-
         if self.app.init(self.argParser):
             self.app.run()
         else:
@@ -72,8 +70,8 @@ class AgxEnv(gym.GoalEnv):
         }
 
         self.seed()
-        #self._env_setup(initial_qpos=initial_qpos)
-        #self.initial_state = copy.deepcopy(self.sim.get_state())
+        # self._env_setup(initial_qpos=initial_qpos)
+        # self.initial_state = copy.deepcopy(self.sim.get_state())
 
         # TODO: Def
         self.goal = self._sample_goal()
@@ -87,7 +85,7 @@ class AgxEnv(gym.GoalEnv):
 
     @property
     def dt(self):
-        #return self.model.opt.timestep * self.n_substeps
+        # return self.model.opt.timestep * self.n_substeps
         return self.sim.getTimeStep() * self.n_substeps
 
 
@@ -115,8 +113,8 @@ class AgxEnv(gym.GoalEnv):
 
     def reset(self):
         print("Resetting...")
-        #TODO: How to reset a simulation in AGX Dynamics?
-        #return obs
+        # TODO: How to reset a simulation in AGX Dynamics?
+        # return obs
 
     def close(self):
         if self.app is not None:
@@ -131,11 +129,11 @@ class AgxEnv(gym.GoalEnv):
         elif mode == 'debug':
             self.app.setEnableDebugRenderer(True)
 
-        #TODO: What else can be moved into this function?
+        # TODO: What else can be moved into this function?
 
 
     # AGX Dynamics methods
-    #-----------------------------
+    # ----------------------------
 
     def _init_camera(self, eye=DEFAULT_EYE,center=DEFAULT_CENTER,up=DEFAULT_UP):
         """Load scene from file. Read all the objects in the file and add to
