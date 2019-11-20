@@ -45,7 +45,7 @@ class AgxEnv(gym.GoalEnv):
     from file and builds it.
     """
 
-    def __init__(self, scene_path, n_substeps):
+    def __init__(self, scene_path, n_substeps, n_actions):
         if (not scene_path.startswith("/")):
              scene_fullpath = os.path.join(os.path.dirname(__file__), "assets", scene_path)
         if not path.exists(scene_fullpath):
@@ -160,7 +160,7 @@ class AgxEnv(gym.GoalEnv):
         # app - A pointer to an instance of a agxOSG::ExampleApplication
         # root - A pointer to an instance of agxOSG::Group
         self.sim = agxPython.getContext().environment.getSimulation()
-        slef.app = agxPython.getContext().environment.getApplication()
+        self.app = agxPython.getContext().environment.getApplication()
         self.root = agxPython.getContext().environment.getSceneRoot()
 
         scene = self._load_scene_from_file(self.scene_path)
