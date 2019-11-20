@@ -14,6 +14,7 @@ This will install the gym environment. Now, you can use your gym environment wit
 
 ```
 import gym
-import gym_agx
-env = gym.make('agx-v0')
+from gym_agx import envs
+
+env = gym.make('BendWire-v0')
 ```
