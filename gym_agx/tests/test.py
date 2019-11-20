@@ -1,4 +1,4 @@
 import gym
 from gym_agx import envs
 
-env = gym.make('bend-wire-v0')
+env = gym.make('BendWire-v0')
