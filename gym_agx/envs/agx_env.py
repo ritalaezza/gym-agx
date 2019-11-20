@@ -24,6 +24,7 @@ DEFAULT_EYE = agx.Vec3(10.4129, -16.5642, 12.7635)
 DEFAULT_CENTER = agx.Vec3(10.0255, -15.7991, 12.2491)
 DEFAULT_UP = agx.Vec3(-0.232383, 0.458895, 0.857563)
 
+
 def convert_observation_to_space(observation):
     if isinstance(observation, dict):
         space = spaces.Dict(OrderedDict([
@@ -88,7 +89,6 @@ class AgxEnv(gym.GoalEnv):
         # return self.model.opt.timestep * self.n_substeps
         return self.sim.getTimeStep() * self.n_substeps
 
-
     # Env methods
     # ----------------------------
 
@@ -110,7 +110,6 @@ class AgxEnv(gym.GoalEnv):
         reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
         return obs, reward, done, info
 
-
     def reset(self):
         print("Resetting...")
         # TODO: How to reset a simulation in AGX Dynamics?
@@ -130,7 +129,6 @@ class AgxEnv(gym.GoalEnv):
             self.app.setEnableDebugRenderer(True)
 
         # TODO: What else can be moved into this function?
-
 
     # AGX Dynamics methods
     # ----------------------------

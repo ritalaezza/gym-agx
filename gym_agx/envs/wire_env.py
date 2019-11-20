@@ -1,5 +1,4 @@
 import numpy as np
-from gym import utils
 from gym_agx.envs import agx_env
 
 
@@ -40,10 +39,10 @@ class WireEnv(agx_env.AgxEnv):
     # ----------------------------
 
     def _step_callback(self):
-        if self.block_gripper:
+        # if self.block_gripper:
             # self.sim.data.set_joint_qpos('robot0:l_gripper_finger_joint', 0.)
             # self.sim.data.set_joint_qpos('robot0:r_gripper_finger_joint', 0.)
-            self.sim.stepForward()
+        self.sim.stepForward()
 
     def _set_action(self, action):
         print("set action")
@@ -157,7 +156,7 @@ class WireEnv(agx_env.AgxEnv):
         # for name, value in initial_qpos.items():
         #     self.sim.data.set_joint_qpos(name, value)
         # utils.reset_mocap_welds(self.sim)
-        self.sim.setForward()
+        self.sim.stepForward()
 
         # # Move end effector into position.
         # gripper_target = np.array([-0.498, 0.005, -0.431 + self.gripper_extra_height]) + self.sim.data.get_site_xpos('robot0:grip')

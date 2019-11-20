@@ -1,5 +1,3 @@
-import numpy as np
-from gym import utils
 from gym_agx.envs import wire_env
 
 SCENE_PATH = 'bend_wire.aagx'
