@@ -135,7 +135,7 @@ class AgxEnv(gym.GoalEnv):
     # AGX Dynamics methods
     # ----------------------------
 
-    def _init_camera(self, eye=DEFAULT_EYE,center=DEFAULT_CENTER,up=DEFAULT_UP):
+    def _init_camera(self, eye=DEFAULT_EYE, center=DEFAULT_CENTER, up=DEFAULT_UP):
         """Load scene from file. Read all the objects in the file and add to
         the scene (not the simulation!) (and the scenegraph root)
         """
