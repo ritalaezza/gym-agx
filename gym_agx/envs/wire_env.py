@@ -13,6 +13,7 @@ class WireEnv(agx_env.AgxEnv):
 
         Args:
             n_substeps (int): number of substeps the simulation runs on every call to step
+            n_actions (int): number of DoF of kinematic object
             distance_threshold (float): the threshold after which a goal is considered achieved
             reward_type ('sparse' or 'dense'): the reward type, i.e. sparse or dense
         """
@@ -118,7 +119,7 @@ class WireEnv(agx_env.AgxEnv):
         # self.sim.forward()
 
     def _reset_sim(self):
-        # TODO: how to reset simulation from code?
+        print("reset sim")
         # self.sim.set_state(self.initial_state)
         #
         # # Randomize start position of object.
@@ -132,11 +133,9 @@ class WireEnv(agx_env.AgxEnv):
         #     self.sim.data.set_joint_qpos('object0:joint', object_qpos)
         #
         # self.sim.forward()
-        return True
+        #return True
 
     def _sample_goal(self):
-        '''This function is responsible for generated target positions for the wire
-        '''
         print("sample goal")
         # if self.has_object:
         #     goal = self.initial_gripper_xpos[:3] + self.np_random.uniform(-self.target_range, self.target_range, size=3)
@@ -153,6 +152,7 @@ class WireEnv(agx_env.AgxEnv):
         return (d < self.distance_threshold).astype(np.float32)
 
     def _env_setup(self, initial_qpos):
+        print("env setup")
         # for name, value in initial_qpos.items():
         #     self.sim.data.set_joint_qpos(name, value)
         # utils.reset_mocap_welds(self.sim)

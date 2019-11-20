@@ -71,12 +71,16 @@ class AgxEnv(gym.GoalEnv):
         }
 
         self.seed()
+
+        # TODO: Determine if these steps are needed
         # self._env_setup(initial_qpos=initial_qpos)
         # self.initial_state = copy.deepcopy(self.sim.get_state())
 
-        # TODO: Def
+        # TODO: Get first goal and observation
         self.goal = self._sample_goal()
         obs = self._get_obs()
+
+        # TODO: Define observation and state spaces
         self.action_space = spaces.Box(-1., 1., shape=(n_actions,), dtype='float32')
         self.observation_space = spaces.Dict(dict(
             desired_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
@@ -86,7 +90,6 @@ class AgxEnv(gym.GoalEnv):
 
     @property
     def dt(self):
-        # return self.model.opt.timestep * self.n_substeps
         return self.sim.getTimeStep() * self.n_substeps
 
     # Env methods
@@ -127,20 +130,18 @@ class AgxEnv(gym.GoalEnv):
             self.app.setEnableOSGRenderer(True)
         elif mode == 'debug':
             self.app.setEnableDebugRenderer(True)
-
         # TODO: What else can be moved into this function?
 
     # AGX Dynamics methods
     # ----------------------------
 
     def _init_camera(self, eye=DEFAULT_EYE, center=DEFAULT_CENTER, up=DEFAULT_UP):
-        """Load scene from file. Read all the objects in the file and add to
-        the scene (not the simulation!) (and the scenegraph root)
+        """Initializes camera. Maybe should be called in subclasses?
         """
         self.app.setCameraHome(eye, center, up)
 
     def _load_scene_from_file(self, file_path):
-        """Load scene from file. Read all the objects in the file and add to
+        """Loads scene from file. Read all the objects in the file and add to
         the scene (not the simulation!) (and the scenegraph root)
         """
         scene = agxSDK.Assembly()  # Create a new empty Assembly
@@ -151,10 +152,12 @@ class AgxEnv(gym.GoalEnv):
         return scene
 
     def _build_scene(self):
-        print("Building scene.")
-        # sim - A pointer to an instance of a agxSDK::Simulation
-        # app - A pointer to an instance of a agxOSG::ExampleApplication
-        # root - A pointer to an instance of agxOSG::Group
+        """Initializes simulation, application and scene root objects:
+        sim - A pointer to an instance of a agxSDK::Simulation
+        app - A pointer to an instance of a agxOSG::ExampleApplication
+        root - A pointer to an instance of agxOSG::Group
+        Adds scene to simulation.
+        """
         self.sim = agxPython.getContext().environment.getSimulation()
         self.app = agxPython.getContext().environment.getApplication()
         self.root = agxPython.getContext().environment.getSceneRoot()
