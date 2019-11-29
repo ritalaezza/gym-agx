@@ -1,8 +1,3 @@
-# Name: agx_utils.py
-
-# Description: contains some utility functions being used in various simulations.
-#
-# Never assume any dependency modules already being imported somewhere else!
 import agx
 import agxCollide
 import agxSDK
@@ -135,20 +130,6 @@ def get_state(sim):
     return state
 
 
-def get_obs(sim):
-    """Returns all joint positions and velocities associated with a deformable object and grippers.
-    :param sim: AGX simulation object
-    :return: observations of the deformable object and gripper
-    """
-    if sim.data.qpos is not None and sim.model.joint_names:
-        names = [n for n in sim.model.joint_names if n.startswith('robot')]
-        return (
-            np.array([sim.data.get_joint_qpos(name) for name in names]),
-            np.array([sim.data.get_joint_qvel(name) for name in names]),
-        )
-    return np.zeros(0), np.zeros(0)
-
-
 def ctrl_set_action(sim, pos_ctrl, rot_ctrl, grip_ctrl=None):
     """Apply action to simulation.
     :param sim: AGX simulation object
@@ -161,4 +142,3 @@ def ctrl_set_action(sim, pos_ctrl, rot_ctrl, grip_ctrl=None):
     gripper_rotation = gripper.getRotation()
     gripper.setPosition(gripper_position + pos_ctrl)
     gripper.setRotation(gripper_rotation + rot_ctrl)
-
