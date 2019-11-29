@@ -2,171 +2,176 @@
 # Name: bend_wire.agxPy
 # Description:
 #
-# This script simulates a wire attached on one end and controllable on the other
-# modelled as a cable in AGX
+# This script simulates a wire attached on one end and controllable on the other modelled as a cable in AGX
 #
-
 ########################################
-#  First we need to load script plugins
-#  We want graphics, so agxOSG is our choice.
-########################################
-
 # AGX Dynamics imports
 import agx
 import agxPython
 import agxCollide
-import agxOSG
-import agxIO
 import agxSDK
-import agxUtil
 import agxCable
+import agxOSG
 import agxRender
+import agxIO
 
 # Python modules
 import sys
 import os
-import math
 
-from utils.agx_utils import createHelpText
-from utils.agx_utils import createBody
-
-def initCamera(app):
-    # eye = agx.Vec3(13.0626, -21.7972, 16.2597)
-    # center = agx.Vec3(12.6736, -21.0046, 15.79)
-    # up = agx.Vec3(-0.206903, 0.421624, 0.88285)
-    eye = agx.Vec3(0, math.pi, 0) # these should be angles?
-    center = agx.Vec3(0, 0, 0.5) # translation?
-    up = agx.Vec3(0, 0, 1) # have no idea...
-
-    app.setCameraHome(eye, center, up)
+# Local modules
+from gym_agx.utils.agx_utils import save_sim_file
+from gym_agx.utils.agx_utils import create_body
 
 
-def cableRenderer(sim, root, cable):
-    counter = 0
-    iterator = cable.begin()
-    while not iterator.isEnd():
-        beginPosition = iterator.getBeginPosition()
-        endPosition = iterator.getEndPosition()
-
-        counter = counter + 1
-        #print("Segment {} extends from {} to {}.".format(counter, beginPosition.x(), endPosition.x()))
-
-        segmentRenderer = agxOSG.createVisual(iterator.getGeometry(), root)
-        agxOSG.setDiffuseColor(segmentRenderer, agxRender.Color(0.0, 1.0, 0.0,   1.0))
-
-        iterator.inc()
+# Parameters
+LENGTH = 0.1          # meters
+RESOLUTION = 100      # segments per meter
+YOUNG_MODULUS = 1e10  # Giga Pascals
+YIELD_POINT = 1e8     # Newton meters
+RADIUS = 0.001        # meters
+GROUND_WIDTH = 0.002  # meters
+GRAVITY = False
+CABLE_GRIPPER_RATIO = 2
+SIZE_GRIPPER = CABLE_GRIPPER_RATIO*RADIUS
 
 
-########################################
-# A function that creates a scene
-########################################
-def buildScene1(sim, app, root):
-    # Parameters
-    radius = 0.001       # meters
-    resolution = 100     # segments per meter
-    youngsModulus = 1e10 # Giga Pascals
-    yieldPoint = 1e8     # Newton meters
+def build_scene(app=None, root=None):
+    # Instantiate a simulation
+    sim = agxSDK.Simulation()
 
     # By default the gravity vector is 0,0,-9.81 with a uniform gravity field. (we CAN change that
     # too by creating an agx.PointGravityField for example).
     # AGX uses a right-hand coordinate system (That is Z defines UP. X is right, and Y is into the screen)
-    G = agx.Vec3(0, 0, 0) # remove gravity
-    sim.setUniformGravity(G)
+    if not GRAVITY:
+        g = agx.Vec3(0, 0, 0)  # remove gravity
+        sim.setUniformGravity(g)
 
-    dt = sim.getTimeStep()  # What is the current delta-t (timestep) that is used in the simulation?
-    sim.setTimeStep(1 / 60)  # We can change the timestep if we want to
+    # Get current delta-t (timestep) that is used in the simulation?
+    dt = sim.getTimeStep()
+    print("dt = {}".format(dt))
 
-    # add text to screen
-    createHelpText(sim, app)
+    # Change the timestep (100 Hz)
+    sim.setTimeStep(1 / 100)
 
-    # Create a ground plane
-    ground, groundGeom = createBody(sim, root, name="Ground", shape=agxCollide.Box(0.4, 0.4, 0.01), position=agx.Vec3(0, 0, -0.01), motionControl=agx.RigidBody.STATIC)
+    # Create a ground plane for reference
+    ground, ground_geom = create_body(sim, name="ground", shape=agxCollide.Box(LENGTH, LENGTH, GROUND_WIDTH),
+                                      position=agx.Vec3(LENGTH/2, 0, -(GROUND_WIDTH + SIZE_GRIPPER/2 + LENGTH)),
+                                      motionControl=agx.RigidBody.STATIC)
 
-    # Create a wall
-    wall, wallGeom = createBody(sim, root, name="Wall", shape=agxCollide.Box(0.01, 0.4, 0.4), position=agx.Vec3(-0.39, 0, 0.4), motionControl=agx.RigidBody.STATIC)
-    #wallGeom.setEnableCollisions(True)
     # Create cable
-    cable = agxCable.Cable(radius, resolution)
+    cable = agxCable.Cable(RADIUS, RESOLUTION)
 
-    startTransform = agx.AffineMatrix4x4()
-    startTransform.setTranslate(0 + radius, 0, 0)
-    startTransform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())
-    cable.add(agxCable.BodyFixedNode(wall, startTransform)) # fix cable to wall
+    # Create two grippers one static one kinematic
+    gripper_left, gripper_left_geom = create_body(sim, name="gripper_left",
+                                                  shape=agxCollide.Box(SIZE_GRIPPER, SIZE_GRIPPER, SIZE_GRIPPER),
+                                                  position=agx.Vec3(0, 0, 0), motionControl=agx.RigidBody.STATIC)
 
-    # In order to add slack:
-    #cable.add(agxCable.FreeNode(agx.Vec3( 0, 0.2, 0.2)))
+    gripper_right, gripper_right_geom = create_body(sim, name="gripper_right",
+                                                    shape=agxCollide.Box(SIZE_GRIPPER, SIZE_GRIPPER, SIZE_GRIPPER),
+                                                    position=agx.Vec3(LENGTH, 0, 0),
+                                                    motionControl=agx.RigidBody.KINEMATICS)
+
+    # Create LockJoints for each gripper:
+    # The cable is attached so that it passes through the attachment point along the Z axis of the body's model
+    # coordinate frame. Use the constructor taking an AffineMatrix4x4 instead if another direction is required.
+    left_transform = agx.AffineMatrix4x4()
+    # The translation specified in the transformation is relative to the body and not the world
+    left_transform.setTranslate(SIZE_GRIPPER + RADIUS, 0, 0)
+    # The resulting rotation will be a rotation matrix which rotates a vector from Z to X
+    left_transform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())
+    cable.add(agxCable.BodyFixedNode(gripper_left, left_transform))  # fix cable to gripper_left
+
+    right_transform = agx.AffineMatrix4x4()
+    right_transform.setTranslate(- SIZE_GRIPPER - RADIUS, 0, 0)
+    # The resulting rotation will be a rotation matrix which rotates a vector from Z to X
+    right_transform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())
+    cable.add(agxCable.BodyFixedNode(gripper_right, right_transform))  # fix cable to object
 
     # Set cable properties
     properties = cable.getCableProperties()
-    properties.setYoungsModulus(youngsModulus, agxCable.BEND)
-    properties.setYoungsModulus(youngsModulus, agxCable.STRETCH)
+    properties.setYoungsModulus(YOUNG_MODULUS, agxCable.BEND)
+    properties.setYoungsModulus(YOUNG_MODULUS, agxCable.TWIST)
+    properties.setYoungsModulus(YOUNG_MODULUS, agxCable.STRETCH)
 
+    # Add cable plasticity
     plasticity = agxCable.CablePlasticity()
-    plasticity.setYieldPoint(yieldPoint, agxCable.BEND) # sets torque required for permanent deformation
-    # NOTE: Strech direction is always elastic
+    plasticity.setYieldPoint(YIELD_POINT, agxCable.BEND)  # set torque required for permanent deformation
+    # NOTE: Stretch direction is always elastic
     cable.addComponent(plasticity)
 
-    # Create attachment object
-    obj, objGeom = createBody(sim, root, name="Object", shape=agxCollide.Box(4*radius, 4*radius, 4*radius), position=agx.Vec3(0.2, 0, 0.4), color=agxRender.Color(1.0, 0.0, 0.0,  1.0), motionControl=agx.RigidBody.KINEMATICS)
-    tipTransform = agx.AffineMatrix4x4()
-    tipTransform.setTranslate(2*radius, 0, 0)
-    tipTransform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())
-    cable.add(agxCable.BodyFixedNode(obj, tipTransform)) # fix cable to object
+    # Try to initialize cable
+    report = cable.tryInitialize()
+    if report.successful():
+        print("Successful cable initialization!")
+    else:
+        print(report.getActualError())
 
-    # Make attachement object a sensor
-    # last_link = cable.End()
-    # last_link.setSensor(True)
-
+    # Add cable to simulation
     sim.add(cable)
 
-    cableRenderer(sim, root, cable)
+    # Add basic rendering:
+    ground_node = agxOSG.createVisual(ground, root)
+    gripper_left_node = agxOSG.createVisual(gripper_left, root)
+    gripper_right_node = agxOSG.createVisual(gripper_right, root)
+    cable_node = agxOSG.createVisual(cable, root)
+    agxOSG.setDiffuseColor(ground_node, agxRender.Color(1.0, 1.0, 1.0, 1.0))
+    agxOSG.setDiffuseColor(gripper_left_node, agxRender.Color(1.0, 0.0, 0.0, 1.0))
+    agxOSG.setDiffuseColor(gripper_right_node, agxRender.Color(0.0, 0.0, 1.0, 1.0))
+    agxOSG.setDiffuseColor(cable_node, agxRender.Color(0.0, 1.0, 0.0, 1.0))
 
-    # Save simulation to file:
+    return sim
+
+
+# Build and save scene to .aagx file
+def main():
+    # Instantiate ExampleApplication object and get root
+    app = agxOSG.ExampleApplication()
+    root = app.getSceneAgxOSGRoot()
+
+    # Build simulation object, provide root for rendering information
+    sim = build_scene(app, root)
+
+    # Print list of objects in terminal
+    rbs = sim.getRigidBodies()
+
+    for i, rb in enumerate(rbs):
+        name = rbs[i].getName()
+        if name == "":
+            rbs[i].setName("segment_{}".format(i-2))
+        print("Object: {}".format(rbs[i].getName()))
+        print("Position:")
+        print(rbs[i].getPosition())
+        print("Velocity:")
+        print(rbs[i].getVelocity())
+        print("Rotation:")
+        print(rbs[i].getRotation())
+        print("Translation:")
+        print(rbs[i].getAngularVelocity())
+
+    # Save simulation to file
     file_directory = os.path.dirname(os.path.abspath(__file__))
     package_directory = os.path.split(file_directory)[0]
     file = os.path.join(package_directory, 'envs/assets', 'bend_wire.aagx')
-    if (not agxIO.writeFile(file, sim)):
-        print("Unable to save simulation!")
+    save_sim_file(sim, file)
 
+    # Render simulation
+    arg_parser = agxIO.ArgumentParser([sys.executable] + sys.argv)
+    app.addScene(arg_parser.getArgumentName(1), "build_scene")
 
-# Entry point if script is launched using agxViewer
-def buildScene():
-    # sim - A pointer to an instance of a agxSDK::Simulation
-    # app - A pointer to an instance of a agxOSG::ExampleApplication
-    # root - A pointer to an instance of agxOSG::Group
-    sim = agxPython.getContext().environment.getSimulation()
-    app = agxPython.getContext().environment.getApplication()
-    root = agxPython.getContext().environment.getSceneRoot()
-
+    # Set rendering mode
     app.setEnableDebugRenderer(False)
     app.setEnableOSGRenderer(True)
 
-    initCamera(app)
-
-    # We just call buildScene1 to create a scene
-    buildScene1(sim, app, root)
-
-
-def main(args):
-    # Create an application with graphics etc.
-    app = agxOSG.ExampleApplication()
-
-    # Create a command line parser. sys.executable will point to python executable
-    # in this case, because getArgumentName(0) needs to match the C argv[0] which
-    # is the name of the program running
-    argParser = agxIO.ArgumentParser([sys.executable] + args)
-
-    app.addScene(argParser.getArgumentName(1), "buildScene", ord('1'), False)
-
-    # Call the init method of this simulation
-    # It will setup the viewer, windows etc.
-    if app.init(argParser):
+    # Call the init method of ExampleApplication
+    if app.init(arg_parser):
         app.run()
     else:
         print("An error occurred while initializing ExampleApplication.")
 
 
 # Entry point when this script is loaded with python
-if agxPython.getContext() is None:
-    init = agx.AutoInit()
-    main(sys.argv)
+if __name__ == '__main__':
+    if agxPython.getContext() is None:
+        init = agx.AutoInit()
+        main()
