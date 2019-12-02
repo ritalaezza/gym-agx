@@ -26,12 +26,12 @@ from gym_agx.utils.agx_utils import create_body
 
 # Parameters
 FILE_NAME = 'bend_wire.aagx'
-LENGTH = 0.1          # meters
-RESOLUTION = 100      # segments per meter
-YOUNG_MODULUS = 1e10  # Giga Pascals
-YIELD_POINT = 1e8     # Newton meters
-RADIUS = 0.001        # meters
-GROUND_WIDTH = 0.002  # meters
+LENGTH = 0.1           # meters
+RESOLUTION = 100       # segments per meter
+YOUNG_MODULUS = 1e10   # Giga Pascals
+YIELD_POINT = 1e8      # Newton meters
+RADIUS = 0.001         # meters
+GROUND_WIDTH = 0.0001  # meters
 GRAVITY = False
 CABLE_GRIPPER_RATIO = 2
 SIZE_GRIPPER = CABLE_GRIPPER_RATIO*RADIUS
@@ -145,7 +145,7 @@ def main():
         print(rbs[i].getVelocity())
         print("Rotation:")
         print(rbs[i].getRotation())
-        print("Translation:")
+        print("Angular velocity:")
         print(rbs[i].getAngularVelocity())
 
     # Save simulation to file
