@@ -25,6 +25,7 @@ from gym_agx.utils.agx_utils import create_body
 
 
 # Parameters
+FILE_NAME = 'bend_wire.aagx'
 LENGTH = 0.1          # meters
 RESOLUTION = 100      # segments per meter
 YOUNG_MODULUS = 1e10  # Giga Pascals
@@ -36,7 +37,7 @@ CABLE_GRIPPER_RATIO = 2
 SIZE_GRIPPER = CABLE_GRIPPER_RATIO*RADIUS
 
 
-def build_scene(app=None, root=None):
+def build_scene(root=None):
     # Instantiate a simulation
     sim = agxSDK.Simulation()
 
@@ -44,6 +45,7 @@ def build_scene(app=None, root=None):
     # too by creating an agx.PointGravityField for example).
     # AGX uses a right-hand coordinate system (That is Z defines UP. X is right, and Y is into the screen)
     if not GRAVITY:
+        print("Gravity off.")
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 
@@ -73,20 +75,17 @@ def build_scene(app=None, root=None):
                                                     motionControl=agx.RigidBody.KINEMATICS)
 
     # Create LockJoints for each gripper:
-    # The cable is attached so that it passes through the attachment point along the Z axis of the body's model
-    # coordinate frame. Use the constructor taking an AffineMatrix4x4 instead if another direction is required.
-    left_transform = agx.AffineMatrix4x4()
+    # Cables are attached passing through the attachment point along the Z axis of the body's coordinate frame.
     # The translation specified in the transformation is relative to the body and not the world
+    left_transform = agx.AffineMatrix4x4()
     left_transform.setTranslate(SIZE_GRIPPER + RADIUS, 0, 0)
-    # The resulting rotation will be a rotation matrix which rotates a vector from Z to X
-    left_transform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())
-    cable.add(agxCable.BodyFixedNode(gripper_left, left_transform))  # fix cable to gripper_left
+    left_transform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())  # Rotation matrix which switches Z with X
+    cable.add(agxCable.BodyFixedNode(gripper_left, left_transform))  # Fix cable to gripper_left
 
     right_transform = agx.AffineMatrix4x4()
     right_transform.setTranslate(- SIZE_GRIPPER - RADIUS, 0, 0)
-    # The resulting rotation will be a rotation matrix which rotates a vector from Z to X
-    right_transform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())
-    cable.add(agxCable.BodyFixedNode(gripper_right, right_transform))  # fix cable to object
+    right_transform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())  # Rotation matrix which switches Z with X
+    cable.add(agxCable.BodyFixedNode(gripper_right, right_transform))  # Fix cable to gripper_right
 
     # Set cable properties
     properties = cable.getCableProperties()
@@ -103,7 +102,7 @@ def build_scene(app=None, root=None):
     # Try to initialize cable
     report = cable.tryInitialize()
     if report.successful():
-        print("Successful cable initialization!")
+        print("Successful cable initialization.")
     else:
         print(report.getActualError())
 
@@ -130,7 +129,7 @@ def main():
     root = app.getSceneAgxOSGRoot()
 
     # Build simulation object, provide root for rendering information
-    sim = build_scene(app, root)
+    sim = build_scene(root)
 
     # Print list of objects in terminal
     rbs = sim.getRigidBodies()
@@ -152,7 +151,7 @@ def main():
     # Save simulation to file
     file_directory = os.path.dirname(os.path.abspath(__file__))
     package_directory = os.path.split(file_directory)[0]
-    file = os.path.join(package_directory, 'envs/assets', 'bend_wire.aagx')
+    file = os.path.join(package_directory, 'envs/assets', FILE_NAME)
     save_sim_file(sim, file)
 
     # Render simulation
@@ -170,7 +169,6 @@ def main():
         print("An error occurred while initializing ExampleApplication.")
 
 
-# Entry point when this script is loaded with python
 if __name__ == '__main__':
     if agxPython.getContext() is None:
         init = agx.AutoInit()
