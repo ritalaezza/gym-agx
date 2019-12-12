@@ -1,18 +1,35 @@
-########################################
-# Name: bend_wire.agxPy
-# Description:
-#
-# This script simulates a wire attached on one end and controllable on the other modelled as a cable in AGX
-#
-########################################
+"""Simulation for BendWire environment
+
+This module creates the simulation files which will them be used in BendWire environments.
+
+Example:
+    Examples can be given using either the ``Example`` or ``Examples``
+    sections. Sections support any reStructuredText formatting, including
+    literal blocks::
+
+        $ python example_google.py
+
+Section breaks are created by resuming unindented text. Section breaks
+are also implicitly created anytime a new section starts.
+
+Attributes:
+    module_level_variable1 (int): Module level variables may be documented in
+        either the ``Attributes`` section of the module docstring, or in an
+        inline docstring immediately following the variable.
+
+        Either form is acceptable, but the two should not be mixed. Choose
+        one convention to document module level variables and be consistent
+        with it.
+
+Todo:
+    * For module TODOs
+"""
 # AGX Dynamics imports
 import agx
 import agxPython
 import agxCollide
 import agxSDK
 import agxCable
-import agxOSG
-import agxRender
 import agxIO
 
 # Python modules
@@ -20,24 +37,27 @@ import sys
 import os
 
 # Local modules
-from gym_agx.utils.agx_utils import save_sim_file
-from gym_agx.utils.agx_utils import create_body
+from gym_agx.utils.agx_utils import create_body, add_wire_rendering
 
 
-# Parameters
-FILE_NAME = 'bend_wire.aagx'
-LENGTH = 0.1           # meters
-RESOLUTION = 100       # segments per meter
+FILE_NAME = 'bend_wire'
+# Simulation Parameters
+RADIUS = 0.001         # meters
+LENGTH = 0.1+2*RADIUS  # meters
+RESOLUTION = 1000      # segments per meter
 YOUNG_MODULUS = 1e10   # Giga Pascals
 YIELD_POINT = 1e8      # Newton meters
-RADIUS = 0.001         # meters
 GROUND_WIDTH = 0.0001  # meters
 GRAVITY = False
+# Rendering Parameters
 CABLE_GRIPPER_RATIO = 2
 SIZE_GRIPPER = CABLE_GRIPPER_RATIO*RADIUS
+EYE = agx.Vec3(LENGTH / 2, -5 * LENGTH, 0)
+CENTER = agx.Vec3(LENGTH / 2, 0, 0)
+UP = agx.Vec3(0., 0., 1.)
 
 
-def build_scene(root=None):
+def build_simulation():
     # Instantiate a simulation
     sim = agxSDK.Simulation()
 
@@ -87,7 +107,8 @@ def build_scene(root=None):
     right_transform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())  # Rotation matrix which switches Z with X
     cable.add(agxCable.BodyFixedNode(gripper_right, right_transform))  # Fix cable to gripper_right
 
-    # Set cable properties
+    # Set cable name and properties
+    cable.setName("DLO")
     properties = cable.getCableProperties()
     properties.setYoungsModulus(YOUNG_MODULUS, agxCable.BEND)
     properties.setYoungsModulus(YOUNG_MODULUS, agxCable.TWIST)
@@ -99,6 +120,16 @@ def build_scene(root=None):
     # NOTE: Stretch direction is always elastic
     cable.addComponent(plasticity)
 
+    # Set cable damage name and weights
+    damage = agxCable.CableDamage()
+    damage.setName("DLO_damage")
+    damage.setStretchDeformationWeight(10.0)
+    damage.setBendDeformationWeight(0.0)
+    damage.setTwistDeformationWeight(1.0)
+
+    # Add cable damage
+    cable.addComponent(damage)
+
     # Try to initialize cable
     report = cable.tryInitialize()
     if report.successful():
@@ -109,27 +140,13 @@ def build_scene(root=None):
     # Add cable to simulation
     sim.add(cable)
 
-    # Add basic rendering:
-    ground_node = agxOSG.createVisual(ground, root)
-    gripper_left_node = agxOSG.createVisual(gripper_left, root)
-    gripper_right_node = agxOSG.createVisual(gripper_right, root)
-    cable_node = agxOSG.createVisual(cable, root)
-    agxOSG.setDiffuseColor(ground_node, agxRender.Color(1.0, 1.0, 1.0, 1.0))
-    agxOSG.setDiffuseColor(gripper_left_node, agxRender.Color(1.0, 0.0, 0.0, 1.0))
-    agxOSG.setDiffuseColor(gripper_right_node, agxRender.Color(0.0, 0.0, 1.0, 1.0))
-    agxOSG.setDiffuseColor(cable_node, agxRender.Color(0.0, 1.0, 0.0, 1.0))
-
     return sim
 
 
-# Build and save scene to .aagx file
-def main():
-    # Instantiate ExampleApplication object and get root
-    app = agxOSG.ExampleApplication()
-    root = app.getSceneAgxOSGRoot()
-
-    # Build simulation object, provide root for rendering information
-    sim = build_scene(root)
+# Build and save scene to file
+def main(args):
+    # Build simulation object
+    sim = build_simulation()
 
     # Print list of objects in terminal
     rbs = sim.getRigidBodies()
@@ -137,8 +154,9 @@ def main():
     for i, rb in enumerate(rbs):
         name = rbs[i].getName()
         if name == "":
-            rbs[i].setName("segment_{}".format(i-2))
-        print("Object: {}".format(rbs[i].getName()))
+            print("Object: segment_{}".format(i-2))
+        else:
+            print("Object: {}".format(rbs[i].getName()))
         print("Position:")
         print(rbs[i].getPosition())
         print("Velocity:")
@@ -151,25 +169,24 @@ def main():
     # Save simulation to file
     file_directory = os.path.dirname(os.path.abspath(__file__))
     package_directory = os.path.split(file_directory)[0]
-    file = os.path.join(package_directory, 'envs/assets', FILE_NAME)
-    save_sim_file(sim, file)
+    markup_file = os.path.join(package_directory, 'envs/assets', FILE_NAME + ".aagx")
+    if not agxIO.writeFile(markup_file, sim):
+        print("Unable to save simulation to markup file!")
+    binary_file = os.path.join(package_directory, 'envs/assets', FILE_NAME + ".agx")
+    if not agxIO.writeFile(binary_file, sim):
+        print("Unable to save simulation to binary file!")
 
     # Render simulation
-    arg_parser = agxIO.ArgumentParser([sys.executable] + sys.argv)
-    app.addScene(arg_parser.getArgumentName(1), "build_scene")
-
-    # Set rendering mode
-    app.setEnableDebugRenderer(False)
-    app.setEnableOSGRenderer(True)
-
-    # Call the init method of ExampleApplication
-    if app.init(arg_parser):
-        app.run()
-    else:
-        print("An error occurred while initializing ExampleApplication.")
+    app = add_wire_rendering(sim, LENGTH)
+    app.init(agxIO.ArgumentParser([sys.executable] + args))
+    app.setCameraHome(EYE, CENTER, UP)  # should only be added after app.init
+    app.initSimulation(sim, True)
+    while not app.breakRequested():
+        sim.stepForward()
+        app.executeOneStepWithGraphics()
 
 
 if __name__ == '__main__':
     if agxPython.getContext() is None:
         init = agx.AutoInit()
-        main()
+        main(sys.argv)

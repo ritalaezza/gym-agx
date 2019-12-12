@@ -9,6 +9,7 @@ __pycache__/
 
 # Extensions:
 *.pyc
+*.aagx
 
 # Ignore file
 agx_statistics.txt
