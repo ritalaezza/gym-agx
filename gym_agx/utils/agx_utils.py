@@ -117,45 +117,6 @@ def create_info_printer(sim, app, text_table=None, text_color=None):
     sim.add(InfoPrinter(sim, app, text_table, text_color))
 
 
-def add_wire_rendering(sim, length):
-    """Create ExampleApplication instance and add rendering information.
-    :param sim: AGX Simulation object
-    :param length: Length of the DLO
-    :return: app
-    """
-    camera_distance = 0.5
-    light_pos = agx.Vec4(length / 2, - camera_distance, camera_distance, 1.)
-    light_dir = agx.Vec3(0., 0., -1.)
-
-    app = agxOSG.ExampleApplication(sim)
-    app.setAutoStepping(False)
-    app.setEnableDebugRenderer(False)
-    app.setEnableOSGRenderer(True)
-
-    root = app.getRoot()
-    rbs = sim.getRigidBodies()
-    for rb in rbs:
-        if rb.getName() == "ground":
-            ground_node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(ground_node, agxRender.Color(1.0, 1.0, 1.0, 1.0))
-        elif rb.getName() == "gripper_left":
-            gripper_left_node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(gripper_left_node, agxRender.Color(1.0, 0.0, 0.0, 1.0))
-        elif rb.getName() == "gripper_right":
-            gripper_right_node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(gripper_right_node, agxRender.Color(0.0, 0.0, 1.0, 1.0))
-        else:  # Cable segments
-            cable_node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(cable_node, agxRender.Color(0.0, 1.0, 0.0, 1.0))
-
-    scene_decorator = app.getSceneDecorator()
-    light_source_0 = scene_decorator.getLightSource(agxOSG.SceneDecorator.LIGHT0)
-    light_source_0.setPosition(light_pos)
-    light_source_0.setDirection(light_dir)
-
-    return app, root
-
-
 def get_state(sim):
     """Return dictionary with object list.
     :param sim: AGX simulation object

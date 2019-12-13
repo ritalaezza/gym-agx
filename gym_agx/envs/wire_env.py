@@ -6,13 +6,16 @@ import numpy as np
 import agx
 import agxIO
 import agxSDK
+import agxOSG
 import agxCable
+import agxRender
 
 from gym_agx.envs import agx_env
-from gym_agx.utils.agx_utils import add_wire_rendering, get_cable_state, to_numpy_array, to_agx_list
+from gym_agx.utils.agx_utils import get_cable_state, to_numpy_array, to_agx_list
 
 
 def goal_distance(goal_a, goal_b):
+    print("goal distance")
     assert goal_a.shape == goal_b.shape
     return np.linalg.norm(goal_a - goal_b, axis=-1)
 
@@ -41,18 +44,14 @@ class WireEnv(agx_env.AgxEnv):
         super(WireEnv, self).__init__(scene_path=scene_path, n_substeps=n_substeps, grippers=grippers,
                                       n_actions=n_actions)
 
-        self.app, self.root = add_wire_rendering(self.sim, self.length)
-        self.app.init(agxIO.ArgumentParser([sys.executable] + self.args))
-        self.app.setCameraHome(self.camera['eye'], self.camera['center'], self.camera['up'])  # only after app.init
-        self.app.initSimulation(self.sim, True)
-
-    def render(self, mode='osg'):
+    def render(self, mode="human"):
         return super(WireEnv, self).render(mode)
 
     # GoalEnv methods
     # ----------------------------
 
     def compute_reward(self, achieved_goal, goal, info):
+        print("compute reward")
         # Compute distance between goal and the achieved goal.
         d = goal_distance(achieved_goal, goal)
         if self.reward_type == 'sparse':
@@ -62,6 +61,50 @@ class WireEnv(agx_env.AgxEnv):
 
     # AgxEnv methods
     # ----------------------------
+
+    def _init_app(self, start_rendering):
+        print("start rendering")
+        self.app.init(agxIO.ArgumentParser([sys.executable] + self.args))
+        self.app.setCameraHome(self.camera['eye'], self.camera['center'], self.camera['up'])  # only after app.init
+        self.app.initSimulation(self.sim, start_rendering)
+
+    def _add_rendering(self, mode='osg'):
+        print("add rendering")
+        camera_distance = 0.5
+        light_pos = agx.Vec4(self.length / 2, - camera_distance, camera_distance, 1.)
+        light_dir = agx.Vec3(0., 0., -1.)
+
+        self.app = agxOSG.ExampleApplication(self.sim)
+        self.app.setAutoStepping(False)
+        if mode == 'osg':
+            self.app.setEnableDebugRenderer(False)
+            self.app.setEnableOSGRenderer(True)
+        elif mode == 'debug':
+            self.app.setEnableDebugRenderer(True)
+            self.app.setEnableOSGRenderer(False)
+        else:
+            logger.error("Unexpected rendering mode: {}".format(mode))
+
+        self.root = self.app.getRoot()
+        rbs = self.sim.getRigidBodies()
+        for rb in rbs:
+            if rb.getName() == "ground":
+                ground_node = agxOSG.createVisual(rb, self.root)
+                agxOSG.setDiffuseColor(ground_node, agxRender.Color(1.0, 1.0, 1.0, 1.0))
+            elif rb.getName() == "gripper_left":
+                gripper_left_node = agxOSG.createVisual(rb, self.root)
+                agxOSG.setDiffuseColor(gripper_left_node, agxRender.Color(1.0, 0.0, 0.0, 1.0))
+            elif rb.getName() == "gripper_right":
+                gripper_right_node = agxOSG.createVisual(rb, self.root)
+                agxOSG.setDiffuseColor(gripper_right_node, agxRender.Color(0.0, 0.0, 1.0, 1.0))
+            else:  # Cable segments
+                cable_node = agxOSG.createVisual(rb, self.root)
+                agxOSG.setDiffuseColor(cable_node, agxRender.Color(0.0, 1.0, 0.0, 1.0))
+
+        scene_decorator = self.app.getSceneDecorator()
+        light_source_0 = scene_decorator.getLightSource(agxOSG.SceneDecorator.LIGHT0)
+        light_source_0.setPosition(light_pos)
+        light_source_0.setDirection(light_dir)
 
     def _set_action(self, action):
         print("set action")
@@ -79,6 +122,7 @@ class WireEnv(agx_env.AgxEnv):
             print("Unable to restore simulation!")
             return False
 
+        self._add_rendering()
         return True
 
     def _get_obs(self):
@@ -94,11 +138,13 @@ class WireEnv(agx_env.AgxEnv):
             gripper_state[:3, i] = to_numpy_array(gripper.getPosition())
             gripper_state[3:, i] = to_numpy_array(gripper.getRotation())
 
-        obs['achieved_goal'] = cable_state
         obs['observation'] = np.concatenate((gripper_state, cable_state), axis=1)
+        obs['achieved_goal'] = cable_state
+        obs['desired_goal'] = self.goal.copy()
         return obs
 
     def _is_success(self, achieved_goal, desired_goal):
+        print("is success")
         d = goal_distance(achieved_goal, desired_goal)
         return (d < self.distance_threshold).astype(np.float32)
 
@@ -144,6 +190,17 @@ class WireEnv(agx_env.AgxEnv):
 
     def _render_callback(self):
         print("render callback")
+        if not self.app.breakRequested():
+            self.app.executeOneStepWithGraphics()
+        else:
+            self._init_app(True)
+            self.app.executeOneStepWithGraphics()
 
     def _step_callback(self):
         print("step callback")
+        t = self.sim.getTimeStamp()
+        print("timestep: {}".format(t))
+        try:
+            self.sim.stepForward()
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
