@@ -1,11 +1,8 @@
 import agx
 import agxCollide
 import agxSDK
-import agxOSG
-import agxRender
 
 import numpy as np
-
 import logging
 
 logger = logging.getLogger(__name__)
@@ -117,16 +114,6 @@ def create_info_printer(sim, app, text_table=None, text_color=None):
     sim.add(InfoPrinter(sim, app, text_table, text_color))
 
 
-def get_state(sim):
-    """Return dictionary with object list.
-    :param sim: AGX simulation object
-    :return: dictionary with rigid objects
-    """
-    rbs = sim.getRigidBodies()
-    state = dict(list(enumerate(rbs)))
-    return state
-
-
 def to_numpy_array(agx_list):
     """Convert from AGX data structure to NumPy array.
     :param agx_list: AGX data structure
@@ -165,7 +152,7 @@ def to_agx_list(np_array, agx_type):
 
 
 def get_cable_state(cable):
-    """Get AGX Cable segments' positions and rotations.
+    """Get AGX Cable segments' positions and rotations and force.
     :param cable: AGX Cable object
     :return: NumPy array with segments' position and rotations
     """
@@ -179,26 +166,26 @@ def get_cable_state(cable):
 
             rotation = segment_iterator.getGeometry().getRotation()
             cable_state[3:, i] = to_numpy_array(rotation)
-
-            segment_iterator.inc()
         else:
             logger.error('AGX segment iteration finished early. Number or cable segments may be wrong.')
 
     return cable_state
 
 
-def ctrl_set_action(sim, obj_name, pos_ctrl, rot_ctrl, grip_ctrl=None):
-    """Apply action to simulation.
-    :param sim: AGX simulation object
-    :param obj_name: Kinematic Rigid Object (gripper)
-    :param pos_ctrl: Displacement of object in x,y,z coordinates
-    :param rot_ctrl: Rotation of object around x,y,z axes
-    :param grip_ctrl: (optional) Displacement of object relative to deformable object
+def get_force_torque(sim, rigid_body, constraint_name):
+    """Gets force an torque on rigid object, computed by a constraint defined by 'constraint_name'.
+    :param sim: AGX Simulation object
+    :param rigid_body: RigidBody object on which to compute force and torque
+    :param constraint_name: Name indicating which constraint contains force torque information for this object
+    :return: force an torque
     """
-    obj = sim.getObject(obj_name)
-    transform = agx.AffineMatrix4x4()
-    transform.setTranslate(pos_ctrl)
-    transform.setRotate(rot_ctrl)
-    obj.moveTo(transform)
+    force = agx.Vec3()
+    torque = agx.Vec3()
 
-    # TODO: Implement a change in relative position of gripper on deformable object
+    constraint = sim.getConstraint(constraint_name)
+    constraint.getLastForce(rigid_body, force, torque)
+
+    force = to_numpy_array(force)
+    torque = to_numpy_array(torque)
+
+    return force, torque

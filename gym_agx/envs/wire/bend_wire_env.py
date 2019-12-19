@@ -9,9 +9,12 @@ SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire.agx')
 
 
 class BendWireEnv(wire_env.WireEnv):
+    """Subclass which inherits from Wire environment.
+    """
     def __init__(self, reward_type='sparse'):
-        """Initialize BendWire environment.
+        """Initializes BendWire environment
         The radius and length should be consistent with the model defined in 'SCENE_PATH'.
+        :param reward_type: either 'sparse' or 'dense'
         """
         radius = 0.01
         length = 0.1 + 2*radius
@@ -29,4 +32,5 @@ class BendWireEnv(wire_env.WireEnv):
 
         wire_env.WireEnv.__init__(
             self, scene_path=SCENE_PATH, n_substeps=5, grippers=grippers, length=length, n_actions=6, camera=camera,
-            args=args, distance_threshold=0.05, reward_type=reward_type)
+            args=args, distance_threshold=0.01**3, reward_type=reward_type,  terminate_when_unhealthy=True,
+            damage_threshold=1e7)

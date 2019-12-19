@@ -1,12 +1,25 @@
 import gym
-import numpy as np
 from gym_agx import envs
 
-env = gym.make('BendWire-v0')
-env.reset()
-print(env.action_space.sample())
-zero_action = np.zeros((6, 1), dtype=float)
-for _ in range(10):
-    env.render()
-    env.step(zero_action)  # take neutral action
-env.close()
+N_EPISODES = 1
+EPISODE_LENGTH = 1200  # 1 minute (1 step is 0.05 seconds)
+
+
+def main():
+    env = gym.make('BendWire-v0')
+    for _ in range(N_EPISODES):
+        env.reset()
+        for _ in range(EPISODE_LENGTH):
+            env.render()
+            obs, reward, done, info = env.step(env.action_space.sample())
+            if done:
+                if info['is_success']:
+                    print("Goal reached!", "reward=", reward)
+                else:
+                    print("Stopped early.")
+                break
+    env.close()
+
+
+if __name__ == "__main__":
+    main()

@@ -11,38 +11,68 @@ import agxCable
 import agxRender
 
 from gym_agx.envs import agx_env
-from gym_agx.utils.agx_utils import get_cable_state, to_numpy_array, to_agx_list
+from gym_agx.utils.agx_utils import get_cable_state, get_force_torque, to_numpy_array, to_agx_list
 
 
 def goal_distance(goal_a, goal_b):
-    print("goal distance")
+    logger.debug("goal distance")
     assert goal_a.shape == goal_b.shape
-    return np.linalg.norm(goal_a - goal_b, axis=-1)
+    linear_distance = np.linalg.norm(goal_a[:3, :] - goal_b[:3, :], axis=0)
+    angular_distance = np.linalg.norm(goal_a[3:, :] - goal_b[3:, :], axis=0)
+    return linear_distance, angular_distance
 
 
 logger = logging.getLogger(__name__)
 
 
 class WireEnv(agx_env.AgxEnv):
+    """Superclass for all Wire environments.
+    """
     def __init__(self, scene_path, n_substeps, grippers, length, n_actions, camera, args, distance_threshold,
-                 reward_type):
-        """Superclass for all Wire environments.
-
-        Args:
-            n_substeps (int): number of substeps the simulation runs on every call to step
-            n_actions (int): number of DoF of kinematic object
-            distance_threshold (float): the threshold after which a goal is considered achieved
-            reward_type ('sparse' or 'dense'): the reward type, i.e. sparse or dense
+                 reward_type, terminate_when_unhealthy, damage_threshold):
+        """Initializes a WireEnv object
+        :param scene_path: path to binary file containing serialized simulation defined in sim/ folder
+        :param n_substeps: number os simulation steps per call to step()
+        :param grippers: dictionary containing gripper names
+        :param length: length of wire
+        :param n_actions: number of actions (DoF)
+        :param camera: dictionary containing EYE, CENTER, UP information for rendering
+        :param args: sys.argv
+        :param distance_threshold: threshold for reward function
+        :param reward_type: reward type, i.e. 'sparse' or 'dense'
+        :param terminate_when_unhealthy: boolean to determine early stopping when too much damage occurs
+        :param damage_threshold: damage threshold used when 'terminate_when_unhealthy' is True
         """
+        # TODO: may want to move some of these to parent class
+        self.terminate_when_unhealthy = terminate_when_unhealthy
         self.distance_threshold = distance_threshold
+        self.damage_threshold = damage_threshold
         self.reward_type = reward_type
         self.grippers = grippers
         self.length = length
-        self.camera = camera
-        self.args = args  # TODO: may want to move this to parent class
 
         super(WireEnv, self).__init__(scene_path=scene_path, n_substeps=n_substeps, grippers=grippers,
-                                      n_actions=n_actions)
+                                      n_actions=n_actions, camera=camera, args=args)
+
+    @property
+    def is_healthy(self):
+        largest = agxCable.SegmentDamage()
+        cable = agxCable.Cable.find(self.sim, "DLO")
+        cable_damage = agxCable.CableDamage.getCableDamage(cable)
+        damages = cable_damage.getCurrentDamages()
+
+        for d in damages:
+            for e in range(agxCable.NUM_CABLE_DAMAGE_TYPES):
+                largest[e] = max(largest[e], d[e])
+        if largest.total() > self.damage_threshold:
+            return False
+        else:
+            return True
+
+    @property
+    def done(self):
+        done = (not self.is_healthy if self.terminate_when_unhealthy else False)
+        return done
 
     def render(self, mode="human"):
         return super(WireEnv, self).render(mode)
@@ -51,25 +81,19 @@ class WireEnv(agx_env.AgxEnv):
     # ----------------------------
 
     def compute_reward(self, achieved_goal, goal, info):
-        print("compute reward")
+        logger.debug("compute reward")
         # Compute distance between goal and the achieved goal.
-        d = goal_distance(achieved_goal, goal)
+        distance_per_segment, __ = goal_distance(achieved_goal, goal)
         if self.reward_type == 'sparse':
-            return -(d > self.distance_threshold).astype(np.float32)
+            return -1 * float(any(i >= self.distance_threshold for i in distance_per_segment))
         else:
-            return -d
+            return -1 * distance_per_segment.mean()
 
     # AgxEnv methods
     # ----------------------------
 
-    def _init_app(self, start_rendering):
-        print("start rendering")
-        self.app.init(agxIO.ArgumentParser([sys.executable] + self.args))
-        self.app.setCameraHome(self.camera['eye'], self.camera['center'], self.camera['up'])  # only after app.init
-        self.app.initSimulation(self.sim, start_rendering)
-
     def _add_rendering(self, mode='osg'):
-        print("add rendering")
+        logger.debug("add rendering")
         camera_distance = 0.5
         light_pos = agx.Vec4(self.length / 2, - camera_distance, camera_distance, 1.)
         light_dir = agx.Vec3(0., 0., -1.)
@@ -106,50 +130,56 @@ class WireEnv(agx_env.AgxEnv):
         light_source_0.setPosition(light_pos)
         light_source_0.setDirection(light_dir)
 
-    def _set_action(self, action):
-        print("set action")
-        for i, key in enumerate(self.grippers):
-            gripper = self.sim.getRigidBody(key)
-            velocity = to_agx_list(action[:3, i], agx.Vec3)
-            gripper.setVelocity(velocity)
-            angular_velocity = to_agx_list(action[3:, i], agx.Vec3)
-            gripper.setAngularVelocity(angular_velocity)
-
     def _reset_sim(self):
-        print("reset sim")
+        logger.debug("reset sim")
         self.sim.cleanup(agxSDK.Simulation.CLEANUP_ALL, True)
         if not self.sim.restore(self.scene_path, agxSDK.Simulation.READ_ALL):
-            print("Unable to restore simulation!")
+            logger.error("Unable to restore simulation!")
             return False
 
         self._add_rendering()
         return True
 
     def _get_obs(self):
-        print("get obs")
+        logger.debug("get obs")
         obs = dict.fromkeys({'achieved_goal', 'observation'}, None)
 
         cable = agxCable.Cable.find(self.sim, "DLO")
+        padded_cable_state = np.zeros(shape=(7, cable.getNumSegments(), 2), dtype=float)
         cable_state = get_cable_state(cable)
+        padded_cable_state[:, :, 0] = cable_state
 
-        gripper_state = np.zeros(shape=(7, len(self.grippers)), dtype=float)
+        gripper_state = np.zeros(shape=(7, len(self.grippers), 2), dtype=float)
         for i, key in enumerate(self.grippers):
             gripper = self.sim.getRigidBody(key)
-            gripper_state[:3, i] = to_numpy_array(gripper.getPosition())
-            gripper_state[3:, i] = to_numpy_array(gripper.getRotation())
+            gripper_state[:3, i, 0] = to_numpy_array(gripper.getPosition())
+            gripper_state[3:, i, 0] = to_numpy_array(gripper.getRotation())
+            gripper_state[:3, i, 1], gripper_state[3:6, i, 1] = get_force_torque(self.sim, gripper, key + '_constraint')
+            gripper_state[6, i, 1] = 1  # fill empty space. Boolean indicating gripper and not segment.
 
-        obs['observation'] = np.concatenate((gripper_state, cable_state), axis=1)
+        obs['observation'] = np.concatenate((gripper_state, padded_cable_state), axis=1)
         obs['achieved_goal'] = cable_state
         obs['desired_goal'] = self.goal.copy()
         return obs
 
+    def _set_action(self, action):
+        logger.debug("set action")
+        for i, key in enumerate(self.grippers):
+            gripper = self.sim.getRigidBody(key)
+            velocity = to_agx_list(action[:3, i], agx.Vec3)
+            velocity *= 0.001  # from meters per second to millimeters per second
+            gripper.setVelocity(velocity)
+            angular_velocity = to_agx_list(action[3:, i], agx.Vec3)
+            angular_velocity *= 0.5  # half of input rad/s
+            gripper.setAngularVelocity(angular_velocity)
+
     def _is_success(self, achieved_goal, desired_goal):
-        print("is success")
-        d = goal_distance(achieved_goal, desired_goal)
-        return (d < self.distance_threshold).astype(np.float32)
+        logger.debug("is success")
+        distance_per_segment, __ = goal_distance(achieved_goal, desired_goal)
+        return all(i < self.distance_threshold for i in distance_per_segment)
 
     def _sample_goal(self):
-        print("sample goal")
+        logger.debug("sample goal")
         n_steps = 1000
         valid_goal = False
         while not valid_goal:
@@ -177,7 +207,7 @@ class WireEnv(agx_env.AgxEnv):
                 for d in damages:
                     for e in range(agxCable.NUM_CABLE_DAMAGE_TYPES):
                         largest[e] = max(largest[e], d[e])
-                if largest.total() > 1e7:
+                if largest.total() > self.damage_threshold:
                     print("Too much damage!")
                     break
 
@@ -188,19 +218,22 @@ class WireEnv(agx_env.AgxEnv):
 
         return goal.copy()
 
+    def _step_callback(self):
+        logger.debug("step callback")
+        t = self.sim.getTimeStamp()
+
+        t_0 = t
+        while t < t_0 + self.dt:
+            try:
+                self.sim.stepForward()
+                t = self.sim.getTimeStamp()
+            except:
+                logger.error("Unexpected error:", sys.exc_info()[0])
+
     def _render_callback(self):
-        print("render callback")
+        logger.debug("render callback")
         if not self.app.breakRequested():
             self.app.executeOneStepWithGraphics()
         else:
             self._init_app(True)
             self.app.executeOneStepWithGraphics()
-
-    def _step_callback(self):
-        print("step callback")
-        t = self.sim.getTimeStamp()
-        print("timestep: {}".format(t))
-        try:
-            self.sim.stepForward()
-        except:
-            print("Unexpected error:", sys.exc_info()[0])

@@ -31,13 +31,14 @@ import agxCollide
 import agxSDK
 import agxCable
 import agxIO
+import agxOSG
 
 # Python modules
 import sys
 import os
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, add_wire_rendering
+from gym_agx.utils.agx_utils import create_body
 
 
 FILE_NAME = 'bend_wire'
@@ -55,6 +56,25 @@ SIZE_GRIPPER = CABLE_GRIPPER_RATIO*RADIUS
 EYE = agx.Vec3(LENGTH / 2, -5 * LENGTH, 0)
 CENTER = agx.Vec3(LENGTH / 2, 0, 0)
 UP = agx.Vec3(0., 0., 1.)
+
+
+def add_rendering(sim, length):
+    camera_distance = 0.5
+    light_pos = agx.Vec4(length / 2, - camera_distance, camera_distance, 1.)
+    light_dir = agx.Vec3(0., 0., -1.)
+
+    app = agxOSG.ExampleApplication(sim)
+    app.setAutoStepping(False)
+
+    app.setEnableDebugRenderer(True)
+    app.setEnableOSGRenderer(False)
+
+    scene_decorator = app.getSceneDecorator()
+    light_source_0 = scene_decorator.getLightSource(agxOSG.SceneDecorator.LIGHT0)
+    light_source_0.setPosition(light_pos)
+    light_source_0.setDirection(light_dir)
+
+    return app
 
 
 def build_simulation():
@@ -140,6 +160,19 @@ def build_simulation():
     # Add cable to simulation
     sim.add(cable)
 
+    # Rename constraints and set enable force computation
+    constraints = sim.getConstraints()
+    for i, c in enumerate(constraints):
+        right_attachment = c.getAttachment(gripper_right)
+        left_attachment = c.getAttachment(gripper_left)
+        if right_attachment:
+            c.setName('gripper_right_constraint')
+            c.setEnableComputeForces(True)
+        elif left_attachment:
+            c.setName('gripper_left_constraint')
+            c.setEnableComputeForces(True)
+        else:
+            print('Constraint #{}'.format(i))
     return sim
 
 
@@ -177,10 +210,13 @@ def main(args):
         print("Unable to save simulation to binary file!")
 
     # Render simulation
-    app = add_wire_rendering(sim, LENGTH)
+    app = add_rendering(sim, LENGTH)
     app.init(agxIO.ArgumentParser([sys.executable] + args))
     app.setCameraHome(EYE, CENTER, UP)  # should only be added after app.init
     app.initSimulation(sim, True)
+    gripper = sim.getRigidBody('gripper_right')
+    gripper.setVelocity(-0.001, 0.0, 0.0)
+
     while not app.breakRequested():
         sim.stepForward()
         app.executeOneStepWithGraphics()
