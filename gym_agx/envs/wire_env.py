@@ -4,7 +4,6 @@ import logging
 import numpy as np
 
 import agx
-import agxIO
 import agxSDK
 import agxOSG
 import agxCable
@@ -12,13 +11,21 @@ import agxRender
 
 from gym_agx.envs import agx_env
 from gym_agx.utils.agx_utils import get_cable_state, get_force_torque, to_numpy_array, to_agx_list
+from gym_agx.utils.agx_utils import compute_linear_distance, compute_angular_distance
 
 
 def goal_distance(goal_a, goal_b):
     logger.debug("goal distance")
     assert goal_a.shape == goal_b.shape
-    linear_distance = np.linalg.norm(goal_a[:3, :] - goal_b[:3, :], axis=0)
-    angular_distance = np.linalg.norm(goal_a[3:, :] - goal_b[3:, :], axis=0)
+    linear_distance = np.zeros(shape=goal_a.shape)
+    angular_distance = np.zeros(shape=goal_a.shape)
+    for i in range(0, len(linear_distance), 7):
+        v_a = goal_a[i:i+3]
+        v_b = goal_b[i:i+3]
+        q_a = goal_a[i+3:i+7]
+        q_b = goal_b[i+3:i+7]
+        linear_distance[i] = compute_linear_distance(v_a, v_b)
+        angular_distance[i] = compute_angular_distance(q_a, q_b)
     return linear_distance, angular_distance
 
 
@@ -142,7 +149,7 @@ class WireEnv(agx_env.AgxEnv):
 
     def _get_obs(self):
         logger.debug("get obs")
-        obs = dict.fromkeys({'achieved_goal', 'observation'}, None)
+        obs = dict.fromkeys({'observation', 'achieved_goal', 'desired_goal'})
 
         cable = agxCable.Cable.find(self.sim, "DLO")
         padded_cable_state = np.zeros(shape=(7, cable.getNumSegments(), 2), dtype=float)
@@ -157,13 +164,18 @@ class WireEnv(agx_env.AgxEnv):
             gripper_state[:3, i, 1], gripper_state[3:6, i, 1] = get_force_torque(self.sim, gripper, key + '_constraint')
             gripper_state[6, i, 1] = 1  # fill empty space. Boolean indicating gripper and not segment.
 
-        obs['observation'] = np.concatenate((gripper_state, padded_cable_state), axis=1)
-        obs['achieved_goal'] = cable_state
-        obs['desired_goal'] = self.goal.copy()
+        observation = np.concatenate((gripper_state, padded_cable_state), axis=1)
+        logger.debug("Observation: {}".format(observation))
+
+        obs['observation'] = observation.ravel()
+        obs['achieved_goal'] = cable_state.ravel()
+        obs['desired_goal'] = self.goal.ravel()
         return obs
 
-    def _set_action(self, action):
+    def _set_action(self, stacked_action):
         logger.debug("set action")
+        n_grippers = len(self.grippers)
+        action = np.reshape(stacked_action, newshape=(int(len(stacked_action)/n_grippers), n_grippers))
         for i, key in enumerate(self.grippers):
             gripper = self.sim.getRigidBody(key)
             velocity = to_agx_list(action[:3, i], agx.Vec3)
@@ -216,7 +228,7 @@ class WireEnv(agx_env.AgxEnv):
         goal = get_cable_state(cable)
         self._reset_sim()
 
-        return goal.copy()
+        return goal.ravel()
 
     def _step_callback(self):
         logger.debug("step callback")

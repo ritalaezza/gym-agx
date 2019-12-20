@@ -2,12 +2,26 @@ import agx
 import agxCollide
 import agxSDK
 
+import math
 import numpy as np
+from pyquaternion import Quaternion
 import logging
 
 logger = logging.getLogger(__name__)
 
 # TODO: Is it really good practice to have classes being defined inside methods (instead of just instantiated)?
+
+
+def compute_linear_distance(v0, v1):
+    distance = math.sqrt(((v0 - v1)**2).sum())
+    return distance
+
+
+def compute_angular_distance(q0, q1):
+    q0 = Quaternion(q0)
+    q1 = Quaternion(q1)
+    distance = Quaternion.absolute_distance(q0, q1)
+    return distance
 
 
 def create_help_text(sim, app, text_table=None):

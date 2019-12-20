@@ -30,7 +30,6 @@ class BendWireEnv(wire_env.WireEnv):
             raise IOError("File %s does not exist" % self.scene_path)
         print("Fetching environment from {}".format(SCENE_PATH))
 
-        wire_env.WireEnv.__init__(
-            self, scene_path=SCENE_PATH, n_substeps=5, grippers=grippers, length=length, n_actions=6, camera=camera,
-            args=args, distance_threshold=0.01**3, reward_type=reward_type,  terminate_when_unhealthy=True,
-            damage_threshold=1e7)
+        super(BendWireEnv, self).__init__(scene_path=SCENE_PATH, n_substeps=5, grippers=grippers, length=length,
+                                          n_actions=6, camera=camera, args=args, distance_threshold=0.01**3,
+                                          reward_type=reward_type,  terminate_when_unhealthy=True, damage_threshold=1e7)

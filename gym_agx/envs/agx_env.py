@@ -60,7 +60,7 @@ class AgxEnv(gym.GoalEnv):
         self.goal = self._sample_goal()
         obs = self._get_obs()
 
-        self.action_space = spaces.Box(-1., 1., shape=(n_actions, len(grippers)), dtype='float32')
+        self.action_space = spaces.Box(-1., 1., shape=(n_actions*len(grippers),), dtype='float32')
         self.observation_space = spaces.Dict(dict(
             desired_goal=spaces.Box(-np.inf, np.inf, shape=obs['desired_goal'].shape, dtype='float32'),
             achieved_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
@@ -95,8 +95,6 @@ class AgxEnv(gym.GoalEnv):
         done = self.done
         info = {
             'is_success': self._is_success(obs['achieved_goal'], self.goal),
-            'achieved_goal': obs['achieved_goal'],
-            'desired_goal': self.goal
         }
         reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
         return obs, reward, done, info
@@ -114,7 +112,6 @@ class AgxEnv(gym.GoalEnv):
     def close(self):
         logger.debug("close")
         if self.app is not None:
-            # self.viewer.finish()
             self.app = None
             agx.shutdown()
 
