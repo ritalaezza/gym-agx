@@ -1,3 +1,4 @@
+import os
 import numpy as np
 
 import gym
@@ -68,14 +69,15 @@ def main(train=True):
     # Okay, now it's time to learn something! We visualize the training here for show, but this
     # slows down training quite a lot. You can always safely abort the training prematurely using
     # Ctrl + C.
-
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    file_path = os.path.join(dir_path, 'ddpg_{}_weights.h5f'.format(ENV_NAME))
     if train:
         agent.fit(env, nb_steps=10000, visualize=False, verbose=1)
 
         # After training is done, we save the final weights.
-        agent.save_weights('ddpg_{}_weights.h5f'.format(ENV_NAME), overwrite=True)
+        agent.save_weights(file_path, overwrite=True)
     else:
-        agent.load_weights('ddpg_{}_weights.h5f'.format(ENV_NAME))
+        agent.load_weights(file_path)
 
     # Finally, evaluate our algorithm for 5 episodes.
     agent.test(env, nb_episodes=5, visualize=True, nb_max_episode_steps=1000)
