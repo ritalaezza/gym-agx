@@ -212,19 +212,13 @@ class WireEnv(agx_env.AgxEnv):
                 self.sim.stepForward()
 
                 # Check for cable damage
-                cable = agxCable.Cable.find(self.sim, "DLO")
-                cable_damage = agxCable.CableDamage.getCableDamage(cable)
-                damages = cable_damage.getCurrentDamages()
-
-                for d in damages:
-                    for e in range(agxCable.NUM_CABLE_DAMAGE_TYPES):
-                        largest[e] = max(largest[e], d[e])
-                if largest.total() > self.damage_threshold:
+                if not self.is_healthy:
                     print("Too much damage!")
                     break
 
             valid_goal = True
 
+        cable = agxCable.Cable.find(self.sim, "DLO")
         goal = get_cable_state(cable)
         self._reset_sim()
 
