@@ -13,13 +13,13 @@ use rlpyt.utils.logging.context.add_exp_param().
 """
 
 from rlpyt.samplers.serial.sampler import SerialSampler
-import gym
-from gym_agx import envs
 from rlpyt.envs.gym import make as gym_make
-from rlpyt.algos.qpg.ddpg import DDPG
-from rlpyt.agents.qpg.ddpg_agent import DdpgAgent
 from rlpyt.runners.minibatch_rl import MinibatchRlEval
 from rlpyt.utils.logging.context import logger_context
+
+from gym_agx.rlpyt.gym import make as gym_make
+from gym_agx.rlpyt.algos.ddpg import DDPG
+from gym_agx.rlpyt.agents.ddpg_agent import DdpgAgent
 
 
 def build_and_train(env_id="BendWire-v0", run_ID=0, cuda_idx=None):
@@ -46,7 +46,7 @@ def build_and_train(env_id="BendWire-v0", run_ID=0, cuda_idx=None):
     )
     config = dict(env_id=env_id)
     name = "sac_" + env_id
-    log_dir = "tests"
+    log_dir = "rl_tests"
     with logger_context(log_dir, run_ID, name, config):
         runner.train()
 

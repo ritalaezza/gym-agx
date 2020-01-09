@@ -24,8 +24,7 @@ class HERGoalEnvWrapper(Wrapper):
         # Check that all spaces are of the same type
         # (current limitation of the wrapper)
         space_types = [type(env.observation_space.spaces[key]) for key in KEY_ORDER]
-        assert len(set(space_types)) == 1, "The spaces for goal and observation"\
-                                           " must be of the same type"
+        assert len(set(space_types)) == 1, "The spaces for goal and observation must be of the same type"
 
         if isinstance(self.spaces[0], spaces.Discrete):
             self.obs_dim = 1
@@ -43,16 +42,13 @@ class HERGoalEnvWrapper(Wrapper):
         if isinstance(self.spaces[0], spaces.MultiBinary):
             total_dim = self.obs_dim + 2 * self.goal_dim
             self.observation_space = spaces.MultiBinary(total_dim)
-
         elif isinstance(self.spaces[0], spaces.Box):
             lows = np.concatenate([space.low for space in self.spaces])
             highs = np.concatenate([space.high for space in self.spaces])
             self.observation_space = spaces.Box(lows, highs, dtype=np.float32)
-
         elif isinstance(self.spaces[0], spaces.Discrete):
             dimensions = [env.observation_space.spaces[key].n for key in KEY_ORDER]
             self.observation_space = spaces.MultiDiscrete(dimensions)
-
         else:
             raise NotImplementedError("{} space is not supported".format(type(self.spaces[0])))
 
