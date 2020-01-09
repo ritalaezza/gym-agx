@@ -138,4 +138,3 @@ def make(*args, info_example=None, **kwargs):
         return GymEnvWrapper(env)
     else:
         return GymEnvWrapper(EnvInfoWrapper(env, info_example))
-
