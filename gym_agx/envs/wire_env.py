@@ -136,11 +136,12 @@ class WireEnv(agx_env.AgxEnv):
         light_source_0 = scene_decorator.getLightSource(agxOSG.SceneDecorator.LIGHT0)
         light_source_0.setPosition(light_pos)
         light_source_0.setDirection(light_dir)
+        scene_decorator.setEnableLogo(False)
 
     def _reset_sim(self):
         logger.debug("reset sim")
         self.sim.cleanup(agxSDK.Simulation.CLEANUP_ALL, True)
-        if not self.sim.restore(self.scene_path, agxSDK.Simulation.READ_ALL):
+        if not self.sim.restore(self.scene_path, agxSDK.Simulation.READ_DEFAULT):
             logger.error("Unable to restore simulation!")
             return False
 
