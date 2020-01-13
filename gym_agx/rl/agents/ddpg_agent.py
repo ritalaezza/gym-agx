@@ -35,8 +35,7 @@ class DdpgAgent(BaseAgent):
         save__init__args(locals())
         super().__init__()  # For async setup.
 
-    def initialize(self, env_spaces, share_memory=False,
-                   global_B=1, env_ranks=None):
+    def initialize(self, env_spaces, share_memory=False, global_B=1, env_ranks=None):
         super().initialize(env_spaces, share_memory,
                            global_B=global_B, env_ranks=env_ranks)
         self.q_model = self.QModelCls(**self.env_model_kwargs,
@@ -83,23 +82,20 @@ class DdpgAgent(BaseAgent):
         return q.cpu()
 
     def q_at_mu(self, observation, prev_action, prev_reward):
-        model_inputs = buffer_to((observation, prev_action, prev_reward),
-                                 device=self.device)
+        model_inputs = buffer_to((observation, prev_action, prev_reward), device=self.device)
         mu = self.model(*model_inputs)
         q = self.q_model(*model_inputs, mu)
         return q.cpu()
 
     def target_q_at_mu(self, observation, prev_action, prev_reward):
-        model_inputs = buffer_to((observation, prev_action, prev_reward),
-                                 device=self.device)
+        model_inputs = buffer_to((observation, prev_action, prev_reward), device=self.device)
         target_mu = self.target_model(*model_inputs)
         target_q_at_mu = self.target_q_model(*model_inputs, target_mu)
         return target_q_at_mu.cpu()
 
     @torch.no_grad()
     def step(self, observation, prev_action, prev_reward):
-        model_inputs = buffer_to((observation, prev_action, prev_reward),
-                                 device=self.device)
+        model_inputs = buffer_to((observation, prev_action, prev_reward), device=self.device)
         mu = self.model(*model_inputs)
         action = self.distribution.sample(DistInfo(mean=mu))
         agent_info = AgentInfo(mu=mu)

@@ -105,7 +105,6 @@ class WireEnv(agx_env.AgxEnv):
         light_pos = agx.Vec4(self.length / 2, - camera_distance, camera_distance, 1.)
         light_dir = agx.Vec3(0., 0., -1.)
 
-        self.app = agxOSG.ExampleApplication(self.sim)
         self.app.setAutoStepping(False)
         if mode == 'osg':
             self.app.setEnableDebugRenderer(False)
@@ -145,7 +144,7 @@ class WireEnv(agx_env.AgxEnv):
             logger.error("Unable to restore simulation!")
             return False
 
-        self._add_rendering()
+        self._add_rendering(mode='osg')
         return True
 
     def _get_obs(self):
@@ -214,7 +213,7 @@ class WireEnv(agx_env.AgxEnv):
 
                 # Check for cable damage
                 if not self.is_healthy:
-                    print("Too much damage!")
+                    logger.debug("Too much damage!")
                     break
 
             valid_goal = True

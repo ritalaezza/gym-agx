@@ -45,11 +45,12 @@ class AgxEnv(gym.GoalEnv):
         self.sim = agxSDK.Simulation()
         self._build_simulation()
 
-        # Needed for rendering OSG ExampleApplication
+        # Initialize OSG ExampleApplication
+        self.app = agxOSG.ExampleApplication(self.sim)
         self.args = args
-        self.app = None
         self.root = None
         self.camera = camera
+        self._add_rendering(mode='osg')
 
         # TODO: Is this needed?
         self.fps = int(np.round(1.0 / self.dt))
@@ -132,6 +133,8 @@ class AgxEnv(gym.GoalEnv):
 
     def _init_app(self, start_rendering):
         logger.debug("init app")
+        if start_rendering:
+            self._add_rendering()
         self.app.init(agxIO.ArgumentParser([sys.executable] + self.args))
         self.app.setCameraHome(self.camera['eye'], self.camera['center'], self.camera['up'])  # only after app.init
         self.app.initSimulation(self.sim, start_rendering)

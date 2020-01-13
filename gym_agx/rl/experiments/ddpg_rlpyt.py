@@ -8,7 +8,6 @@ every log point (see inside the logger for other options).
 In viskit, whatever (nested) key-value pairs appear in config will become plottable
 keys for showing several experiments.  If you need to add more after an experiment,
 use rlpyt.utils.logging.context.add_exp_param().
-
 """
 
 from rlpyt.samplers.serial.sampler import SerialSampler
@@ -22,6 +21,7 @@ from gym_agx.rlpyt.agents.ddpg_agent import DdpgAgent
 
 
 def build_and_train(env_id="BendWire-v0", run_ID=0, cuda_idx=None, sample_mode="serial", n_parallel=2):
+
     affinity = dict(cuda_idx=cuda_idx, workers_cpus=list(range(n_parallel)))
     gpu_cpu = "CPU" if cuda_idx is None else f"GPU {cuda_idx}"
     if sample_mode == "serial":
@@ -37,12 +37,12 @@ def build_and_train(env_id="BendWire-v0", run_ID=0, cuda_idx=None, sample_mode="
         EnvCls=gym_make,
         env_kwargs=dict(id=env_id),
         eval_env_kwargs=dict(id=env_id),
-        batch_T=4,  # Four time-steps per sampler iteration.
-        batch_B=16,  # 16 parallel environments.
-        max_decorrelation_steps=100,
-        eval_n_envs=10,
+        batch_T=4,  # Time-steps per sampler iteration.
+        batch_B=n_parallel,  # Parallel environments (i.e. sampler Batch dimension).
+        max_decorrelation_steps=0,
+        eval_n_envs=8,
         eval_max_steps=int(10e3),
-        eval_max_trajectories=5,
+        eval_max_trajectories=8,
     )
     algo = DDPG()  # Run with defaults.
     agent = DdpgAgent()
@@ -50,14 +50,15 @@ def build_and_train(env_id="BendWire-v0", run_ID=0, cuda_idx=None, sample_mode="
         algo=algo,
         agent=agent,
         sampler=sampler,
-        n_steps=50e6,
-        log_interval_steps=1e4,
+        n_steps=10e3,
+        log_interval_steps=100,
         affinity=affinity,
     )
+
     config = dict(env_id=env_id)
     name = sample_mode + "_ddpg_" + env_id
-    log_dir = "rl_tests"
-    with logger_context(log_dir, run_ID, name, config):
+    log_dir = "experiments"
+    with logger_context(log_dir, run_ID, name, config, snapshot_mode="last"):
         runner.train()
 
 
