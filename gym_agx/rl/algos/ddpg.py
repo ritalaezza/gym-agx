@@ -12,10 +12,8 @@ from rlpyt.utils.collections import namedarraytuple
 from rlpyt.utils.tensor import valid_mean
 from rlpyt.algos.utils import valid_from_done
 
-OptInfo = namedtuple("OptInfo",
-                     ["muLoss", "qLoss", "muGradNorm", "qGradNorm"])
-SamplesToBuffer = namedarraytuple("SamplesToBuffer",
-                                  ["observation", "action", "reward", "done", "timeout"])
+OptInfo = namedtuple("OptInfo", ["muLoss", "qLoss", "muGradNorm", "qGradNorm"])
+SamplesToBuffer = namedarraytuple("SamplesToBuffer", ["observation", "action", "reward", "done", "timeout"])
 
 
 class DDPG(RlAlgorithm):
@@ -39,7 +37,7 @@ class DDPG(RlAlgorithm):
             clip_grad_norm=10.,
             q_target_clip=1e6,
             n_step_return=1,
-            updates_per_sync=1,  # For async mode only.
+            # updates_per_sync=1,  # For async mode only.
             bootstrap_timelimit=True,
     ):
         if optim_kwargs is None:
@@ -48,26 +46,25 @@ class DDPG(RlAlgorithm):
         del batch_size  # Property.
         save__init__args(locals())
 
-    def initialize(self, agent, n_itr, batch_spec, mid_batch_reset, examples,
-                   world_size=1, rank=0):
+    def initialize(self, agent, n_itr, batch_spec, mid_batch_reset, examples, world_size=1, rank=0):
         """Used in basic or synchronous multi-GPU runners, not async."""
         self.agent = agent
         self.n_itr = n_itr
         self.mid_batch_reset = mid_batch_reset
         self.sampler_bs = sampler_bs = batch_spec.size
-        self.updates_per_optimize = max(1, round(self.replay_ratio * sampler_bs /
-                                                 self.batch_size))
+        self.updates_per_optimize = max(1, round(self.replay_ratio * sampler_bs / self.batch_size))
         logger.log(f"From sampler batch size {sampler_bs}, training "
                    f"batch size {self.batch_size}, and replay ratio "
                    f"{self.replay_ratio}, computed {self.updates_per_optimize} "
                    f"updates per iteration.")
         self.min_itr_learn = int(self.min_steps_learn // sampler_bs)
+        print(f"Min iterations to learn (aka. update): {self.min_itr_learn} = "
+              f" min_steps_learn {self.min_steps_learn} //  sampler batch size {sampler_bs}.")
         # Agent give min itr learn.?
         self.initialize_replay_buffer(examples, batch_spec)
         self.optim_initialize(rank)
 
-    def async_initialize(self, agent, sampler_n_itr, batch_spec, mid_batch_reset,
-                         examples, world_size=1):
+    def async_initialize(self, agent, sampler_n_itr, batch_spec, mid_batch_reset, examples, world_size=1):
         """Used in async runner only."""
         self.agent = agent
         self.n_itr = sampler_n_itr
@@ -116,6 +113,7 @@ class DDPG(RlAlgorithm):
             self.replay_buffer.append_samples(samples_to_buffer)
         opt_info = OptInfo(*([] for _ in range(len(OptInfo._fields))))
         if itr < self.min_itr_learn:
+            print("skipping update")
             return opt_info
         for _ in range(self.updates_per_optimize):
             samples_from_replay = self.replay_buffer.sample_batch(self.batch_size)
@@ -130,8 +128,7 @@ class DDPG(RlAlgorithm):
             self.q_optimizer.zero_grad()
             q_loss = self.q_loss(samples_from_replay, valid)
             q_loss.backward()
-            q_grad_norm = torch.nn.utils.clip_grad_norm_(
-                self.agent.q_parameters(), self.clip_grad_norm)
+            q_grad_norm = torch.nn.utils.clip_grad_norm_(self.agent.q_parameters(), self.clip_grad_norm)
             self.q_optimizer.step()
             opt_info.qLoss.append(q_loss.item())
             opt_info.qGradNorm.append(q_grad_norm)
@@ -140,8 +137,7 @@ class DDPG(RlAlgorithm):
                 self.mu_optimizer.zero_grad()
                 mu_loss = self.mu_loss(samples_from_replay, valid)
                 mu_loss.backward()
-                mu_grad_norm = torch.nn.utils.clip_grad_norm_(
-                    self.agent.mu_parameters(), self.clip_grad_norm)
+                mu_grad_norm = torch.nn.utils.clip_grad_norm_(self.agent.mu_parameters(), self.clip_grad_norm)
                 self.mu_optimizer.step()
                 opt_info.muLoss.append(mu_loss.item())
                 opt_info.muGradNorm.append(mu_grad_norm)
@@ -176,8 +172,7 @@ class DDPG(RlAlgorithm):
         return q_loss
 
     def optim_state_dict(self):
-        return dict(q=self.q_optimizer.state_dict(),
-                    mu=self.mu_optimizer.state_dict())
+        return dict(q=self.q_optimizer.state_dict(), mu=self.mu_optimizer.state_dict())
 
     def load_optim_state_dict(self, state_dict):
         self.q_optimizer.load_state_dict(state_dict["q"])

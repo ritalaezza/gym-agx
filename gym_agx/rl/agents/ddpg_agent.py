@@ -9,7 +9,7 @@ from rlpyt.utils.buffer import buffer_to
 from rlpyt.models.utils import update_state_dict
 from rlpyt.utils.collections import namedarraytuple
 
-from gym_agx.rlpyt.models.mlp import MuMlpModel, QofMuMlpModel
+from gym_agx.rl.models.mlp import MuMlpModel, QofMuMlpModel
 
 AgentInfo = namedarraytuple("AgentInfo", ["mu"])
 
