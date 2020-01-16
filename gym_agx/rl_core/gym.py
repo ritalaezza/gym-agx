@@ -68,7 +68,7 @@ class GymEnvWrapper(Wrapper):
 
 def build_info_tuples(info, name="info"):
     # Define namedtuples at module level for pickle.
-    # Only place rl uses pickle is in the sampler, when getting the
+    # Only place rl_core uses pickle is in the sampler, when getting the
     # first examples, to avoid MKL threading issues...can probably turn
     # that off, (look for subprocess=True --> False), and then might
     # be able to define these directly within the class.
@@ -133,7 +133,6 @@ def make(*args, info_example=None, **kwargs):
     env = gym.make(*args, **kwargs)
     if issubclass(type(env.unwrapped), GoalEnv):
         env = HERGoalEnvWrapper(env)
-
     if info_example is None:
         return GymEnvWrapper(env)
     else:

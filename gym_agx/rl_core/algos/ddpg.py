@@ -23,9 +23,9 @@ class DDPG(RlAlgorithm):
             self,
             discount=0.99,
             batch_size=128,
-            min_steps_learn=int(1e4),
+            min_steps_learn=int(1e3),
             replay_size=int(1e6),
-            replay_ratio=4,  # data_consumption / data_generation
+            replay_ratio=64,  # data_consumption / data_generation
             target_update_tau=0.01,
             target_update_interval=2,  # * batch_size env steps.
             policy_update_interval=1,
@@ -38,7 +38,7 @@ class DDPG(RlAlgorithm):
             q_target_clip=1e6,
             n_step_return=1,
             # updates_per_sync=1,  # For async mode only.
-            bootstrap_timelimit=True,
+            bootstrap_timelimit=False,  # From original SAC implementation
     ):
         if optim_kwargs is None:
             optim_kwargs = dict()
@@ -113,7 +113,6 @@ class DDPG(RlAlgorithm):
             self.replay_buffer.append_samples(samples_to_buffer)
         opt_info = OptInfo(*([] for _ in range(len(OptInfo._fields))))
         if itr < self.min_itr_learn:
-            print("skipping update")
             return opt_info
         for _ in range(self.updates_per_optimize):
             samples_from_replay = self.replay_buffer.sample_batch(self.batch_size)

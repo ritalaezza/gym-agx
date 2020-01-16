@@ -9,7 +9,7 @@ from rlpyt.utils.buffer import buffer_to
 from rlpyt.models.utils import update_state_dict
 from rlpyt.utils.collections import namedarraytuple
 
-from gym_agx.rl.models.mlp import MuMlpModel, QofMuMlpModel
+from gym_agx.rl_core.models.mlp import MuMlpModel, QofMuMlpModel
 
 AgentInfo = namedarraytuple("AgentInfo", ["mu"])
 
@@ -36,16 +36,12 @@ class DdpgAgent(BaseAgent):
         super().__init__()  # For async setup.
 
     def initialize(self, env_spaces, share_memory=False, global_B=1, env_ranks=None):
-        super().initialize(env_spaces, share_memory,
-                           global_B=global_B, env_ranks=env_ranks)
-        self.q_model = self.QModelCls(**self.env_model_kwargs,
-                                      **self.q_model_kwargs)
+        super().initialize(env_spaces, share_memory, global_B=global_B, env_ranks=env_ranks)
+        self.q_model = self.QModelCls(**self.env_model_kwargs, **self.q_model_kwargs)
         if self.initial_q_model_state_dict is not None:
             self.q_model.load_state_dict(self.initial_q_model_state_dict)
-        self.target_model = self.ModelCls(**self.env_model_kwargs,
-                                          **self.model_kwargs)
-        self.target_q_model = self.QModelCls(**self.env_model_kwargs,
-                                             **self.q_model_kwargs)
+        self.target_model = self.ModelCls(**self.env_model_kwargs, **self.model_kwargs)
+        self.target_q_model = self.QModelCls(**self.env_model_kwargs, **self.q_model_kwargs)
         self.target_q_model.load_state_dict(self.q_model.state_dict())
         assert len(env_spaces.action.shape) == 1
         self.distribution = Gaussian(
@@ -76,8 +72,7 @@ class DdpgAgent(BaseAgent):
         )
 
     def q(self, observation, prev_action, prev_reward, action):
-        model_inputs = buffer_to((observation, prev_action, prev_reward,
-                                  action), device=self.device)
+        model_inputs = buffer_to((observation, prev_action, prev_reward, action), device=self.device)
         q = self.q_model(*model_inputs)
         return q.cpu()
 

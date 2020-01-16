@@ -7,7 +7,7 @@ every log point (see inside the logger for other options).
 
 In viskit, whatever (nested) key-value pairs appear in config will become plottable
 keys for showing several experiments.  If you need to add more after an experiment,
-use rl.utils.logging.context.add_exp_param().
+use rl_core.utils.logging.context.add_exp_param().
 """
 
 from rlpyt.samplers.serial.sampler import SerialSampler
@@ -15,9 +15,9 @@ from rlpyt.samplers.parallel.cpu.sampler import CpuSampler
 from rlpyt.envs.gym import make as gym_make
 from rlpyt.runners.minibatch_rl import MinibatchRlEval
 from rlpyt.utils.logging.context import logger_context
-from gym_agx.rl.gym import make as gym_make
-from gym_agx.rl.algos.ddpg import DDPG
-from gym_agx.rl.agents.ddpg_agent import DdpgAgent
+from gym_agx.rl_core.gym import make as gym_make
+from gym_agx.rl_core.algos.ddpg import DDPG
+from gym_agx.rl_core.agents.ddpg_agent import DdpgAgent
 
 
 def build_and_train(env_id="BendWire-v0", run_ID=0, cuda_idx=None, sample_mode="serial", n_parallel=2):
@@ -38,12 +38,12 @@ def build_and_train(env_id="BendWire-v0", run_ID=0, cuda_idx=None, sample_mode="
         env_kwargs=dict(id=env_id),
         eval_env_kwargs=dict(id=env_id),
         # Sampler batch size: batch_T * batch_B
-        batch_T=100,  # Time-steps per sampler iteration.
+        batch_T=2,  # Time-steps per sampler iteration.
         batch_B=n_parallel,  # Parallel environments (i.e. sampler Batch dimension).
         max_decorrelation_steps=0,
-        eval_n_envs=8,
+        eval_n_envs=2,
         eval_max_steps=int(1e4),
-        eval_max_trajectories=8,
+        eval_max_trajectories=5,
     )
     algo = DDPG()  # Run with defaults.
     agent = DdpgAgent()
@@ -51,8 +51,8 @@ def build_and_train(env_id="BendWire-v0", run_ID=0, cuda_idx=None, sample_mode="
         algo=algo,
         agent=agent,
         sampler=sampler,
-        n_steps=1e6,
-        log_interval_steps=100,
+        n_steps=2e4,
+        log_interval_steps=2e3,
         affinity=affinity,
     )
 
