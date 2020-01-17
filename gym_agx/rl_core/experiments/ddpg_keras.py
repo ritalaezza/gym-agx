@@ -1,8 +1,10 @@
 import os
 import numpy as np
+from datetime import datetime
 
 import gym
 from gym_agx import envs
+from gym_agx.utils.gym_utils import HERGoalEnvWrapper
 
 from keras.models import Sequential, Model
 from keras.layers import Dense, Activation, Flatten, Input, Concatenate
@@ -14,7 +16,8 @@ from rl.agents import DDPGAgent
 from rl.memory import SequentialMemory
 from rl.random import OrnsteinUhlenbeckProcess
 
-from gym_agx.utils.gym_utils import HERGoalEnvWrapper
+import tensorflow as tf
+tf.get_logger().setLevel('INFO')
 
 
 class AgxProcessor(WhiteningNormalizerProcessor):
@@ -22,12 +25,9 @@ class AgxProcessor(WhiteningNormalizerProcessor):
         return np.clip(action, -1., 1.)
 
 
-ENV_NAME = 'BendWire-v0'
-
-
-def main(train=True):
+def main(env_name, train=True, path=None):
     # Get the environment and extract the number of actions.
-    env = gym.make(ENV_NAME)
+    env = gym.make(env_name)
     env = HERGoalEnvWrapper(env)
     np.random.seed(123)
     env.seed(123)
@@ -67,18 +67,17 @@ def main(train=True):
                       processor=AgxProcessor())
     agent.compile([Adam(lr=1e-4), Adam(lr=1e-3)], metrics=['mae'])
 
-    # Okay, now it's time to learn something! We visualize the training here for show, but this
-    # slows down training quite a lot. You can always safely abort the training prematurely using
-    # Ctrl + C.
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    file_path = os.path.join(dir_path, 'ddpg_{}_weights.h5f'.format(ENV_NAME))
+    # Train the agent
     if train:
+        now = datetime.now()
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        file_path = os.path.join(dir_path, 'runs/keras/{}/{}_weights.h5f'.format(env_name, now))
         agent.fit(env, nb_steps=10000, visualize=False, verbose=1)
 
         # After training is done, we save the final weights.
         agent.save_weights(file_path, overwrite=True)
     else:
-        agent.load_weights(file_path)
+        agent.load_weights(path)
 
     # Finally, evaluate our algorithm for 5 episodes.
     agent.test(env, nb_episodes=5, visualize=True, nb_max_episode_steps=1000)
@@ -87,4 +86,7 @@ def main(train=True):
 
 
 if __name__ == "__main__":
-    main(False)
+    env_name = "BendWire-v0"
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    file_path = os.path.join(dir_path, 'runs/keras/{}/weights.h5f'.format(env_name))
+    main(env_name, False, path=file_path)
