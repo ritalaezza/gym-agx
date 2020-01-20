@@ -1,7 +1,8 @@
 from collections import OrderedDict
-
-import numpy as np
 from gym import spaces, Wrapper
+from enum import Enum
+import numpy as np
+import copy
 
 # Important: gym mixes up ordered and unordered keys
 # and the Dict space may return a different order of keys that the actual one
@@ -95,12 +96,6 @@ class HERGoalEnvWrapper(Wrapper):
 
     def close(self):
         return self.env.close()
-
-
-import copy
-from enum import Enum
-
-import numpy as np
 
 
 class GoalSelectionStrategy(Enum):

@@ -3,9 +3,9 @@ import agxCollide
 import agxSDK
 
 import math
+import logging
 import numpy as np
 from pyquaternion import Quaternion
-import logging
 
 logger = logging.getLogger(__name__)
 
