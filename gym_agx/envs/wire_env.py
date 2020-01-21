@@ -165,7 +165,6 @@ class WireEnv(agx_env.AgxEnv):
             gripper_state[6, i, 1] = 1  # fill empty space. Boolean indicating gripper and not segment.
 
         observation = np.concatenate((gripper_state, padded_cable_state), axis=1)
-        logger.debug("Observation: {}".format(observation))
 
         obs['observation'] = observation.ravel()
         obs['achieved_goal'] = cable_state.ravel()
