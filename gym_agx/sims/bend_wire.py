@@ -43,6 +43,7 @@ from gym_agx.utils.agx_utils import create_body
 
 FILE_NAME = 'bend_wire'
 # Simulation Parameters
+TIMESTEP = 1 / 100     # seconds (eq. 100 Hz)
 RADIUS = 0.001         # meters
 LENGTH = 0.1+2*RADIUS  # meters
 RESOLUTION = 1000      # segments per meter
@@ -91,10 +92,10 @@ def build_simulation():
 
     # Get current delta-t (timestep) that is used in the simulation?
     dt = sim.getTimeStep()
-    print("dt = {}".format(dt))
+    print("default dt = {}".format(dt))
 
-    # Change the timestep (100 Hz)
-    sim.setTimeStep(1 / 100)
+    # Change the timestep
+    sim.setTimeStep(TIMESTEP)
 
     # Create a ground plane for reference
     ground, ground_geom = create_body(sim, name="ground", shape=agxCollide.Box(LENGTH, LENGTH, GROUND_WIDTH),
