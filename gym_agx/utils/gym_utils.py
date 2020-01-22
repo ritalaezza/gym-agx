@@ -80,7 +80,8 @@ class HERGoalEnvWrapper(Wrapper):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-        return self.convert_dict_to_obs(obs), reward, done, info
+        goal_obs = self.convert_dict_to_obs(obs)
+        return goal_obs, reward, done, info
 
     def seed(self, seed=None):
         return self.env.seed(seed)

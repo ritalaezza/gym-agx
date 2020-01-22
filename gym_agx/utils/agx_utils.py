@@ -13,15 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 def compute_linear_distance(v0, v1):
-    distance = math.sqrt(((v0 - v1)**2).sum())
-    return distance
+    return math.sqrt(((v0 - v1)**2).sum())
 
 
 def compute_angular_distance(q0, q1):
     q0 = Quaternion(q0)
     q1 = Quaternion(q1)
-    distance = Quaternion.absolute_distance(q0, q1)
-    return distance
+    return Quaternion.absolute_distance(q0, q1)
 
 
 def create_help_text(sim, app, text_table=None):
