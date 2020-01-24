@@ -1,7 +1,9 @@
 import agx
-import agxCollide
+import agxIO
 import agxSDK
+import agxCollide
 
+import os
 import math
 import logging
 import numpy as np
@@ -9,54 +11,122 @@ from pyquaternion import Quaternion
 
 logger = logging.getLogger(__name__)
 
-# TODO: Is it really good practice to have classes being defined inside methods (instead of just instantiated)?
+
+class InfoPrinter(agxSDK.StepEventListener):
+    def __init__(self, app, text_table, text_color):
+        super().__init__(agxSDK.StepEventListener.POST_STEP)
+        self.text_table = text_table
+        self.text_color = text_color
+        self.app = app
+        self.row = 31
+
+    def post(self, t):
+        if self.textTable:
+            color = agx.Vec4(0.3, 0.6, 0.7, 1)
+            if self.text_color:
+                color = self.text_color
+            for i, v in enumerate(self.text_table):
+                self.app.getSceneDecorator().setText(i, str(v[0]) + " " + v[1](), color)
+
+
+class HelpListener(agxSDK.StepEventListener):
+    def __init__(self, app, text_table):
+        super().__init__(agxSDK.StepEventListener.PRE_STEP)
+        self.text_table = text_table
+        self.app = app
+        self.row = 31
+
+    def pre(self, t):
+        if t > 3.0:
+
+            self.app.getSceneDecorator().setText(self.row, "", agx.Vec4f(1, 1, 1, 1))
+
+            if self.text_table:
+                start_row = self.row - len(self.text_table)
+                for i, v in enumerate(self.text_table):
+                    self.app.getSceneDecorator().setText(start_row + i - 1, "", agx.Vec4f(0.3, 0.6, 0.7, 1))
+
+            self.getSimulation().remove(self)
+
+    def addNotification(self):
+        if self.text_table:
+            start_row = self.row - len(self.text_table)
+            for i, v in enumerate(self.text_table):
+                self.app.getSceneDecorator().setText(start_row + i - 1, v, agx.Vec4f(0.3, 0.6, 0.7, 1))
+
+        self.app.getSceneDecorator().setText(self.row, "Press e to start simulation", agx.Vec4f(0.3, 0.6, 0.7, 1))
+
+
+def create_info_printer(sim, app, text_table=None, text_color=None):
+    """Write information to screen from lambda functions during the simulation.
+    :param sim: AGX Simulation object
+    :param app: OSG Example Application object
+    :param text_table: table with text to be printed on screen
+    :param text_color: Color of text
+    :return: AGX simulation object
+    """
+    return sim.add(InfoPrinter(sim, app, text_table, text_color))
+
+
+def create_help_text(sim, app, text_table=None):
+    """Write help text. textTable is a table with strings that will be drawn above the default text.
+    :param sim: AGX Simulation object
+    :param app: OSG Example Application object
+    :param text_table: table with text to be printed on screen
+    :return: AGX simulation object
+    """
+    return sim.add(HelpListener(sim, app, text_table))
+
+
+def save_simulation(sim, file_name):
+    """Save AGX simulation object to file.
+    :param sim: AGX simulation object
+    :param file_name: name of the file
+    :return: Boolean for success/failure
+    """
+    file_directory = os.path.dirname(os.path.abspath(__file__))
+    package_directory = os.path.split(file_directory)[0]
+    markup_file = os.path.join(package_directory, 'envs/assets', file_name + ".aagx")
+    if not agxIO.writeFile(markup_file, sim):
+        print("Unable to save simulation to markup file!")
+        return False
+    binary_file = os.path.join(package_directory, 'envs/assets', file_name + ".agx")
+    if not agxIO.writeFile(binary_file, sim):
+        print("Unable to save simulation to binary file!")
+        return False
+    return True
+
+
+def sinusoidal_trajectory(A, w, t):
+    """Assuming a position trajectory of the type: x(t) = A cos(w*t) , the velocity trajectory becomes:
+    x'(t) = - A*w sin(w*t)
+    :param A: Amplitude in meters
+    :param w: frequency in radians per second
+    :param t: current timestamp in seconds
+    :return: instant velocity, x'
+    """
+    return -A * w * math.sin(w * t)
 
 
 def compute_linear_distance(v0, v1):
+    """Computes linear distance between two points.
+    :param v0: Numpy array
+    :param v1: Numpy array
+    :return: Euclidean distance between v0 and v1.
+    """
     return math.sqrt(((v0 - v1)**2).sum())
 
 
 def compute_angular_distance(q0, q1):
+    """Computes 'angular distance' (angle) between quaternions. Uses pyquaternion library.
+    See: https://kieranwynn.github.io/pyquaternion/
+    :param q0: Numpy array
+    :param q1: Numpy array
+    :return: a positive scalar corresponding to the chord of the shortest path/arc that connects q0 to q1.
+    """
     q0 = Quaternion(q0)
     q1 = Quaternion(q1)
     return Quaternion.absolute_distance(q0, q1)
-
-
-def create_help_text(sim, app, text_table=None):
-    """Write help text indicating how to start simulation textTable is a table with strings that will be drawn above
-     the default text.
-    :param sim: AGX Simulation object
-    :param app: OSG Example Application object
-    :param text_table: table with text to be printed on screen
-    """
-    class HelpListener(agxSDK.StepEventListener):
-        def __init__(self, app, text_table):
-            super().__init__(agxSDK.StepEventListener.PRE_STEP)
-            self.text_table = text_table
-            self.app = app
-            self.row = 31
-
-        def pre(self, t):
-            if t > 3.0:
-
-                self.app.getSceneDecorator().setText(self.row, "", agx.Vec4f(1, 1, 1, 1))
-
-                if self.text_table:
-                    start_row = self.row - len(self.text_table)
-                    for i, v in enumerate(self.text_table):
-                        self.app.getSceneDecorator().setText(start_row + i - 1, "", agx.Vec4f(0.3, 0.6, 0.7, 1))
-
-                self.getSimulation().remove(self)
-
-        def addNotification(self):
-            if self.text_table:
-                start_row = self.row - len(self.text_table)
-                for i, v in enumerate(self.text_table):
-                    self.app.getSceneDecorator().setText(start_row + i - 1, v, agx.Vec4f(0.3, 0.6, 0.7, 1))
-
-            self.app.getSceneDecorator().setText(self.row, "Press e to start simulation", agx.Vec4f(0.3, 0.6, 0.7, 1))
-
-    sim.add(HelpListener(sim, app, text_table))
 
 
 def create_body(sim, shape, **args):
@@ -100,32 +170,6 @@ def create_body(sim, shape, **args):
     return body, geometry
 
 
-def create_info_printer(sim, app, text_table=None, text_color=None):
-    """Write information to screen from lambda functions during the simulation.
-    :param sim: AGX Simulation object
-    :param app: OSG Example Application object
-    :param text_table: table with text to be printed on screen
-    :param text_color: Color of text
-    """
-    class InfoPrinter(agxSDK.StepEventListener):
-        def __init__(self, app, text_table, text_color):
-            super().__init__(agxSDK.StepEventListener.POST_STEP)
-            self.text_table = text_table
-            self.text_color = text_color
-            self.app = app
-            self.row = 31
-
-        def post(self, t):
-            if self.textTable:
-                color = agx.Vec4(0.3, 0.6, 0.7, 1)
-                if self.text_color:
-                    color = self.text_color
-                for i, v in enumerate(self.text_table):
-                    self.app.getSceneDecorator().setText(i, str(v[0]) + " " + v[1](), color)
-
-    sim.add(InfoPrinter(sim, app, text_table, text_color))
-
-
 def to_numpy_array(agx_list):
     """Convert from AGX data structure to NumPy array.
     :param agx_list: AGX data structure
@@ -133,11 +177,11 @@ def to_numpy_array(agx_list):
     """
     agx_type = type(agx_list)
     if agx_type == agx.Vec3:
-        np_array = np.zeros(shape=(3,), dtype=float)
+        np_array = np.zeros(shape=(3,), dtype=np.float64)
         for i in range(3):
             np_array[i] = agx_list[i]
     elif agx_type == agx.Quat:
-        np_array = np.zeros(shape=(4,), dtype=float)
+        np_array = np.zeros(shape=(4,), dtype=np.float64)
         for i in range(4):
             np_array[i] = agx_list[i]
     else:
@@ -163,9 +207,10 @@ def to_agx_list(np_array, agx_type):
     return agx_list
 
 
-def get_cable_state(cable):
-    """Get AGX Cable segments' positions and rotations and force.
+def get_cable_state(cable, gain=1):
+    """Get AGX Cable segments' positions and rotations.
     :param cable: AGX Cable object
+    :param gain: gives possibility to rescale position values
     :return: NumPy array with segments' position and rotations
     """
     num_segments = cable.getNumSegments()
@@ -173,15 +218,34 @@ def get_cable_state(cable):
     segment_iterator = cable.begin()
     for i in range(num_segments):
         if not segment_iterator.isEnd():
-            position = segment_iterator.getGeometry().getPosition()
+            position = segment_iterator.getGeometry().getPosition() * gain
             cable_state[:3, i] = to_numpy_array(position)
 
             rotation = segment_iterator.getGeometry().getRotation()
             cable_state[3:, i] = to_numpy_array(rotation)
+            segment_iterator.inc()
         else:
             logger.error('AGX segment iteration finished early. Number or cable segments may be wrong.')
 
     return cable_state
+
+
+def get_gripper_state(sim, grippers, gain=1):
+    """Get AGX 'gripper' positions, rotations, force and torque.
+    :param sim: AGX Dynamics simulation object
+    :param grippers: List AGX kinematic object(s)
+    :param gain: gives possibility to rescale position values
+    :return: NumPy array with gripper position, rotations, force and torque
+    """
+    gripper_state = np.zeros(shape=(14, len(grippers)))
+    for i, key in enumerate(grippers):
+        gripper = sim.getRigidBody(key)
+        gripper_state[:3, i] = to_numpy_array(gripper.getPosition()) * gain
+        gripper_state[3:7, i] = to_numpy_array(gripper.getRotation())
+        gripper_state[7:10, i], gripper_state[10:13, i] = get_force_torque(sim, gripper, key + '_constraint')
+        gripper_state[13, i] = 0  # For now just a filler, but could contain other information
+
+    return gripper_state
 
 
 def get_force_torque(sim, rigid_body, constraint_name):

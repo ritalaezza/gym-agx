@@ -35,18 +35,19 @@ class HERGoalEnvWrapper(Wrapper):
             self.obs_dim = env.observation_space.spaces['observation'].shape[0]
             self.goal_dim = goal_space_shape[0]
 
-            if len(goal_space_shape) == 2:
-                assert goal_space_shape[1] == 1, "Only 1D observation spaces are supported yet"
-            else:
-                assert len(goal_space_shape) == 1, "Only 1D observation spaces are supported yet"
+            # if len(goal_space_shape) == 2:
+            #     assert goal_space_shape[1] == 1, "Only 1D observation spaces are supported yet"
+            # else:
+            #     assert len(goal_space_shape) == 1, "Only 1D observation spaces are supported yet"
 
         if isinstance(self.spaces[0], spaces.MultiBinary):
             total_dim = self.obs_dim + 2 * self.goal_dim
             self.observation_space = spaces.MultiBinary(total_dim)
         elif isinstance(self.spaces[0], spaces.Box):
-            lows = np.concatenate([space.low for space in self.spaces])
-            highs = np.concatenate([space.high for space in self.spaces])
-            self.observation_space = spaces.Box(lows, highs, dtype=np.float32)
+            # lows = np.concatenate([space.low for space in self.spaces])
+            # highs = np.concatenate([space.high for space in self.spaces])
+            # self.observation_space = spaces.Box(lows, highs, dtype=np.float32)
+            self.observation_space = env.observation_space.spaces['observation']
         elif isinstance(self.spaces[0], spaces.Discrete):
             dimensions = [env.observation_space.spaces[key].n for key in KEY_ORDER]
             self.observation_space = spaces.MultiDiscrete(dimensions)
@@ -63,7 +64,8 @@ class HERGoalEnvWrapper(Wrapper):
         if isinstance(self.observation_space, spaces.MultiDiscrete):
             # Special case for multidiscrete
             return np.concatenate([[int(obs_dict[key])] for key in KEY_ORDER])
-        return np.concatenate([obs_dict[key] for key in KEY_ORDER])
+        # return np.concatenate([obs_dict[key] for key in KEY_ORDER])
+        return obs_dict['observation']
 
     def convert_obs_to_dict(self, observations):
         """
