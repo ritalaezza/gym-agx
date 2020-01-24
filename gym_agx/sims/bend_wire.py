@@ -34,24 +34,29 @@ import agxIO
 import agxOSG
 
 # Python modules
+import numpy as np
+import math
 import sys
 import os
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body
+from gym_agx.utils.agx_utils import create_body, save_simulation, sinusoidal_trajectory
 
 
 FILE_NAME = 'bend_wire'
 # Simulation Parameters
 TIMESTEP = 1 / 100     # seconds (eq. 100 Hz)
-RADIUS = 0.001         # meters
-LENGTH = 0.1+2*RADIUS  # meters
+LENGTH = 0.1           # meters
+RADIUS = LENGTH / 100  # meters
+LENGTH += 2*RADIUS     # meters
 RESOLUTION = 1000      # segments per meter
-YOUNG_MODULUS = 1e10   # Giga Pascals
-YIELD_POINT = 1e8      # Newton meters
-GROUND_WIDTH = 0.0001  # meters
 GRAVITY = False
+# Aluminum Parameters
+POISSON_RATIO = 0.35   # no unit
+YOUNG_MODULUS = 69e9   # Pascals
+YIELD_POINT = 5e7      # Pascals
 # Rendering Parameters
+GROUND_WIDTH = 0.0001  # meters
 CABLE_GRIPPER_RATIO = 2
 SIZE_GRIPPER = CABLE_GRIPPER_RATIO*RADIUS
 EYE = agx.Vec3(LENGTH / 2, -5 * LENGTH, 0)
@@ -97,6 +102,10 @@ def build_simulation():
     # Change the timestep
     sim.setTimeStep(TIMESTEP)
 
+    # Confirm timestep changed
+    dt = sim.getTimeStep()
+    print("new dt = {}".format(dt))
+
     # Create a ground plane for reference
     ground, ground_geom = create_body(sim, name="ground", shape=agxCollide.Box(LENGTH, LENGTH, GROUND_WIDTH),
                                       position=agx.Vec3(LENGTH/2, 0, -(GROUND_WIDTH + SIZE_GRIPPER/2 + LENGTH)),
@@ -130,16 +139,22 @@ def build_simulation():
 
     # Set cable name and properties
     cable.setName("DLO")
-    properties = cable.getCableProperties()
-    properties.setYoungsModulus(YOUNG_MODULUS, agxCable.BEND)
-    properties.setYoungsModulus(YOUNG_MODULUS, agxCable.TWIST)
-    properties.setYoungsModulus(YOUNG_MODULUS, agxCable.STRETCH)
+    # properties = cable.getCableProperties()
+    # properties.setYoungsModulus(YOUNG_MODULUS, agxCable.BEND)
+    # properties.setYoungsModulus(YOUNG_MODULUS, agxCable.TWIST)
+    # properties.setYoungsModulus(YOUNG_MODULUS, agxCable.STRETCH)
 
     # Add cable plasticity
     plasticity = agxCable.CablePlasticity()
     plasticity.setYieldPoint(YIELD_POINT, agxCable.BEND)  # set torque required for permanent deformation
-    # NOTE: Stretch direction is always elastic
-    cable.addComponent(plasticity)
+    cable.addComponent(plasticity)  # NOTE: Stretch direction is always elastic
+
+    # Define material
+    material = agx.Material("Aluminum")
+    bulk_material = material.getBulkMaterial()
+    bulk_material.setPoissonsRatio(POISSON_RATIO)
+    bulk_material.setYoungsModulus(YOUNG_MODULUS)
+    cable.setMaterial(material)
 
     # Set cable damage name and weights
     damage = agxCable.CableDamage()
@@ -201,26 +216,30 @@ def main(args):
         print(rbs[i].getAngularVelocity())
 
     # Save simulation to file
-    file_directory = os.path.dirname(os.path.abspath(__file__))
-    package_directory = os.path.split(file_directory)[0]
-    markup_file = os.path.join(package_directory, 'envs/assets', FILE_NAME + ".aagx")
-    if not agxIO.writeFile(markup_file, sim):
-        print("Unable to save simulation to markup file!")
-    binary_file = os.path.join(package_directory, 'envs/assets', FILE_NAME + ".agx")
-    if not agxIO.writeFile(binary_file, sim):
-        print("Unable to save simulation to binary file!")
+    save_simulation(sim, FILE_NAME)
 
     # Render simulation
     app = add_rendering(sim, LENGTH)
     app.init(agxIO.ArgumentParser([sys.executable] + args))
     app.setCameraHome(EYE, CENTER, UP)  # should only be added after app.init
-    app.initSimulation(sim, True)
+    app.initSimulation(sim, True)       # This changes timestep!
+    sim.setTimeStep(TIMESTEP)
     gripper = sim.getRigidBody('gripper_right')
-    gripper.setVelocity(-0.001, 0.0, 0.0)
 
-    while not app.breakRequested():
+    n_steps = 1000  # implies minimum period of 10 seconds.
+    period = 12     # seconds
+    amplitude = LENGTH / 4
+    rad_frequency = 2 * math.pi * (1 / period)
+    for k in range(n_steps):
+        t = sim.getTimeStamp()
+        velocity_x = sinusoidal_trajectory(amplitude, rad_frequency, t)
+        print("k = {}, t = {}, v_x = {}".format(k, t, velocity_x))
+        gripper.setVelocity(velocity_x, 0, 0)
         sim.stepForward()
         app.executeOneStepWithGraphics()
+
+    # Save goal simulation to file
+    save_simulation(sim, FILE_NAME + "_goal")
 
 
 if __name__ == '__main__':

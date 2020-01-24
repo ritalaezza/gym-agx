@@ -10,33 +10,49 @@ import agxCable
 import agxRender
 
 from gym_agx.envs import agx_env
-from gym_agx.utils.agx_utils import get_cable_state, get_force_torque, to_numpy_array, to_agx_list
+from gym_agx.utils.agx_utils import get_cable_state, get_gripper_state, to_agx_list
 from gym_agx.utils.agx_utils import compute_linear_distance, compute_angular_distance
+
+logger = logging.getLogger(__name__)
+
+# import matplotlib.pyplot as plt
+# from mpl_toolkits.mplot3d import Axes3D
 
 
 def goal_distance(goal_a, goal_b):
     logger.debug("goal distance")
     assert goal_a.shape == goal_b.shape
-    linear_distance = np.zeros(shape=goal_a.shape)
-    angular_distance = np.zeros(shape=goal_a.shape)
-    for i in range(0, len(linear_distance), 7):
-        v_a = goal_a[i:i+3]
-        v_b = goal_b[i:i+3]
-        q_a = goal_a[i+3:i+7]
-        q_b = goal_b[i+3:i+7]
-        linear_distance[i] = compute_linear_distance(v_a, v_b)
+    goal_a_reshaped = goal_a.reshape(7, int(len(goal_a)/7), order='F')
+    goal_b_reshaped = goal_b.reshape(7, int(len(goal_a)/7), order='F')
+    linear_distance = np.zeros(int(len(goal_a)/7))
+    angular_distance = np.zeros(int(len(goal_a)/7))
+    for i in range(0, len(linear_distance)):
+        p_a = goal_a_reshaped[:3, i]
+        p_b = goal_b_reshaped[:3, i]
+        q_a = goal_a_reshaped[3:, i]
+        q_b = goal_b_reshaped[3:, i]
+        linear_distance[i] = compute_linear_distance(p_a, p_b)
         angular_distance[i] = compute_angular_distance(q_a, q_b)
+
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+    # ax.scatter(goal_a_reshaped[0, :], goal_a_reshaped[1, :], goal_a_reshaped[2, :])
+    # ax.scatter(goal_b_reshaped[0, :], goal_b_reshaped[1, :], goal_b_reshaped[2, :])
+    # plt.show()
+
     return linear_distance, angular_distance
 
 
-logger = logging.getLogger(__name__)
+def sinusoidal_trajectory(amp, w, t):
+    return -amp * w * math.sin(w * t)
 
 
 class WireEnv(agx_env.AgxEnv):
     """Superclass for all Wire environments.
     """
     def __init__(self, scene_path, n_substeps, grippers, length, n_actions, camera, args, distance_threshold,
-                 reward_type, terminate_when_unhealthy, damage_threshold):
+                 reward_type, terminate_when_unhealthy, damage_threshold, observation_type, randomized_goal,
+                 goal_scene_path):
         """Initializes a WireEnv object
         :param scene_path: path to binary file containing serialized simulation defined in sim/ folder
         :param n_substeps: number os simulation steps per call to step()
@@ -49,11 +65,17 @@ class WireEnv(agx_env.AgxEnv):
         :param reward_type: reward type, i.e. 'sparse' or 'dense'
         :param terminate_when_unhealthy: boolean to determine early stopping when too much damage occurs
         :param damage_threshold: damage threshold used when 'terminate_when_unhealthy' is True
+        :param observation_type: either 'vector' or 'matrix'
+        :param randomized_goal: boolean deciding if a new goal is sampled for each episode
+        :param goal_scene_path: path to goal scene file
         """
         # TODO: may want to move some of these to parent class
         self.terminate_when_unhealthy = terminate_when_unhealthy
         self.distance_threshold = distance_threshold
         self.damage_threshold = damage_threshold
+        self.observation_type = observation_type
+        self.goal_scene_path = goal_scene_path
+        self.randomized_goal = randomized_goal
         self.reward_type = reward_type
         self.grippers = grippers
         self.length = length
@@ -89,12 +111,16 @@ class WireEnv(agx_env.AgxEnv):
 
     def compute_reward(self, achieved_goal, goal, info):
         logger.debug("compute reward")
-        # Compute distance between goal and the achieved goal.
+        # Compute distance between goal and the achieved goal
         distance_per_segment, __ = goal_distance(achieved_goal, goal)
         if self.reward_type == 'sparse':
-            return -1 * float(any(i >= self.distance_threshold for i in distance_per_segment))
+            return -1 * float(any(dist >= self.distance_threshold for dist in distance_per_segment))
         else:
-            return -1 * distance_per_segment.mean()
+            if any(dist >= self.distance_threshold for dist in distance_per_segment):
+                reward = -1 * distance_per_segment.mean()
+            else:
+                reward = 0
+            return reward
 
     # AgxEnv methods
     # ----------------------------
@@ -152,23 +178,24 @@ class WireEnv(agx_env.AgxEnv):
         obs = dict.fromkeys({'observation', 'achieved_goal', 'desired_goal'})
 
         cable = agxCable.Cable.find(self.sim, "DLO")
-        padded_cable_state = np.zeros(shape=(7, cable.getNumSegments(), 2), dtype=float)
+        padded_cable_state = np.zeros(shape=(14, cable.getNumSegments()))
         cable_state = get_cable_state(cable)
-        padded_cable_state[:, :, 0] = cable_state
+        padded_cable_state[:7, :] = cable_state
+        gripper_state = get_gripper_state(self.sim, self.grippers)
 
-        gripper_state = np.zeros(shape=(7, len(self.grippers), 2), dtype=float)
-        for i, key in enumerate(self.grippers):
-            gripper = self.sim.getRigidBody(key)
-            gripper_state[:3, i, 0] = to_numpy_array(gripper.getPosition())
-            gripper_state[3:, i, 0] = to_numpy_array(gripper.getRotation())
-            gripper_state[:3, i, 1], gripper_state[3:6, i, 1] = get_force_torque(self.sim, gripper, key + '_constraint')
-            gripper_state[6, i, 1] = 1  # fill empty space. Boolean indicating gripper and not segment.
+        if self.observation_type == 'vector':
+            padded_cable_state[7:, :] = self.goal.reshape(7, cable.getNumSegments(), order='F')
+            observation = np.concatenate((gripper_state, padded_cable_state), axis=1)
+            obs['observation'] = observation.ravel(order='F')
+            obs['achieved_goal'] = cable_state.ravel(order='F')
+        elif self.observation_type == 'matrix':
+            observation = np.concatenate((gripper_state, padded_cable_state), axis=1)
+            obs['observation'] = observation
+            obs['achieved_goal'] = cable_state
+        else:
+            logger.error("Unsupported observation type!")
 
-        observation = np.concatenate((gripper_state, padded_cable_state), axis=1)
-
-        obs['observation'] = observation.ravel()
-        obs['achieved_goal'] = cable_state.ravel()
-        obs['desired_goal'] = self.goal.ravel()
+        obs['desired_goal'] = self.goal
         return obs
 
     def _set_action(self, stacked_action):
@@ -177,51 +204,62 @@ class WireEnv(agx_env.AgxEnv):
         action = np.reshape(stacked_action, newshape=(int(len(stacked_action)/n_grippers), n_grippers))
         for i, key in enumerate(self.grippers):
             gripper = self.sim.getRigidBody(key)
-            velocity = to_agx_list(action[:3, i], agx.Vec3)
-            velocity *= 0.001  # from meters per second to millimeters per second
-            gripper.setVelocity(velocity)
-            angular_velocity = to_agx_list(action[3:, i], agx.Vec3)
-            angular_velocity *= 0.5  # half of input rad/s
-            gripper.setAngularVelocity(angular_velocity)
+            velocity = np.zeros(3)
+            velocity[0] = action[0, i]
+            linear_velocity = to_agx_list(velocity, agx.Vec3)
+            linear_velocity *= 0.001  # from meters per second to millimeters per second
+
+            if self.is_healthy:
+                gripper.setVelocity(linear_velocity)
+            else:
+                gripper.setVelocity(0, 0, 0)
+            # angular_velocity = to_agx_list(action[3:, i], agx.Vec3)
+            # angular_velocity *= 0.5  # half of input rad/s
+            # gripper.setAngularVelocity(angular_velocity)
 
     def _is_success(self, achieved_goal, desired_goal):
-        logger.debug("is success")
+        logger.info("is success")
         distance_per_segment, __ = goal_distance(achieved_goal, desired_goal)
-        return all(i < self.distance_threshold for i in distance_per_segment)
+        return all(dist < self.distance_threshold for dist in distance_per_segment)
 
     def _sample_goal(self):
         logger.debug("sample goal")
-        n_steps = 1000
-        valid_goal = False
-        while not valid_goal:
-            # Define initial linear and angular velocities
-            gripper_right = self.sim.getRigidBody('gripper_right')
-            velocity_x = np.random.uniform(-0.002, 0)
-            velocity_y = np.random.uniform(-0.002, 0.002)
-            velocity_z = np.random.uniform(-0.002, 0.002)
-            gripper_right.setVelocity(velocity_x, velocity_y, velocity_z)
-            angular_velocity_y = np.random.uniform(-math.pi / 4, math.pi / 4)
-            angular_velocity_z = np.random.uniform(-math.pi / 4, math.pi / 4)
-            gripper_right.setAngularVelocity(0, angular_velocity_y, angular_velocity_z)
+        if self.randomized_goal:
+            n_steps = 1000
+            dt = self.sim.getTimeStep()
+            min_period = n_steps*dt
 
-            largest = agxCable.SegmentDamage()
-            for k in range(n_steps):
-                angular_velocity = gripper_right.getAngularVelocity()
-                gripper_right.setAngularVelocity(0, angular_velocity[1] * 0.99, angular_velocity[2] * 0.99)
-                self.sim.stepForward()
+            valid_goal = False
+            while not valid_goal:
+                # Define initial linear and angular velocities
+                gripper_right = self.sim.getRigidBody('gripper_right')
+                amplitude = np.random.uniform(low=0.0, high=self.length/4)
+                period = np.random.uniform(low=min_period, high=2*min_period)
+                rad_frequency = 2 * math.pi * (1 / period)
+                for k in range(n_steps):
+                    velocity_x = sinusoidal_trajectory(amplitude, rad_frequency, k*dt)
+                    gripper_right.setVelocity(velocity_x, 0, 0)
+                    self.sim.stepForward()
 
-                # Check for cable damage
-                if not self.is_healthy:
-                    logger.debug("Too much damage!")
-                    break
+                    # Check for cable damage
+                    if not self.is_healthy:
+                        self._reset_sim()
+                        logger.info("Too much damage!")
+                        break
 
-            valid_goal = True
+                valid_goal = True
+        else:
+            self.sim.cleanup(agxSDK.Simulation.CLEANUP_ALL, True)
+            if not self.sim.restore(self.goal_scene_path, agxSDK.Simulation.READ_DEFAULT):
+                logger.error("Unable to restore goal!")
 
         cable = agxCable.Cable.find(self.sim, "DLO")
         goal = get_cable_state(cable)
+        if self.observation_type == 'vector':
+            goal = goal.ravel(order="F")
         self._reset_sim()
 
-        return goal.ravel()
+        return goal
 
     def _step_callback(self):
         logger.debug("step callback")

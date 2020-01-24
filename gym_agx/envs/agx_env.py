@@ -138,6 +138,7 @@ class AgxEnv(gym.GoalEnv):
         self.app.init(agxIO.ArgumentParser([sys.executable] + self.args))
         self.app.setCameraHome(self.camera['eye'], self.camera['center'], self.camera['up'])  # only after app.init
         self.app.initSimulation(self.sim, start_rendering)
+        logger.debug("Timestep after initSimulation is: {}".format(self.sim.getTimeStep()))
 
     def _add_rendering(self, mode='osg'):
         """Create ExampleApplication instance and add rendering information.

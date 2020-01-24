@@ -34,5 +34,5 @@ for reward_type in ['sparse', 'dense']:
         id='BendWire{}-v0'.format(suffix),
         entry_point='gym_agx.envs:BendWireEnv',
         kwargs=kwargs,
-        max_episode_steps=int(5e3),
+        max_episode_steps=int(2000),
     )
