@@ -34,10 +34,8 @@ import agxIO
 import agxOSG
 
 # Python modules
-import numpy as np
 import math
 import sys
-import os
 
 # Local modules
 from gym_agx.utils.agx_utils import create_body, save_simulation, sinusoidal_trajectory

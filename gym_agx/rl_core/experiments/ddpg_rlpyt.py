@@ -14,7 +14,7 @@ from gym_agx.rl_core.agents.ddpg_agent import DdpgAgent
 from gym_agx.rl_core.models.mlp import MuMlpModel
 
 
-def build_and_train(env_id="BendWire-v0", run_ID=0, cuda_idx=None, sample_mode="serial", n_parallel=2):
+def build_and_train(env_id, run_ID, cuda_idx, sample_mode, n_parallel):
     affinity = dict(cuda_idx=cuda_idx, workers_cpus=list(range(n_parallel)))
     gpu_cpu = "CPU" if cuda_idx is None else f"GPU {cuda_idx}"
     if sample_mode == "serial":
@@ -36,16 +36,39 @@ def build_and_train(env_id="BendWire-v0", run_ID=0, cuda_idx=None, sample_mode="
         max_decorrelation_steps=0,
         eval_n_envs=2,
         eval_max_steps=int(1e4),
-        eval_max_trajectories=5,
+        eval_max_trajectories=10,
     )
-    algo = DDPG()  # Run with defaults.
-    agent = DdpgAgent()
+    algo = DDPG(
+        discount=0.99,
+        batch_size=128,
+        min_steps_learn=int(1e3),
+        replay_size=int(1e6),
+        replay_ratio=64,
+        target_update_tau=0.001,
+        target_update_interval=1,
+        policy_update_interval=1,
+        learning_rate=1e-4,
+        q_learning_rate=1e-3,
+        OptimCls=torch.optim.Adam,
+        optim_kwargs=None,
+        initial_optim_state_dict=None,
+        clip_grad_norm=1e8,
+        q_target_clip=1e6,
+        n_step_return=1,
+        bootstrap_timelimit=False,
+    )
+    agent = DdpgAgent(
+        initial_model_state_dict=None,
+        initial_q_model_state_dict=None,
+        action_std=0.008,
+        action_noise_clip=None,
+    )
     runner = MinibatchRlEval(
         algo=algo,
         agent=agent,
         sampler=sampler,
-        n_steps=2e4,
-        log_interval_steps=2e3,
+        n_steps=1e6,
+        log_interval_steps=1e4,
         affinity=affinity,
     )
 
@@ -64,7 +87,7 @@ def test(env_id, run_ID):
     agent_state_dict = state_dict['agent_state_dict']
     env = gym_make(env_id)
     obs = env.reset()
-    agent = MuMlpModel(observation_shape=obs.shape, action_size=env.action_space.shape[0], hidden_sizes=[8, 16])
+    agent = MuMlpModel(observation_shape=obs.shape, action_size=env.action_space.shape[0], hidden_sizes=[64, 64])
     agent.load_state_dict(agent_state_dict["model"])
 
     for _ in range(3):
@@ -75,6 +98,7 @@ def test(env_id, run_ID):
             env.render()
             action = agent(torch.from_numpy(obs), action, reward)
             obs, reward, done, info = env.step(action.detach().numpy())
+            print(reward)
             if done:
                 if info.is_success:
                     print("Goal reached!", "reward=", reward)
@@ -89,11 +113,10 @@ def main(train, test_ID=None):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     log_dir = os.path.join(dir_path, f'runs/rlpyt/{env_id}/')
     runs = os.listdir(log_dir)
+    runs = [r.split('_')[1].zfill(3) for r in runs]
     runs.sort()
-    for i in range(len(runs)):
-        runs[i] = int(runs[i].split('_')[1])
 
-    run_ID = runs[-1]
+    run_ID = int(runs[-1])
 
     if train:
         run_ID += 1
@@ -120,4 +143,4 @@ def main(train, test_ID=None):
 
 
 if __name__ == "__main__":
-    main(False, 0)
+    main(True)

@@ -7,17 +7,13 @@ from gym_agx import envs
 from gym_agx.utils.gym_utils import HERGoalEnvWrapper
 
 from keras.models import Sequential, Model
-from keras.layers import Dense, Activation, Flatten, Input, Concatenate
+from keras.layers import Dense, Activation, Flatten, Input, Concatenate, Convolution2D
 from keras.optimizers import Adam
 
-# from rl.callbacks import WandbLogger
 from rl.processors import WhiteningNormalizerProcessor
 from rl.agents import DDPGAgent
 from rl.memory import SequentialMemory
 from rl.random import OrnsteinUhlenbeckProcess
-
-import tensorflow as tf
-tf.get_logger().setLevel('INFO')
 
 
 class AgxProcessor(WhiteningNormalizerProcessor):
@@ -29,8 +25,8 @@ def main(env_name, train=True, path=None):
     # Get the environment and extract the number of actions.
     env = gym.make(env_name)
     env = HERGoalEnvWrapper(env)
-    np.random.seed(123)
-    env.seed(123)
+    # np.random.seed(123)
+    # env.seed(123)
     assert len(env.action_space.shape) == 1
     nb_actions = env.action_space.shape[0]
 
@@ -67,7 +63,7 @@ def main(env_name, train=True, path=None):
                       processor=AgxProcessor())
     agent.compile([Adam(lr=1e-4), Adam(lr=1e-3)], metrics=['mae'])
 
-    # Train the agent
+    # We can now train the agent.
     if train:
         now = datetime.now()
         dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -80,13 +76,13 @@ def main(env_name, train=True, path=None):
         agent.load_weights(path)
 
     # Finally, evaluate our algorithm for 5 episodes.
-    agent.test(env, nb_episodes=5, visualize=True, nb_max_episode_steps=1000)
+    history = agent.test(env, nb_episodes=5, visualize=True, nb_max_episode_steps=2000, verbose=1)
 
     env.close()
 
 
 if __name__ == "__main__":
-    env_name = "BendWire-v0"
+    env_name = "BendWireDense-v0"
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    file_path = os.path.join(dir_path, 'runs/keras/{}/weights.h5f'.format(env_name))
-    main(env_name, False, path=file_path)
+    file_path = os.path.join(dir_path, 'runs/keras/{}/2020-01-22 16:03:09.754750_weights.h5f'.format(env_name))
+    main(env_name, False, file_path)

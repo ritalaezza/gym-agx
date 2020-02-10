@@ -108,13 +108,34 @@ def sinusoidal_trajectory(A, w, t):
     return -A * w * math.sin(w * t)
 
 
+def find_reference_angle(angle):
+    while angle > 2 * math.pi:
+        angle -= 2 * math.pi
+
+    # Determine quadrant:
+    if angle < math.pi / 2:
+        reference_angle = angle
+        sign = 1
+    elif angle < math.pi:
+        reference_angle = math.pi - angle
+        sign = -1
+    elif angle < 3 * math.pi / 2:
+        reference_angle = angle - math.pi
+        sign = 1
+    else:
+        reference_angle = 2 * math.pi - angle
+        sign = -1
+
+    return reference_angle, sign
+
+
 def compute_linear_distance(v0, v1):
     """Computes linear distance between two points.
     :param v0: Numpy array
     :param v1: Numpy array
     :return: Euclidean distance between v0 and v1.
     """
-    return math.sqrt(((v0 - v1)**2).sum())
+    return math.sqrt(((v0 - v1) ** 2).sum())
 
 
 def compute_angular_distance(q0, q1):
@@ -127,6 +148,69 @@ def compute_angular_distance(q0, q1):
     q0 = Quaternion(q0)
     q1 = Quaternion(q1)
     return Quaternion.absolute_distance(q0, q1)
+
+
+def compute_curvature(v0, v1, segment_length=1):
+    """Computes curvature between two segments (through circumscribed osculating circle).
+    :param v0: Numpy array
+    :param v1: Numpy array
+    :param segment_length: length of AGX Cable segment (default 1)
+    :return: a positive scalar corresponding to the curvature: K = 2*tan(tangent_angle/2) / segment_length
+    """
+    length_v0 = np.linalg.norm(v0)
+    length_v1 = np.linalg.norm(v1)
+    angle = math.acos(np.dot(v0 / length_v0, v1 / length_v1))
+    ref_angle, sign = find_reference_angle(angle)
+    return 2 * sign * np.tan(ref_angle / 2) / segment_length
+
+
+def compute_torsion(v0, v1, v2, segment_length=1):
+    """Computes torsion between two segments (through circumscribed osculating circle).
+    :param v0: Numpy array
+    :param v1: Numpy array
+    :param v2: Numpy array
+    :param segment_length: length of AGX Cable segment (default 1)
+    :return: a positive scalar corresponding to the curvature: T = 2*tan(binormal_angle/2) / segment_length
+    """
+    # Binormal vectors
+    length_v0 = np.linalg.norm(v0)
+    length_v1 = np.linalg.norm(v1)
+    length_v2 = np.linalg.norm(v2)
+    b01 = np.cross(v0 / length_v0, v1 / length_v1)
+    b12 = np.cross(v1 / length_v1, v2 / length_v2)
+    length_b01 = np.linalg.norm(b01)
+    length_b12 = np.linalg.norm(b12)
+    # Torsion angle
+    angle = np.arccos(np.dot(b01 / length_b01, b12 / length_b12))
+    ref_angle, sign = find_reference_angle(angle)
+    return 2 * sign * np.tan(ref_angle / 2) / segment_length
+
+
+def get_cable_curvature(cable_state, segment_length=1):
+    """Iterates through cable state to compute curvature between three adjacent points.
+    :param cable_state: Numpy array with coordinates of cable segments
+    :param segment_length: length of AGX Cable segment (default 1)
+    """
+    cable_vectors = np.diff(cable_state)
+    curvature = np.zeros(shape=cable_state.shape[1] - 2)
+    for i in range(cable_state.shape[1] - 2):
+        curvature[i] = compute_curvature(cable_vectors[:, i], cable_vectors[:, i + 1], segment_length)
+
+    return curvature
+
+
+def get_cable_torsion(cable_state, segment_length=1):
+    """Iterates through cable state to compute torsion between four adjacent points.
+    :param cable_state: Numpy array with coordinates of cable segments
+    :param segment_length: length of AGX Cable segment (default 1)
+    """
+    cable_vectors = np.diff(cable_state)
+    torsion = np.zeros(shape=cable_state.shape[1] - 3)
+    for i in range(cable_state.shape[1] - 3):
+        torsion[i] = compute_torsion(cable_vectors[:, i], cable_vectors[:, i + 1], cable_vectors[:, i + 2],
+                                     segment_length)
+
+    return torsion
 
 
 def create_body(sim, shape, **args):
@@ -207,27 +291,51 @@ def to_agx_list(np_array, agx_type):
     return agx_list
 
 
-def get_cable_state(cable, gain=1):
+def get_cable_pose(cable, gain=1):
     """Get AGX Cable segments' positions and rotations.
     :param cable: AGX Cable object
     :param gain: gives possibility to rescale position values
     :return: NumPy array with segments' position and rotations
     """
     num_segments = cable.getNumSegments()
-    cable_state = np.zeros(shape=(7, num_segments))
+    cable_pose = np.zeros(shape=(7, num_segments))
     segment_iterator = cable.begin()
     for i in range(num_segments):
         if not segment_iterator.isEnd():
             position = segment_iterator.getGeometry().getPosition() * gain
-            cable_state[:3, i] = to_numpy_array(position)
+            cable_pose[:3, i] = to_numpy_array(position)
 
             rotation = segment_iterator.getGeometry().getRotation()
-            cable_state[3:, i] = to_numpy_array(rotation)
+            cable_pose[3:, i] = to_numpy_array(rotation)
             segment_iterator.inc()
         else:
             logger.error('AGX segment iteration finished early. Number or cable segments may be wrong.')
 
-    return cable_state
+    return cable_pose
+
+
+def get_cable_state(cable, gain=1):
+    """Get AGX Cable segments' begin and end positions.
+    :param cable: AGX Cable object
+    :param gain: gives possibility to rescale position values
+    :return: NumPy array with segments' position and rotations
+    """
+    num_segments = cable.getNumSegments()
+    cable_state = np.zeros(shape=(3, num_segments + 1))
+    segment_iterator = cable.begin()
+    for i in range(num_segments):
+        if not segment_iterator.isEnd():
+            position_begin = segment_iterator.getBeginPosition()
+            cable_state[:3, i] = to_numpy_array(position_begin)
+            if i == num_segments - 1:
+                position_end = segment_iterator.getEndPosition()
+                cable_state[:3, -1] = to_numpy_array(position_end)
+
+            segment_iterator.inc()
+        else:
+            logger.error('AGX segment iteration finished early. Number or cable segments may be wrong.')
+
+    return cable_state * gain
 
 
 def get_gripper_state(sim, grippers, gain=1):

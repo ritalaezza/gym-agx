@@ -22,23 +22,23 @@ class DDPG(RlAlgorithm):
     def __init__(
             self,
             discount=0.99,
-            batch_size=128,
-            min_steps_learn=int(1e3),
+            batch_size=64,
+            min_steps_learn=int(1e4),
             replay_size=int(1e6),
             replay_ratio=64,  # data_consumption / data_generation
             target_update_tau=0.01,
-            target_update_interval=2,  # * batch_size env steps.
+            target_update_interval=1,
             policy_update_interval=1,
             learning_rate=1e-4,
             q_learning_rate=1e-3,
             OptimCls=torch.optim.Adam,
             optim_kwargs=None,
             initial_optim_state_dict=None,
-            clip_grad_norm=10.,
+            clip_grad_norm=1e8,
             q_target_clip=1e6,
             n_step_return=1,
-            # updates_per_sync=1,  # For async mode only.
-            bootstrap_timelimit=False,  # From original SAC implementation
+            updates_per_sync=1,  # For async mode only.
+            bootstrap_timelimit=True,  # From original SAC implementation
     ):
         if optim_kwargs is None:
             optim_kwargs = dict()
