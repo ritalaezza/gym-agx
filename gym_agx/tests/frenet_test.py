@@ -1,6 +1,9 @@
 import math
+import pytest
 import numpy as np
 from gym_agx.utils.utils import get_cable_curvature, get_cable_torsion
+
+helix_parameters = [([1, 2, 3], [1, 0.5, 0.25], 0.01)]
 
 
 def parameterized_helix(a=1, b=1, T=2 * math.pi):
@@ -19,6 +22,7 @@ def parameterized_helix(a=1, b=1, T=2 * math.pi):
     return state
 
 
+@pytest.mark.parametrize("a_s, b_s, margin", helix_parameters)
 def test_curvature(a_s, b_s, margin):
     results = []
     for a in a_s:
@@ -33,9 +37,10 @@ def test_curvature(a_s, b_s, margin):
             else:
                 results.append(False)
 
-    return results
+    assert all(results)
 
 
+@pytest.mark.parametrize("a_s, b_s, margin", helix_parameters)
 def test_torsion(a_s, b_s, margin):
     results = []
     for a in a_s:
@@ -50,16 +55,4 @@ def test_torsion(a_s, b_s, margin):
             else:
                 results.append(False)
 
-    return results
-
-
-if __name__ == "__main__":
-    margin = 0.01
-    a_s = [1, 2, 3]
-    b_s = [1, 0.5, 0.25]
-    curvature_results = test_curvature(a_s, b_s, margin)
-    if all(curvature_results):
-        print("Curvature passed.")
-    torsion_results = test_torsion(a_s, b_s, margin)
-    if all(torsion_results):
-        print("Torsion passed.")
+    assert all(results)
