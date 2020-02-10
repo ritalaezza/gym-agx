@@ -38,7 +38,8 @@ import math
 import sys
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, save_simulation, sinusoidal_trajectory
+from gym_agx.utils.agx_utils import create_body, save_simulation
+from gym_agx.utils.utils import sinusoidal_trajectory
 
 
 FILE_NAME = 'bend_wire'
