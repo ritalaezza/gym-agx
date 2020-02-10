@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from gym_agx.utils.agx_utils import get_cable_curvature, get_cable_torsion
+from gym_agx.utils.utils import get_cable_curvature, get_cable_torsion
 
 
 def parameterized_helix(a=1, b=1, T=2 * math.pi):
