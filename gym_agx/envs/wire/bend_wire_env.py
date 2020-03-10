@@ -8,8 +8,8 @@ from gym_agx.utils.agx_utils import CameraSpecs, Gripper, GripperConstraint
 
 FILE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 PACKAGE_DIRECTORY = os.path.split(FILE_DIRECTORY)[0]
-SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire.agx')
-GOAL_SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_goal.agx')
+SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_hinge.agx')
+GOAL_SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_hinge_goal.agx')
 
 logger = logging.getLogger(__name__)
 
