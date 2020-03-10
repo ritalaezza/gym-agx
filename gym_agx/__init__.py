@@ -1,5 +1,4 @@
 import os
-import gym
 import logging.config
 from gym.envs.registration import register
 
@@ -28,11 +27,12 @@ for reward_type in ['sparse', 'dense']:
     suffix = 'Dense' if reward_type == 'dense' else ''
     kwargs = {
         'reward_type': reward_type,
+        'n_substeps': 2,
     }
 
     register(
         id='BendWire{}-v0'.format(suffix),
         entry_point='gym_agx.envs:BendWireEnv',
         kwargs=kwargs,
-        max_episode_steps=int(2000),
+        max_episode_steps=int(1000),
     )

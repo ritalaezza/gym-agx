@@ -1,28 +1,7 @@
 """Simulation for BendWire environment
 
-This module creates the simulation files which will them be used in BendWire environments.
-
-Example:
-    Examples can be given using either the ``Example`` or ``Examples``
-    sections. Sections support any reStructuredText formatting, including
-    literal blocks::
-
-        $ python example_google.py
-
-Section breaks are created by resuming unindented text. Section breaks
-are also implicitly created anytime a new section starts.
-
-Attributes:
-    module_level_variable1 (int): Module level variables may be documented in
-        either the ``Attributes`` section of the module docstring, or in an
-        inline docstring immediately following the variable.
-
-        Either form is acceptable, but the two should not be mixed. Choose
-        one convention to document module level variables and be consistent
-        with it.
-
-Todo:
-    * For module TODOs
+This module creates the simulation files which will be used in BendWire environments.
+TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).
 """
 # AGX Dynamics imports
 import agx
@@ -41,26 +20,28 @@ import sys
 from gym_agx.utils.agx_utils import create_body, save_simulation
 from gym_agx.utils.utils import sinusoidal_trajectory
 
-
-FILE_NAME = 'bend_wire'
+FILE_NAME = 'bend_wire_hinge'
 # Simulation Parameters
-TIMESTEP = 1 / 100     # seconds (eq. 100 Hz)
-LENGTH = 0.1           # meters
+N_SUBSTEPS = 2
+TIMESTEP = 1 / 50  # seconds (eq. 50 Hz)
+LENGTH = 0.1  # meters
 RADIUS = LENGTH / 100  # meters
-LENGTH += 2*RADIUS     # meters
-RESOLUTION = 1000      # segments per meter
-GRAVITY = False
+LENGTH += 2 * RADIUS  # meters
+RESOLUTION = 1000  # segments per meter
+GRAVITY = True
 # Aluminum Parameters
-POISSON_RATIO = 0.35   # no unit
-YOUNG_MODULUS = 69e9   # Pascals
-YIELD_POINT = 5e7      # Pascals
+POISSON_RATIO = 0.35  # no unit
+YOUNG_MODULUS = 69e9  # Pascals
+YIELD_POINT = 5e7  # Pascals
 # Rendering Parameters
 GROUND_WIDTH = 0.0001  # meters
 CABLE_GRIPPER_RATIO = 2
-SIZE_GRIPPER = CABLE_GRIPPER_RATIO*RADIUS
+SIZE_GRIPPER = CABLE_GRIPPER_RATIO * RADIUS
 EYE = agx.Vec3(LENGTH / 2, -5 * LENGTH, 0)
 CENTER = agx.Vec3(LENGTH / 2, 0, 0)
 UP = agx.Vec3(0., 0., 1.)
+# Control parameters
+FORCE_RANGE = 2.5  # N
 
 
 def add_rendering(sim, length):
@@ -107,41 +88,46 @@ def build_simulation():
 
     # Create a ground plane for reference
     ground, ground_geom = create_body(sim, name="ground", shape=agxCollide.Box(LENGTH, LENGTH, GROUND_WIDTH),
-                                      position=agx.Vec3(LENGTH/2, 0, -(GROUND_WIDTH + SIZE_GRIPPER/2 + LENGTH)),
+                                      position=agx.Vec3(LENGTH / 2, 0, -(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH)),
                                       motionControl=agx.RigidBody.STATIC)
 
     # Create cable
     cable = agxCable.Cable(RADIUS, RESOLUTION)
+    cable.setName("DLO")
 
-    # Create two grippers one static one kinematic
     gripper_left, gripper_left_geom = create_body(sim, name="gripper_left",
                                                   shape=agxCollide.Box(SIZE_GRIPPER, SIZE_GRIPPER, SIZE_GRIPPER),
-                                                  position=agx.Vec3(0, 0, 0), motionControl=agx.RigidBody.STATIC)
+                                                  position=agx.Vec3(0, 0, 0), motionControl=agx.RigidBody.DYNAMICS)
 
     gripper_right, gripper_right_geom = create_body(sim, name="gripper_right",
                                                     shape=agxCollide.Box(SIZE_GRIPPER, SIZE_GRIPPER, SIZE_GRIPPER),
                                                     position=agx.Vec3(LENGTH, 0, 0),
-                                                    motionControl=agx.RigidBody.KINEMATICS)
+                                                    motionControl=agx.RigidBody.DYNAMICS)
 
-    # Create LockJoints for each gripper:
+    print("Mass of grippers: {}".format(gripper_right.calculateMass()))
+
+    # Create Frames for each gripper:
     # Cables are attached passing through the attachment point along the Z axis of the body's coordinate frame.
     # The translation specified in the transformation is relative to the body and not the world
     left_transform = agx.AffineMatrix4x4()
     left_transform.setTranslate(SIZE_GRIPPER + RADIUS, 0, 0)
-    left_transform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())  # Rotation matrix which switches Z with X
-    cable.add(agxCable.BodyFixedNode(gripper_left, left_transform))  # Fix cable to gripper_left
+    left_transform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.Y_AXIS())  # Rotation matrix which switches Z with Y
+    frame_left = agx.Frame(left_transform)
 
     right_transform = agx.AffineMatrix4x4()
     right_transform.setTranslate(- SIZE_GRIPPER - RADIUS, 0, 0)
-    right_transform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())  # Rotation matrix which switches Z with X
-    cable.add(agxCable.BodyFixedNode(gripper_right, right_transform))  # Fix cable to gripper_right
+    right_transform.setRotate(agx.Vec3.Z_AXIS(), -agx.Vec3.Y_AXIS())  # Rotation matrix which switches Z with -Y
+    frame_right = agx.Frame(right_transform)
 
-    # Set cable name and properties
-    cable.setName("DLO")
-    # properties = cable.getCableProperties()
-    # properties.setYoungsModulus(YOUNG_MODULUS, agxCable.BEND)
-    # properties.setYoungsModulus(YOUNG_MODULUS, agxCable.TWIST)
-    # properties.setYoungsModulus(YOUNG_MODULUS, agxCable.STRETCH)
+    cable.add(agxCable.FreeNode(agx.Vec3(SIZE_GRIPPER + RADIUS, 0, 0)))  # Fix cable to gripper_left
+    cable.add(agxCable.FreeNode(agx.Vec3(LENGTH - SIZE_GRIPPER - RADIUS, 0, 0)))  # Fix cable to gripper_right
+
+    # Try to initialize cable
+    report = cable.tryInitialize()
+    if report.successful():
+        print("Successful cable initialization.")
+    else:
+        print(report.getActualError())
 
     # Add cable plasticity
     plasticity = agxCable.CablePlasticity()
@@ -155,39 +141,62 @@ def build_simulation():
     bulk_material.setYoungsModulus(YOUNG_MODULUS)
     cable.setMaterial(material)
 
-    # Set cable damage name and weights
-    damage = agxCable.CableDamage()
-    damage.setName("DLO_damage")
-    damage.setStretchDeformationWeight(10.0)
-    damage.setBendDeformationWeight(0.0)
-    damage.setTwistDeformationWeight(1.0)
-
-    # Add cable damage
-    cable.addComponent(damage)
-
-    # Try to initialize cable
-    report = cable.tryInitialize()
-    if report.successful():
-        print("Successful cable initialization.")
-    else:
-        print(report.getActualError())
-
     # Add cable to simulation
     sim.add(cable)
 
-    # Rename constraints and set enable force computation
-    constraints = sim.getConstraints()
-    for i, c in enumerate(constraints):
-        right_attachment = c.getAttachment(gripper_right)
-        left_attachment = c.getAttachment(gripper_left)
-        if right_attachment:
-            c.setName('gripper_right_constraint')
-            c.setEnableComputeForces(True)
-        elif left_attachment:
-            c.setName('gripper_left_constraint')
-            c.setEnableComputeForces(True)
-        else:
-            print('Constraint #{}'.format(i))
+    # Add hinge constraints
+    iterator = cable.begin()
+    segment_left = iterator.getRigidBody()
+    while not iterator.isEnd():
+        segment_right = iterator.getRigidBody()
+        iterator.inc()
+
+    hinge_joint_left = agx.Hinge(gripper_left, frame_left, segment_left)
+    hinge_joint_left.setName('hinge_joint_left')
+    motor_left = hinge_joint_left.getMotor1D()
+    motor_left.setEnable(True)
+    motor_left_param = motor_left.getRegularizationParameters()
+    motor_left_param.setCompliance(1e12)
+    motor_left.setLockedAtZeroSpeed(False)
+    lock_left = hinge_joint_left.getLock1D()
+    lock_left.setEnable(False)
+    range_left = hinge_joint_left.getRange1D()
+    range_left.setEnable(True)
+    range_left.setRange(agx.RangeReal(-math.pi / 2, math.pi / 2))
+    sim.add(hinge_joint_left)
+
+    hinge_joint_right = agx.Hinge(gripper_right, frame_right, segment_right)
+    hinge_joint_right.setName('hinge_joint_right')
+    motor_right = hinge_joint_right.getMotor1D()
+    motor_right.setEnable(True)
+    motor_right_param = motor_right.getRegularizationParameters()
+    motor_right_param.setCompliance(1e12)
+    motor_right.setLockedAtZeroSpeed(False)
+    lock_right = hinge_joint_right.getLock1D()
+    lock_right.setEnable(False)
+    range_right = hinge_joint_right.getRange1D()
+    range_right.setEnable(True)
+    range_right.setRange(agx.RangeReal(-math.pi / 2, math.pi / 2))
+    sim.add(hinge_joint_right)
+
+    # Add prismatic constraints
+    prismatic_frame_right = agx.PrismaticFrame(agx.Vec3(0, 0, 0), agx.Vec3.X_AXIS())
+    prismatic_joint_right = agx.Prismatic(prismatic_frame_right, gripper_right)
+    prismatic_joint_right.setName('prismatic_joint_right')
+    prismatic_joint_right.setEnableComputeForces(True)
+    motor_right = prismatic_joint_right.getMotor1D()
+    motor_right.setLockedAtZeroSpeed(False)
+    motor_right.setEnable(True)
+    motor_right.setForceRange(-FORCE_RANGE, FORCE_RANGE)
+    sim.add(prismatic_joint_right)
+
+    prismatic_frame_left = agx.PrismaticFrame(agx.Vec3(LENGTH, 0, 0), agx.Vec3.X_AXIS())
+    prismatic_joint_left = agx.Prismatic(prismatic_frame_left, gripper_left)
+    prismatic_joint_left.setName('prismatic_joint_left')
+    lock = prismatic_joint_left.getLock1D()
+    lock.setEnable(True)
+    sim.add(prismatic_joint_left)
+
     return sim
 
 
@@ -202,7 +211,7 @@ def main(args):
     for i, rb in enumerate(rbs):
         name = rbs[i].getName()
         if name == "":
-            print("Object: segment_{}".format(i-2))
+            print("Object: segment_{}".format(i - 2))
         else:
             print("Object: {}".format(rbs[i].getName()))
         print("Position:")
@@ -221,21 +230,39 @@ def main(args):
     app = add_rendering(sim, LENGTH)
     app.init(agxIO.ArgumentParser([sys.executable] + args))
     app.setCameraHome(EYE, CENTER, UP)  # should only be added after app.init
-    app.initSimulation(sim, True)       # This changes timestep!
+    app.initSimulation(sim, True)  # This changes timestep and Gravity!
     sim.setTimeStep(TIMESTEP)
-    gripper = sim.getRigidBody('gripper_right')
+    if not GRAVITY:
+        print("Gravity off.")
+        g = agx.Vec3(0, 0, 0)  # remove gravity
+        sim.setUniformGravity(g)
 
-    n_steps = 1000  # implies minimum period of 10 seconds.
-    period = 12     # seconds
+    # gripper = sim.getRigidBody('gripper_right')
+    prismatic_joint = sim.getConstraint1DOF('prismatic_joint_right')
+    hinge_joint = sim.getConstraint1DOF('hinge_joint_right')
+    prismatic_motor = prismatic_joint.getMotor1D()
+    # hinge_motor = hinge_joint.getMotor1D()
+    # hinge_joint_params = hinge_motor.getRegularizationParameters()
+
+    n_seconds = 10
+    n_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
+    period = 12  # seconds
     amplitude = LENGTH / 4
     rad_frequency = 2 * math.pi * (1 / period)
+    # decay = 0.1
+    # compliance = 1e12
     for k in range(n_steps):
-        t = sim.getTimeStamp()
-        velocity_x = sinusoidal_trajectory(amplitude, rad_frequency, t)
-        print("k = {}, t = {}, v_x = {}".format(k, t, velocity_x))
-        gripper.setVelocity(velocity_x, 0, 0)
-        sim.stepForward()
         app.executeOneStepWithGraphics()
+        velocity_x = sinusoidal_trajectory(amplitude, rad_frequency, k * TIMESTEP * N_SUBSTEPS)
+        # compliance = compliance * math.exp(-decay*t)
+        # hinge_joint_params.setCompliance(compliance)
+        prismatic_motor.setSpeed(velocity_x)
+
+        t = sim.getTimeStamp()
+        t_0 = t
+        while t < t_0 + TIMESTEP*N_SUBSTEPS:
+            sim.stepForward()
+            t = sim.getTimeStamp()
 
     # Save goal simulation to file
     save_simulation(sim, FILE_NAME + "_goal")
