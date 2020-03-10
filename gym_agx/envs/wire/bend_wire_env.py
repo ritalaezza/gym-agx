@@ -1,10 +1,10 @@
 import os
 import sys
 import agx
-import math
 import logging
 
 from gym_agx.envs import wire_env
+from gym_agx.utils.agx_utils import CameraSpecs, Gripper, GripperConstraint
 
 FILE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 PACKAGE_DIRECTORY = os.path.split(FILE_DIRECTORY)[0]
@@ -17,24 +17,57 @@ logger = logging.getLogger(__name__)
 class BendWireEnv(wire_env.WireEnv):
     """Subclass which inherits from Wire environment.
     """
-    def __init__(self, reward_type='sparse'):
+
+    def __init__(self, reward_type='sparse', n_substeps=2):
         """Initializes BendWire environment
         The radius and length should be consistent with the model defined in 'SCENE_PATH'.
         :param reward_type: either 'sparse' or 'dense'
         """
-        radius = 0.01
-        length = 0.1 + 2*radius
-        sim_timestep = 0.01      # seconds
+        length = 0.1  # meters
+        camera_distance = 0.5  # meters
+        camera = CameraSpecs(
+            eye=agx.Vec3(length / 2, -5 * length, 0),
+            center=agx.Vec3(length / 2, 0, 0),
+            up=agx.Vec3(0., 0., 1.),
+            light_position=agx.Vec4(length / 2, - camera_distance, camera_distance, 1.),
+            light_direction=agx.Vec3(0., 0., -1.)
+        )
 
-        observation_type = 'vector'
-        env_timestep = (1 / 60)  # seconds
-        n_substeps = int(env_timestep / sim_timestep)
-        camera = {
-            'eye': agx.Vec3(length / 2, -5 * length, 0),
-            'center':  agx.Vec3(length / 2, 0, 0),
-            'up': agx.Vec3(0., 0., 1.)
-        }
-        grippers = {'gripper_right'}
+        gripper_right = Gripper(
+            name='gripper_right',
+            controllable=True,
+            observable=True,
+            max_velocity=14 / 1000,  # m/s
+            max_acceleration=10 / 1000,  # m/s^2
+            min_compliance=1,  # 1/Nm
+            max_compliance=1e12  # 1/Nm
+        )
+        gripper_right.add_constraint(name='prismatic_joint_right',
+                                     gripper_dof=GripperConstraint.Dof.X_TRANSLATIONAL,
+                                     compute_forces_enabled=True,
+                                     velocity_control=True,
+                                     compliance_control=False)
+        gripper_right.add_constraint(name='hinge_joint_right',
+                                     gripper_dof=GripperConstraint.Dof.Y_ROTATIONAL,
+                                     compute_forces_enabled=False,
+                                     velocity_control=False,
+                                     compliance_control=False)
+
+        gripper_left = Gripper(
+            name='gripper_left',
+            controllable=False,
+            observable=False,
+        )
+        gripper_left.add_constraint(name='prismatic_joint_left',
+                                    gripper_dof=GripperConstraint.Dof.X_TRANSLATIONAL,
+                                    compute_forces_enabled=False,
+                                    velocity_control=False)
+        gripper_left.add_constraint(name='hinge_joint_left',
+                                    gripper_dof=GripperConstraint.Dof.Y_ROTATIONAL,
+                                    compute_forces_enabled=False,
+                                    velocity_control=False)
+
+        grippers = [gripper_right, gripper_left]
 
         args = sys.argv
         if not os.path.exists(SCENE_PATH):
@@ -44,14 +77,10 @@ class BendWireEnv(wire_env.WireEnv):
         super(BendWireEnv, self).__init__(scene_path=SCENE_PATH,
                                           n_substeps=n_substeps,
                                           grippers=grippers,
-                                          length=length,
-                                          n_actions=1,
                                           camera=camera,
                                           args=args,
-                                          distance_threshold=math.sqrt(5e-7),  # in m
+                                          distance_threshold=0.06,  # 0.16
                                           reward_type=reward_type,
-                                          terminate_when_unhealthy=False,
-                                          damage_threshold=1e3,
-                                          observation_type=observation_type,
+                                          reward_limit=1.5,
                                           randomized_goal=False,
                                           goal_scene_path=GOAL_SCENE_PATH)

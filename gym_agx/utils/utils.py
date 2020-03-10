@@ -1,6 +1,5 @@
 import math
 import numpy as np
-from pyquaternion import Quaternion
 
 
 def sinusoidal_trajectory(A, w, t):
@@ -15,6 +14,9 @@ def sinusoidal_trajectory(A, w, t):
 
 
 def find_reference_angle(angle):
+    """Finds reference angle in first quadrant.
+    :param angle: angle in radians
+    :return: reference angle and sign"""
     while angle > 2 * math.pi:
         angle -= 2 * math.pi
 
@@ -44,18 +46,6 @@ def compute_linear_distance(v0, v1):
     return math.sqrt(((v0 - v1) ** 2).sum())
 
 
-def compute_angular_distance(q0, q1):
-    """Computes 'angular distance' (angle) between quaternions. Uses pyquaternion library.
-    See: https://kieranwynn.github.io/pyquaternion/
-    :param q0: Numpy array
-    :param q1: Numpy array
-    :return: a positive scalar corresponding to the chord of the shortest path/arc that connects q0 to q1.
-    """
-    q0 = Quaternion(q0)
-    q1 = Quaternion(q1)
-    return Quaternion.absolute_distance(q0, q1)
-
-
 def compute_curvature(v0, v1, segment_length=1):
     """Computes curvature between two segments (through circumscribed osculating circle).
     :param v0: Numpy array
@@ -65,7 +55,9 @@ def compute_curvature(v0, v1, segment_length=1):
     """
     length_v0 = np.linalg.norm(v0)
     length_v1 = np.linalg.norm(v1)
-    angle = math.acos(np.dot(v0 / length_v0, v1 / length_v1))
+    cos_angle = np.dot(v0 / length_v0, v1 / length_v1)
+    cos_angle = np.clip(cos_angle, -1, 1)
+    angle = math.acos(cos_angle)
     ref_angle, sign = find_reference_angle(angle)
     return 2 * sign * np.tan(ref_angle / 2) / segment_length
 

@@ -4,10 +4,145 @@ import agxSDK
 import agxCollide
 
 import os
+import math
 import logging
 import numpy as np
+from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+
+class GripperConstraint:
+    class Dof(Enum):
+        X_TRANSLATIONAL = 0,
+        Y_TRANSLATIONAL = 1,
+        Z_TRANSLATIONAL = 2,
+        X_ROTATIONAL = 3,
+        Y_ROTATIONAL = 4,
+        Z_ROTATIONAL = 5
+
+    def __init__(self, gripper_dof, compute_forces_enabled, velocity_control, compliance_control, velocity_index,
+                 compliance_index):
+        """Gripper constraint object, defining important parameters.
+        :param gripper_dof: (GripperDof) degree of freedom of gripper that this constraint controls
+        :param compute_forces_enabled: (Boolean) force and torque can be measured
+        :param velocity_control: (Boolean) is velocity controlled
+        :param compliance_control: (Boolean) is compliance controlled
+        :param velocity_index: (int) index of action vector which controls velocity of this constraint's motor
+        :param compliance_index: (int) index of action vector which controls compliance of this constraint's motor"""
+        self.gripper_dof = gripper_dof
+        self.velocity_control = velocity_control
+        self.compute_forces_enabled = compute_forces_enabled
+        self.compliance_control = compliance_control
+        self.velocity_index = velocity_index
+        self.compliance_index = compliance_index
+
+    @property
+    def is_active(self):
+        return True if self.velocity_control or self.compliance_control else False
+
+
+class Gripper:
+    last_action_index = -1
+
+    def __init__(self, name, controllable, observable, max_velocity=1, max_acceleration=1, min_compliance=0,
+                 max_compliance=1e6):
+        """Gripper class which keeps track of gripper constraints and action indices.
+        :param name
+        :param controllable
+        :param observable
+        :param max_velocity
+        :param max_acceleration
+        :param max_compliance
+        :return Gripper object"""
+        self.name = name
+        self.controllable = controllable
+        self.observable = observable
+        self.max_velocity = max_velocity
+        self.max_acceleration = max_acceleration
+        self.min_compliance = min_compliance
+        self.max_compliance = max_compliance
+        self.constraints = {}
+
+    def add_constraint(self, name, gripper_dof, compute_forces_enabled=False, velocity_control=False,
+                       compliance_control=False):
+        velocity_index = None
+        compliance_index = None
+        if velocity_control:
+            self.last_action_index += 1
+            velocity_index = self.last_action_index
+        if compliance_control:
+            self.last_action_index += 1
+            compliance_index = self.last_action_index
+        gripper_constraint = GripperConstraint(gripper_dof, compute_forces_enabled, velocity_control,
+                                               compliance_control, velocity_index, compliance_index)
+        self.constraints.update({name: gripper_constraint})
+
+    def apply_control(self, sim, action, dt):
+        if self.controllable:
+            for key, constraint in self.constraints.items():
+                joint = sim.getConstraint1DOF(key)
+                motor = joint.getMotor1D()
+                if constraint.velocity_control:
+                    gripper_velocity = self.get_gripper_velocity(sim, constraint.gripper_dof)
+                    velocity = self.rescale_velocity(action[constraint.velocity_index], gripper_velocity, dt)
+                    motor.setSpeed(np.float64(velocity))
+                if constraint.compliance_control:
+                    motor_param = motor.getRegularizationParameters()
+                    compliance = self.rescale_compliance(action[constraint.compliance_index])
+                    motor_param.setCompliance(np.float64(compliance))
+        else:
+            logger.debug("Received apply_control command for uncontrollable gripper.")
+
+    def get_gripper_velocity(self, sim, constraint_dof):
+        gripper = sim.getRigidBody(self.name)
+        if constraint_dof == GripperConstraint.Dof.X_TRANSLATIONAL:
+            gripper_velocity = gripper.getVelocity()[0]
+        elif constraint_dof == GripperConstraint.Dof.Y_TRANSLATIONAL:
+            gripper_velocity = gripper.getVelocity()[1]
+        elif constraint_dof == GripperConstraint.Dof.Z_TRANSLATIONAL:
+            gripper_velocity = gripper.getVelocity()[2]
+        elif constraint_dof == GripperConstraint.Dof.X_ROTATIONAL:
+            gripper_velocity = gripper.getAngularVelocity()[0]
+        elif constraint_dof == GripperConstraint.Dof.Y_ROTATIONAL:
+            gripper_velocity = gripper.getAngularVelocity()[1]
+        elif constraint_dof == GripperConstraint.Dof.Z_ROTATIONAL:
+            gripper_velocity = gripper.getAngularVelocity()[2]
+        else:
+            logger.error("Unexpected GripperDof.")
+
+        assert not math.isnan(gripper_velocity), "NaN found in gripper velocity: %r" % gripper_velocity
+        return gripper_velocity
+
+    def get_state(self, sim):
+        if self.observable:
+            state = []
+            for key, constraint in self.constraints.items():
+                if constraint.compute_forces_enabled:
+                    state.append(get_gripper_state(sim, key).ravel())
+            return np.asarray(state)
+        else:
+            logger.error("Received get_state command for unobservable gripper.")
+
+    def rescale_velocity(self, velocity, gripper_velocity, dt):
+        if abs(velocity - gripper_velocity) > self.max_acceleration:
+            velocity = gripper_velocity + np.sign(velocity - gripper_velocity) * (self.max_acceleration * dt)
+        if abs(velocity) > self.max_velocity:
+            velocity = self.max_velocity * np.sign(velocity)
+        return velocity
+
+    def rescale_compliance(self, compliance):
+        # Assumes an action range between -1 and 1
+        return (compliance + 1) / 2 * (self.max_compliance - self.min_compliance) + self.min_compliance
+
+
+class CameraSpecs:
+    def __init__(self, eye, center, up, light_position, light_direction):
+        self.camera_pose = {'eye': eye,
+                            'center': center,
+                            'up': up}
+        self.light_pose = {'light_position': light_position,
+                           'light_direction': light_direction}
 
 
 class InfoPrinter(agxSDK.StepEventListener):
@@ -220,20 +355,22 @@ def get_cable_state(cable, gain=1):
     return cable_state * gain
 
 
-def get_gripper_state(sim, grippers, gain=1):
-    """Get AGX 'gripper' positions, rotations, force and torque.
+def get_gripper_state(sim, key, include_position=False, gain=1):
+    """Get AGX 'gripper' positions, force and torque.
     :param sim: AGX Dynamics simulation object
-    :param grippers: List AGX kinematic object(s)
+    :param key: name of gripper
+    :param include_position: Boolean to determine if gripper position is part of state
     :param gain: gives possibility to rescale position values
     :return: NumPy array with gripper position, rotations, force and torque
     """
-    gripper_state = np.zeros(shape=(14, len(grippers)))
-    for i, key in enumerate(grippers):
-        gripper = sim.getRigidBody(key)
-        gripper_state[:3, i] = to_numpy_array(gripper.getPosition()) * gain
-        gripper_state[3:7, i] = to_numpy_array(gripper.getRotation())
-        gripper_state[7:10, i], gripper_state[10:13, i] = get_force_torque(sim, gripper, key + '_constraint')
-        gripper_state[13, i] = 0  # For now just a filler, but could contain other information
+    gripper = sim.getRigidBody(key)
+    if include_position:
+        gripper_state = np.zeros(shape=(3, 3))
+        gripper_state[:, 0] = to_numpy_array(gripper.getPosition()) * gain
+        gripper_state[:, 1], gripper_state[:, 2] = get_force_torque(sim, gripper, key)
+    else:
+        gripper_state = np.zeros(shape=(3, 2))
+        gripper_state[:, 0], gripper_state[:, 1] = get_force_torque(sim, gripper, key)
 
     return gripper_state
 

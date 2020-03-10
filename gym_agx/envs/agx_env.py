@@ -19,7 +19,6 @@ except ImportError as e:
     raise error.DependencyNotInstalled("{}. (HINT: you need to install AGX Dynamics, "
                                        "have a valid license and run 'setup_env.bash'.)".format(e))
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -28,19 +27,20 @@ class AgxEnv(gym.GoalEnv):
     """
     metadata = {'render.modes': ['osg', 'debug']}
 
-    def __init__(self, scene_path, n_substeps, grippers, n_actions, camera, args):
+    def __init__(self, scene_path, n_substeps, n_actions, camera_pose, args):
         """Initializes a AgxEnv object
         :param scene_path: path to binary file containing serialized simulation defined in sim/ folder
         :param n_substeps: number os simulation steps per call to step()
-        :param grippers: dictionary containing gripper names
         :param n_actions: number of actions (DoF)
-        :param camera: dictionary containing EYE, CENTER, UP information for rendering
+        :param camera_pose: dictionary containing EYE, CENTER, UP information for rendering
         :param args: sys.argv
         """
         self.scene_path = scene_path
         self.n_substeps = n_substeps
 
         # Initialize AGX simulation
+        self.gravity = None
+        self.time_step = None
         self.init = agx.AutoInit()
         self.sim = agxSDK.Simulation()
         self._build_simulation()
@@ -49,7 +49,7 @@ class AgxEnv(gym.GoalEnv):
         self.app = agxOSG.ExampleApplication(self.sim)
         self.args = args
         self.root = None
-        self.camera = camera
+        self.camera_pose = camera_pose
         self._add_rendering(mode='osg')
 
         # TODO: Is this needed?
@@ -61,7 +61,9 @@ class AgxEnv(gym.GoalEnv):
         self.goal = self._sample_goal()
         obs = self._get_obs()
 
-        self.action_space = spaces.Box(-1., 1., shape=(n_actions*len(grippers),), dtype='float32')
+        self.n_actions = n_actions
+
+        self.action_space = spaces.Box(-1., 1., shape=(self.n_actions,), dtype='float32')
         self.observation_space = spaces.Dict(dict(
             desired_goal=spaces.Box(-np.inf, np.inf, shape=obs['desired_goal'].shape, dtype='float32'),
             achieved_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
@@ -93,11 +95,11 @@ class AgxEnv(gym.GoalEnv):
         self._step_callback()
 
         obs = self._get_obs()
-        done = self.done
         info = {
             'is_success': self._is_success(obs['achieved_goal'], self.goal),
         }
         reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
+        done = self.done
         return obs, reward, done, info
 
     def reset(self):
@@ -130,15 +132,23 @@ class AgxEnv(gym.GoalEnv):
         if not agxIO.readFile(self.scene_path, self.sim, scene, agxSDK.Simulation.READ_ALL):
             raise RuntimeError("Unable to open file \'" + self.scene_path + "\'")
         self.sim.add(scene)
+        self.gravity = self.sim.getUniformGravity()
+        self.time_step = self.sim.getTimeStep()
+        logger.debug("Timestep after readFile is: {}".format(self.time_step))
+        logger.debug("Gravity after readFile is: {}".format(self.gravity))
 
     def _init_app(self, start_rendering):
         logger.debug("init app")
         if start_rendering:
             self._add_rendering()
         self.app.init(agxIO.ArgumentParser([sys.executable] + self.args))
-        self.app.setCameraHome(self.camera['eye'], self.camera['center'], self.camera['up'])  # only after app.init
+        self.app.setCameraHome(self.camera_pose['eye'], self.camera_pose['center'],
+                               self.camera_pose['up'])  # only after app.init
         self.app.initSimulation(self.sim, start_rendering)
+        self.sim.setUniformGravity(self.gravity)
+        self.sim.setTimeStep(self.time_step)
         logger.debug("Timestep after initSimulation is: {}".format(self.sim.getTimeStep()))
+        logger.debug("Gravity after initSimulation is: {}".format(self.sim.getUniformGravity()))
 
     def _add_rendering(self, mode='osg'):
         """Create ExampleApplication instance and add rendering information.
