@@ -1,0 +1,471 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="English" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="English" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gym_agx.envs package &mdash; gym-agx  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="gym_agx.envs.wire package" href="gym_agx.envs.wire.html" />
+    <link rel="prev" title="gym_agx package" href="gym_agx.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> gym-agx
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="gym_agx.html">gym_agx package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="gym_agx.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">gym_agx.envs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.envs.agx_env">gym_agx.envs.agx_env module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.envs.wire_env">gym_agx.envs.wire_env module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.envs">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="gym_agx.sims.html">gym_agx.sims package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gym_agx.tests.html">gym_agx.tests package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gym_agx.utils.html">gym_agx.utils package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.html#module-gym_agx">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">gym-agx</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="gym_agx.html">gym_agx package</a> &raquo;</li>
+        
+      <li>gym_agx.envs package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/gym_agx.envs.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="gym-agx-envs-package">
+<h1>gym_agx.envs package<a class="headerlink" href="#gym-agx-envs-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.envs.wire.html">gym_agx.envs.wire package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.envs.wire.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.envs.wire.html#module-gym_agx.envs.wire.bend_wire_env">gym_agx.envs.wire.bend_wire_env module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.envs.wire.html#module-gym_agx.envs.wire">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-gym_agx.envs.agx_env">
+<span id="gym-agx-envs-agx-env-module"></span><h2>gym_agx.envs.agx_env module<a class="headerlink" href="#module-gym_agx.envs.agx_env" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="gym_agx.envs.agx_env.AgxEnv">
+<em class="property">class </em><code class="sig-prename descclassname">gym_agx.envs.agx_env.</code><code class="sig-name descname">AgxEnv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scene_path</span></em>, <em class="sig-param"><span class="n">n_substeps</span></em>, <em class="sig-param"><span class="n">n_actions</span></em>, <em class="sig-param"><span class="n">camera_pose</span></em>, <em class="sig-param"><span class="n">args</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.agx_env.AgxEnv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gym.core.GoalEnv</span></code></p>
+<p>Superclass for all AGX Dynamics environments. Initializes AGX, loads scene from file and builds it.</p>
+<dl class="py method">
+<dt id="gym_agx.envs.agx_env.AgxEnv.close">
+<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.agx_env.AgxEnv.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override close in your subclass to perform any necessary cleanup.</p>
+<p>Environments will automatically close() themselves when
+garbage collected or when the program exits.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.envs.agx_env.AgxEnv.compute_reward">
+<code class="sig-name descname">compute_reward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">achieved_goal</span></em>, <em class="sig-param"><span class="n">goal</span></em>, <em class="sig-param"><span class="n">info</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.agx_env.AgxEnv.compute_reward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the step reward. This externalizes the reward function and makes
+it dependent on an a desired goal and the one that was achieved. If you wish to include
+additional rewards that are independent of the goal, you can include the necessary values
+to derive it in info and compute it accordingly.</p>
+<dl>
+<dt>Args:</dt><dd><p>achieved_goal (object): the goal that was achieved during execution
+desired_goal (object): the desired goal that we asked the agent to attempt to achieve
+info (dict): an info dictionary with additional information</p>
+</dd>
+<dt>Returns:</dt><dd><p>float: The reward that corresponds to the provided achieved goal w.r.t. to the desired
+goal. Note that the following should always hold true:</p>
+<blockquote>
+<div><p>ob, reward, done, info = env.step()
+assert reward == env.compute_reward(ob['achieved_goal'], ob['goal'], info)</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.envs.agx_env.AgxEnv.dt">
+<em class="property">property </em><code class="sig-name descname">dt</code><a class="headerlink" href="#gym_agx.envs.agx_env.AgxEnv.dt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="gym_agx.envs.agx_env.AgxEnv.metadata">
+<code class="sig-name descname">metadata</code><em class="property"> = {'render.modes': ['osg', 'debug']}</em><a class="headerlink" href="#gym_agx.envs.agx_env.AgxEnv.metadata" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.envs.agx_env.AgxEnv.render">
+<code class="sig-name descname">render</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'human'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.agx_env.AgxEnv.render" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renders the environment.</p>
+<p>The set of supported modes varies per environment. (And some
+environments do not support rendering at all.) By convention,
+if mode is:</p>
+<ul class="simple">
+<li><p>human: render to the current display or terminal and
+return nothing. Usually for human consumption.</p></li>
+<li><p>rgb_array: Return an numpy.ndarray with shape (x, y, 3),
+representing RGB values for an x-by-y pixel image, suitable
+for turning into a video.</p></li>
+<li><p>ansi: Return a string (str) or StringIO.StringIO containing a
+terminal-style text representation. The text can include newlines
+and ANSI escape sequences (e.g. for colors).</p></li>
+</ul>
+<dl class="simple">
+<dt>Note:</dt><dd><dl class="simple">
+<dt>Make sure that your class's metadata 'render.modes' key includes</dt><dd><p>the list of supported modes. It's recommended to call super()
+in implementations to use the functionality of this method.</p>
+</dd>
+</dl>
+</dd>
+<dt>Args:</dt><dd><p>mode (str): the mode to render with</p>
+</dd>
+</dl>
+<p>Example:</p>
+<dl>
+<dt>class MyEnv(Env):</dt><dd><p>metadata = {'render.modes': ['human', 'rgb_array']}</p>
+<dl class="simple">
+<dt>def render(self, mode='human'):</dt><dd><dl class="simple">
+<dt>if mode == 'rgb_array':</dt><dd><p>return np.array(...) # return RGB frame suitable for video</p>
+</dd>
+<dt>elif mode == 'human':</dt><dd><p>... # pop up a window and render</p>
+</dd>
+<dt>else:</dt><dd><p>super(MyEnv, self).render(mode=mode) # just raise an exception</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.envs.agx_env.AgxEnv.reset">
+<code class="sig-name descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.agx_env.AgxEnv.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets the state of the environment and returns an initial observation.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>observation (object): the initial observation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.envs.agx_env.AgxEnv.seed">
+<code class="sig-name descname">seed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.agx_env.AgxEnv.seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the seed for this env's random number generator(s).</p>
+<dl class="simple">
+<dt>Note:</dt><dd><p>Some environments use multiple pseudorandom number generators.
+We want to capture all such seeds used in order to ensure that
+there aren't accidental correlations between multiple generators.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>list&lt;bigint&gt;: Returns the list of seeds used in this env's random</dt><dd><p>number generators. The first value in the list should be the
+&quot;main&quot; seed, or the value which a reproducer should pass to
+'seed'. Often, the main seed equals the provided 'seed', but
+this won't be true if seed=None, for example.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.envs.agx_env.AgxEnv.step">
+<code class="sig-name descname">step</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">action</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.agx_env.AgxEnv.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run one timestep of the environment's dynamics. When end of
+episode is reached, you are responsible for calling <cite>reset()</cite>
+to reset this environment's state.</p>
+<p>Accepts an action and returns a tuple (observation, reward, done, info).</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>action (object): an action provided by the agent</p>
+</dd>
+<dt>Returns:</dt><dd><p>observation (object): agent's observation of the current environment
+reward (float) : amount of reward returned after previous action
+done (bool): whether the episode has ended, in which case further step() calls will return undefined results
+info (dict): contains auxiliary diagnostic information (helpful for debugging, and sometimes learning)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-gym_agx.envs.wire_env">
+<span id="gym-agx-envs-wire-env-module"></span><h2>gym_agx.envs.wire_env module<a class="headerlink" href="#module-gym_agx.envs.wire_env" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="gym_agx.envs.wire_env.WireEnv">
+<em class="property">class </em><code class="sig-prename descclassname">gym_agx.envs.wire_env.</code><code class="sig-name descname">WireEnv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scene_path</span></em>, <em class="sig-param"><span class="n">n_substeps</span></em>, <em class="sig-param"><span class="n">grippers</span></em>, <em class="sig-param"><span class="n">camera</span></em>, <em class="sig-param"><span class="n">args</span></em>, <em class="sig-param"><span class="n">distance_threshold</span></em>, <em class="sig-param"><span class="n">reward_type</span></em>, <em class="sig-param"><span class="n">reward_limit</span></em>, <em class="sig-param"><span class="n">randomized_goal</span></em>, <em class="sig-param"><span class="n">goal_scene_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.wire_env.WireEnv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#gym_agx.envs.agx_env.AgxEnv" title="gym_agx.envs.agx_env.AgxEnv"><code class="xref py py-class docutils literal notranslate"><span class="pre">gym_agx.envs.agx_env.AgxEnv</span></code></a></p>
+<p>Superclass for all Wire environments.</p>
+<dl class="py method">
+<dt id="gym_agx.envs.wire_env.WireEnv.compute_reward">
+<code class="sig-name descname">compute_reward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">achieved_goal</span></em>, <em class="sig-param"><span class="n">goal</span></em>, <em class="sig-param"><span class="n">info</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.wire_env.WireEnv.compute_reward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the step reward. This externalizes the reward function and makes
+it dependent on an a desired goal and the one that was achieved. If you wish to include
+additional rewards that are independent of the goal, you can include the necessary values
+to derive it in info and compute it accordingly.</p>
+<dl>
+<dt>Args:</dt><dd><p>achieved_goal (object): the goal that was achieved during execution
+desired_goal (object): the desired goal that we asked the agent to attempt to achieve
+info (dict): an info dictionary with additional information</p>
+</dd>
+<dt>Returns:</dt><dd><p>float: The reward that corresponds to the provided achieved goal w.r.t. to the desired
+goal. Note that the following should always hold true:</p>
+<blockquote>
+<div><p>ob, reward, done, info = env.step()
+assert reward == env.compute_reward(ob['achieved_goal'], ob['goal'], info)</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.envs.wire_env.WireEnv.done">
+<em class="property">property </em><code class="sig-name descname">done</code><a class="headerlink" href="#gym_agx.envs.wire_env.WireEnv.done" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.envs.wire_env.WireEnv.render">
+<code class="sig-name descname">render</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'human'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.wire_env.WireEnv.render" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renders the environment.</p>
+<p>The set of supported modes varies per environment. (And some
+environments do not support rendering at all.) By convention,
+if mode is:</p>
+<ul class="simple">
+<li><p>human: render to the current display or terminal and
+return nothing. Usually for human consumption.</p></li>
+<li><p>rgb_array: Return an numpy.ndarray with shape (x, y, 3),
+representing RGB values for an x-by-y pixel image, suitable
+for turning into a video.</p></li>
+<li><p>ansi: Return a string (str) or StringIO.StringIO containing a
+terminal-style text representation. The text can include newlines
+and ANSI escape sequences (e.g. for colors).</p></li>
+</ul>
+<dl class="simple">
+<dt>Note:</dt><dd><dl class="simple">
+<dt>Make sure that your class's metadata 'render.modes' key includes</dt><dd><p>the list of supported modes. It's recommended to call super()
+in implementations to use the functionality of this method.</p>
+</dd>
+</dl>
+</dd>
+<dt>Args:</dt><dd><p>mode (str): the mode to render with</p>
+</dd>
+</dl>
+<p>Example:</p>
+<dl>
+<dt>class MyEnv(Env):</dt><dd><p>metadata = {'render.modes': ['human', 'rgb_array']}</p>
+<dl class="simple">
+<dt>def render(self, mode='human'):</dt><dd><dl class="simple">
+<dt>if mode == 'rgb_array':</dt><dd><p>return np.array(...) # return RGB frame suitable for video</p>
+</dd>
+<dt>elif mode == 'human':</dt><dd><p>... # pop up a window and render</p>
+</dd>
+<dt>else:</dt><dd><p>super(MyEnv, self).render(mode=mode) # just raise an exception</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.envs.wire_env.goal_distance">
+<code class="sig-prename descclassname">gym_agx.envs.wire_env.</code><code class="sig-name descname">goal_distance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">achieved_goal</span></em>, <em class="sig-param"><span class="n">goal</span></em>, <em class="sig-param"><span class="n">norm</span><span class="o">=</span><span class="default_value">'l2'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.wire_env.goal_distance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-gym_agx.envs">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-gym_agx.envs" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="gym_agx.envs.wire.html" class="btn btn-neutral float-right" title="gym_agx.envs.wire package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="gym_agx.html" class="btn btn-neutral float-left" title="gym_agx package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Rita Laezza
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

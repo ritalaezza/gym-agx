@@ -1,0 +1,543 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="English" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="English" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gym_agx.utils package &mdash; gym-agx  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="gym_agx.tests package" href="gym_agx.tests.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> gym-agx
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="gym_agx.html">gym_agx package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="gym_agx.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="gym_agx.envs.html">gym_agx.envs package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gym_agx.sims.html">gym_agx.sims package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gym_agx.tests.html">gym_agx.tests package</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">gym_agx.utils package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.utils.agx_utils">gym_agx.utils.agx_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.utils.utils">gym_agx.utils.utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.utils">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.html#module-gym_agx">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">gym-agx</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="gym_agx.html">gym_agx package</a> &raquo;</li>
+        
+      <li>gym_agx.utils package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/gym_agx.utils.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="gym-agx-utils-package">
+<h1>gym_agx.utils package<a class="headerlink" href="#gym-agx-utils-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-gym_agx.utils.agx_utils">
+<span id="gym-agx-utils-agx-utils-module"></span><h2>gym_agx.utils.agx_utils module<a class="headerlink" href="#module-gym_agx.utils.agx_utils" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="gym_agx.utils.agx_utils.CameraSpecs">
+<em class="property">class </em><code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">CameraSpecs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eye</span></em>, <em class="sig-param"><span class="n">center</span></em>, <em class="sig-param"><span class="n">up</span></em>, <em class="sig-param"><span class="n">light_position</span></em>, <em class="sig-param"><span class="n">light_direction</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.CameraSpecs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="gym_agx.utils.agx_utils.Gripper">
+<em class="property">class </em><code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">Gripper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">controllable</span></em>, <em class="sig-param"><span class="n">observable</span></em>, <em class="sig-param"><span class="n">max_velocity</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">max_acceleration</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">min_compliance</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">max_compliance</span><span class="o">=</span><span class="default_value">1000000.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.Gripper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="gym_agx.utils.agx_utils.Gripper.add_constraint">
+<code class="sig-name descname">add_constraint</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">gripper_dof</span></em>, <em class="sig-param"><span class="n">compute_forces_enabled</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">velocity_control</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">compliance_control</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.Gripper.add_constraint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.utils.agx_utils.Gripper.apply_control">
+<code class="sig-name descname">apply_control</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sim</span></em>, <em class="sig-param"><span class="n">action</span></em>, <em class="sig-param"><span class="n">dt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.Gripper.apply_control" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.utils.agx_utils.Gripper.get_gripper_velocity">
+<code class="sig-name descname">get_gripper_velocity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sim</span></em>, <em class="sig-param"><span class="n">constraint_dof</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.Gripper.get_gripper_velocity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.utils.agx_utils.Gripper.get_state">
+<code class="sig-name descname">get_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sim</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.Gripper.get_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="gym_agx.utils.agx_utils.Gripper.last_action_index">
+<code class="sig-name descname">last_action_index</code><em class="property"> = -1</em><a class="headerlink" href="#gym_agx.utils.agx_utils.Gripper.last_action_index" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.utils.agx_utils.Gripper.rescale_compliance">
+<code class="sig-name descname">rescale_compliance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">compliance</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.Gripper.rescale_compliance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.utils.agx_utils.Gripper.rescale_velocity">
+<code class="sig-name descname">rescale_velocity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">velocity</span></em>, <em class="sig-param"><span class="n">gripper_velocity</span></em>, <em class="sig-param"><span class="n">dt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.Gripper.rescale_velocity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="gym_agx.utils.agx_utils.GripperConstraint">
+<em class="property">class </em><code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">GripperConstraint</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gripper_dof</span></em>, <em class="sig-param"><span class="n">compute_forces_enabled</span></em>, <em class="sig-param"><span class="n">velocity_control</span></em>, <em class="sig-param"><span class="n">compliance_control</span></em>, <em class="sig-param"><span class="n">velocity_index</span></em>, <em class="sig-param"><span class="n">compliance_index</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.GripperConstraint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py class">
+<dt id="gym_agx.utils.agx_utils.GripperConstraint.Dof">
+<em class="property">class </em><code class="sig-name descname">Dof</code><a class="headerlink" href="#gym_agx.utils.agx_utils.GripperConstraint.Dof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt id="gym_agx.utils.agx_utils.GripperConstraint.Dof.X_ROTATIONAL">
+<code class="sig-name descname">X_ROTATIONAL</code><em class="property"> = (3,)</em><a class="headerlink" href="#gym_agx.utils.agx_utils.GripperConstraint.Dof.X_ROTATIONAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="gym_agx.utils.agx_utils.GripperConstraint.Dof.X_TRANSLATIONAL">
+<code class="sig-name descname">X_TRANSLATIONAL</code><em class="property"> = (0,)</em><a class="headerlink" href="#gym_agx.utils.agx_utils.GripperConstraint.Dof.X_TRANSLATIONAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="gym_agx.utils.agx_utils.GripperConstraint.Dof.Y_ROTATIONAL">
+<code class="sig-name descname">Y_ROTATIONAL</code><em class="property"> = (4,)</em><a class="headerlink" href="#gym_agx.utils.agx_utils.GripperConstraint.Dof.Y_ROTATIONAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="gym_agx.utils.agx_utils.GripperConstraint.Dof.Y_TRANSLATIONAL">
+<code class="sig-name descname">Y_TRANSLATIONAL</code><em class="property"> = (1,)</em><a class="headerlink" href="#gym_agx.utils.agx_utils.GripperConstraint.Dof.Y_TRANSLATIONAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="gym_agx.utils.agx_utils.GripperConstraint.Dof.Z_ROTATIONAL">
+<code class="sig-name descname">Z_ROTATIONAL</code><em class="property"> = 5</em><a class="headerlink" href="#gym_agx.utils.agx_utils.GripperConstraint.Dof.Z_ROTATIONAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="gym_agx.utils.agx_utils.GripperConstraint.Dof.Z_TRANSLATIONAL">
+<code class="sig-name descname">Z_TRANSLATIONAL</code><em class="property"> = (2,)</em><a class="headerlink" href="#gym_agx.utils.agx_utils.GripperConstraint.Dof.Z_TRANSLATIONAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.utils.agx_utils.GripperConstraint.is_active">
+<em class="property">property </em><code class="sig-name descname">is_active</code><a class="headerlink" href="#gym_agx.utils.agx_utils.GripperConstraint.is_active" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="gym_agx.utils.agx_utils.HelpListener">
+<em class="property">class </em><code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">HelpListener</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">app</span></em>, <em class="sig-param"><span class="n">text_table</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.HelpListener" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">agxSDK.StepEventListener</span></code></p>
+<dl class="py method">
+<dt id="gym_agx.utils.agx_utils.HelpListener.addNotification">
+<code class="sig-name descname">addNotification</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.HelpListener.addNotification" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="gym_agx.utils.agx_utils.HelpListener.pre">
+<code class="sig-name descname">pre</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.HelpListener.pre" title="Permalink to this definition">¶</a></dt>
+<dd><p><cite>pre(const agx::TimeStamp &amp;time)</cite></p>
+<p>Called before a step is taken in the simulation Implement this method in the
+derived class to get callbacks.</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><cite>time</cite><span class="classifier"></span></dt><dd><ul>
+<li><p>the current simulation time</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="gym_agx.utils.agx_utils.InfoPrinter">
+<em class="property">class </em><code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">InfoPrinter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">app</span></em>, <em class="sig-param"><span class="n">text_table</span></em>, <em class="sig-param"><span class="n">text_color</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.InfoPrinter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">agxSDK.StepEventListener</span></code></p>
+<dl class="py method">
+<dt id="gym_agx.utils.agx_utils.InfoPrinter.post">
+<code class="sig-name descname">post</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.InfoPrinter.post" title="Permalink to this definition">¶</a></dt>
+<dd><p><cite>post(const agx::TimeStamp &amp;time)</cite></p>
+<p>Called after a step is taken in the simulation Implement this method in the
+derived class to get callbacks.</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><cite>time</cite><span class="classifier"></span></dt><dd><ul>
+<li><p>the current simulation time</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.agx_utils.create_body">
+<code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">create_body</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sim</span></em>, <em class="sig-param"><span class="n">shape</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.create_body" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function that creates a RigidBody according to the given definition.
+Returns the body itself, it's geometry and the OSG node that was created for it.
+:param sim: AGX Simulation object
+:param shape: shape of object - agxCollide.Shape.
+:param args: The definition contains the following parts:
+name - string. Optional. Defaults to &quot;&quot;. The name of the new body.
+geometryTransform - agx.AffineMatrix4x4. Optional. Defaults to identity transformation. The local transformation of
+the shape relative to the body.
+motionControl - agx.RigidBody.MotionControl. Optional. Defaults to DYNAMICS.
+material - agx.Material. Optional. Ignored if not given. Material assigned to the geometry created for the body.
+:return: body, geometry</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.agx_utils.create_help_text">
+<code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">create_help_text</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sim</span></em>, <em class="sig-param"><span class="n">app</span></em>, <em class="sig-param"><span class="n">text_table</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.create_help_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write help text. textTable is a table with strings that will be drawn above the default text.
+:param sim: AGX Simulation object
+:param app: OSG Example Application object
+:param text_table: table with text to be printed on screen
+:return: AGX simulation object</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.agx_utils.create_info_printer">
+<code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">create_info_printer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sim</span></em>, <em class="sig-param"><span class="n">app</span></em>, <em class="sig-param"><span class="n">text_table</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">text_color</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.create_info_printer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write information to screen from lambda functions during the simulation.
+:param sim: AGX Simulation object
+:param app: OSG Example Application object
+:param text_table: table with text to be printed on screen
+:param text_color: Color of text
+:return: AGX simulation object</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.agx_utils.get_cable_pose">
+<code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">get_cable_pose</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cable</span></em>, <em class="sig-param"><span class="n">gain</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.get_cable_pose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get AGX Cable segments' positions and rotations.
+:param cable: AGX Cable object
+:param gain: gives possibility to rescale position values
+:return: NumPy array with segments' position and rotations</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.agx_utils.get_cable_state">
+<code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">get_cable_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cable</span></em>, <em class="sig-param"><span class="n">gain</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.get_cable_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get AGX Cable segments' begin and end positions.
+:param cable: AGX Cable object
+:param gain: gives possibility to rescale position values
+:return: NumPy array with segments' position and rotations</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.agx_utils.get_force_torque">
+<code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">get_force_torque</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sim</span></em>, <em class="sig-param"><span class="n">rigid_body</span></em>, <em class="sig-param"><span class="n">constraint_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.get_force_torque" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets force an torque on rigid object, computed by a constraint defined by 'constraint_name'.
+:param sim: AGX Simulation object
+:param rigid_body: RigidBody object on which to compute force and torque
+:param constraint_name: Name indicating which constraint contains force torque information for this object
+:return: force an torque</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.agx_utils.get_gripper_state">
+<code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">get_gripper_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sim</span></em>, <em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">include_position</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">gain</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.get_gripper_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get AGX 'gripper' positions, force and torque.
+:param sim: AGX Dynamics simulation object
+:param key: name of gripper
+:param include_position: Boolean to determine if gripper position is part of state
+:param gain: gives possibility to rescale position values
+:return: NumPy array with gripper position, rotations, force and torque</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.agx_utils.save_simulation">
+<code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">save_simulation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sim</span></em>, <em class="sig-param"><span class="n">file_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.save_simulation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save AGX simulation object to file.
+:param sim: AGX simulation object
+:param file_name: name of the file
+:return: Boolean for success/failure</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.agx_utils.to_agx_list">
+<code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">to_agx_list</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">np_array</span></em>, <em class="sig-param"><span class="n">agx_type</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.to_agx_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert from Numpy array to AGX data structure.
+:param np_array:  NumPy array
+:param agx_type: Target AGX data structure
+:return: AGX data object</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.agx_utils.to_numpy_array">
+<code class="sig-prename descclassname">gym_agx.utils.agx_utils.</code><code class="sig-name descname">to_numpy_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">agx_list</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.agx_utils.to_numpy_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert from AGX data structure to NumPy array.
+:param agx_list: AGX data structure
+:return: NumPy array</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-gym_agx.utils.utils">
+<span id="gym-agx-utils-utils-module"></span><h2>gym_agx.utils.utils module<a class="headerlink" href="#module-gym_agx.utils.utils" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="gym_agx.utils.utils.compute_curvature">
+<code class="sig-prename descclassname">gym_agx.utils.utils.</code><code class="sig-name descname">compute_curvature</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v0</span></em>, <em class="sig-param"><span class="n">v1</span></em>, <em class="sig-param"><span class="n">segment_length</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.utils.compute_curvature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes curvature between two segments (through circumscribed osculating circle).
+:param v0: Numpy array
+:param v1: Numpy array
+:param segment_length: length of AGX Cable segment (default 1)
+:return: a positive scalar corresponding to the curvature: K = 2*tan(tangent_angle/2) / segment_length</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.utils.compute_linear_distance">
+<code class="sig-prename descclassname">gym_agx.utils.utils.</code><code class="sig-name descname">compute_linear_distance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v0</span></em>, <em class="sig-param"><span class="n">v1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.utils.compute_linear_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes linear distance between two points.
+:param v0: Numpy array
+:param v1: Numpy array
+:return: Euclidean distance between v0 and v1.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.utils.compute_torsion">
+<code class="sig-prename descclassname">gym_agx.utils.utils.</code><code class="sig-name descname">compute_torsion</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v0</span></em>, <em class="sig-param"><span class="n">v1</span></em>, <em class="sig-param"><span class="n">v2</span></em>, <em class="sig-param"><span class="n">segment_length</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.utils.compute_torsion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes torsion between two segments (through circumscribed osculating circle).
+:param v0: Numpy array
+:param v1: Numpy array
+:param v2: Numpy array
+:param segment_length: length of AGX Cable segment (default 1)
+:return: a positive scalar corresponding to the curvature: T = 2*tan(binormal_angle/2) / segment_length</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.utils.find_reference_angle">
+<code class="sig-prename descclassname">gym_agx.utils.utils.</code><code class="sig-name descname">find_reference_angle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">angle</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.utils.find_reference_angle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds reference angle in first quadrant.
+:param angle: angle in radians
+:return: reference angle and sign</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.utils.get_cable_curvature">
+<code class="sig-prename descclassname">gym_agx.utils.utils.</code><code class="sig-name descname">get_cable_curvature</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cable_state</span></em>, <em class="sig-param"><span class="n">segment_length</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.utils.get_cable_curvature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates through cable state to compute curvature between three adjacent points.
+:param cable_state: Numpy array with coordinates of cable segments
+:param segment_length: length of AGX Cable segment (default 1)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.utils.get_cable_torsion">
+<code class="sig-prename descclassname">gym_agx.utils.utils.</code><code class="sig-name descname">get_cable_torsion</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cable_state</span></em>, <em class="sig-param"><span class="n">segment_length</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.utils.get_cable_torsion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates through cable state to compute torsion between four adjacent points.
+:param cable_state: Numpy array with coordinates of cable segments
+:param segment_length: length of AGX Cable segment (default 1)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.utils.utils.sinusoidal_trajectory">
+<code class="sig-prename descclassname">gym_agx.utils.utils.</code><code class="sig-name descname">sinusoidal_trajectory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">A</span></em>, <em class="sig-param"><span class="n">w</span></em>, <em class="sig-param"><span class="n">t</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.utils.utils.sinusoidal_trajectory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assuming a position trajectory of the type: x(t) = A cos(w*t) , the velocity trajectory becomes:
+x'(t) = - A*w sin(w*t)
+:param A: Amplitude in meters
+:param w: frequency in radians per second
+:param t: current timestamp in seconds
+:return: instant velocity, x'</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-gym_agx.utils">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-gym_agx.utils" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="gym_agx.tests.html" class="btn btn-neutral float-left" title="gym_agx.tests package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Rita Laezza
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
