@@ -19,7 +19,7 @@ except ImportError as e:
     raise error.DependencyNotInstalled("{}. (HINT: you need to install AGX Dynamics, "
                                        "have a valid license and run 'setup_env.bash'.)".format(e))
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('gym_agx.envs')
 
 
 class AgxEnv(gym.GoalEnv):
@@ -84,12 +84,12 @@ class AgxEnv(gym.GoalEnv):
     # ----------------------------
 
     def seed(self, seed=None):
-        logger.debug("seed")
+        logger.info("seed")
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
     def step(self, action):
-        logger.debug("step")
+        logger.info("step")
         action = np.clip(action, self.action_space.low, self.action_space.high)
         self._set_action(action)
         self._step_callback()
@@ -103,7 +103,7 @@ class AgxEnv(gym.GoalEnv):
         return obs, reward, done, info
 
     def reset(self):
-        logger.debug("reset")
+        logger.info("reset")
         super(AgxEnv, self).reset()
         did_reset_sim = False
         while not did_reset_sim:
@@ -113,13 +113,13 @@ class AgxEnv(gym.GoalEnv):
         return obs
 
     def close(self):
-        logger.debug("close")
+        logger.info("close")
         if self.app is not None:
             self.app = None
             agx.shutdown()
 
     def render(self, mode='human'):
-        logger.debug("render")
+        logger.info("render")
         # while this rendering mode is not used, it has to be defined for compatibility
         self._render_callback()
 
@@ -138,7 +138,7 @@ class AgxEnv(gym.GoalEnv):
         logger.debug("Gravity after readFile is: {}".format(self.gravity))
 
     def _init_app(self, start_rendering):
-        logger.debug("init app")
+        logger.info("init app")
         if start_rendering:
             self._add_rendering()
         self.app.init(agxIO.ArgumentParser([sys.executable] + self.args))

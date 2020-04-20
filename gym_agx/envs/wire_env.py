@@ -12,7 +12,7 @@ from gym_agx.envs import agx_env
 from gym_agx.utils.agx_utils import get_cable_state
 from gym_agx.utils.utils import get_cable_curvature, sinusoidal_trajectory
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('gym_agx.envs')
 
 
 def goal_distance(achieved_goal, goal, norm="l2"):

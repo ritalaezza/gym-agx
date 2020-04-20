@@ -11,7 +11,7 @@ PACKAGE_DIRECTORY = os.path.split(FILE_DIRECTORY)[0]
 SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_hinge.agx')
 GOAL_SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_hinge_goal.agx')
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('gym_agx.envs')
 
 
 class BendWireEnv(wire_env.WireEnv):

@@ -1,5 +1,8 @@
 import math
+import logging
 import numpy as np
+
+logger = logging.getLogger('gym_agx.utils')
 
 
 def sinusoidal_trajectory(A, w, t):

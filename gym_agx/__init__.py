@@ -2,20 +2,22 @@ import os
 import logging.config
 from gym.envs.registration import register
 
-# This format is true today, but it's *not* an official spec.
-# [username/](env-name)-v(version)    env-name is group 1, version is group 2
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))  # Project Root
 
-PATH = 'logging.conf'
-if os.path.exists(PATH):
-    with open(PATH, 'rt') as f:
+LOG_DIR = os.path.join(ROOT_DIR, 'logging.conf')
+if os.path.exists(LOG_DIR):
+    with open(LOG_DIR, 'rt') as f:
         try:
-            logging.config.fileConfig(PATH)
+            # Quick fix: change working directory to Project root before setting log configuration
+            current_dir = os.getcwd()
+            os.chdir(ROOT_DIR)
+            logging.config.fileConfig(LOG_DIR)
+            os.chdir(current_dir)
         except Exception as e:
             print(e)
-            print('Error in Logging Configuration. Using default configs')
 else:
     logging.basicConfig(level=logging.DEBUG)
-    print('Failed to load configuration file. Using default configs')
+    print('Failed to load configuration file. Using default configs.')
 
 
 def _merge(a, b):
@@ -23,6 +25,8 @@ def _merge(a, b):
     return a
 
 
+# This format is true today, but it's *not* an official spec.
+# [username/](env-name)-v(version)    env-name is group 1, version is group 2
 for reward_type in ['sparse', 'dense']:
     suffix = 'Dense' if reward_type == 'dense' else ''
     kwargs = {

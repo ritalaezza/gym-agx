@@ -1,6 +1,8 @@
 import pytest
+import logging
 import re
 
+logger = logging.getLogger('gym_agx.tests')
 ENVIRONMENT_IDS = ['BendWire-v0']
 
 

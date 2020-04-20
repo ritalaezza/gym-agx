@@ -13,12 +13,15 @@ import agxIO
 import agxOSG
 
 # Python modules
+import logging
 import math
 import sys
 
 # Local modules
 from gym_agx.utils.agx_utils import create_body, save_simulation
 from gym_agx.utils.utils import sinusoidal_trajectory
+
+logger = logging.getLogger('gym_agx.sims')
 
 FILE_NAME = 'bend_wire_hinge'
 # Simulation Parameters
@@ -71,20 +74,20 @@ def build_simulation():
     # too by creating an agx.PointGravityField for example).
     # AGX uses a right-hand coordinate system (That is Z defines UP. X is right, and Y is into the screen)
     if not GRAVITY:
-        print("Gravity off.")
+        logger.info("Gravity off.")
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 
     # Get current delta-t (timestep) that is used in the simulation?
     dt = sim.getTimeStep()
-    print("default dt = {}".format(dt))
+    logger.debug("default dt = {}".format(dt))
 
     # Change the timestep
     sim.setTimeStep(TIMESTEP)
 
     # Confirm timestep changed
     dt = sim.getTimeStep()
-    print("new dt = {}".format(dt))
+    logger.debug("new dt = {}".format(dt))
 
     # Create a ground plane for reference
     ground, ground_geom = create_body(sim, name="ground", shape=agxCollide.Box(LENGTH, LENGTH, GROUND_WIDTH),
@@ -104,7 +107,7 @@ def build_simulation():
                                                     position=agx.Vec3(LENGTH, 0, 0),
                                                     motionControl=agx.RigidBody.DYNAMICS)
 
-    print("Mass of grippers: {}".format(gripper_right.calculateMass()))
+    logger.info("Mass of grippers: {}".format(gripper_right.calculateMass()))
 
     # Create Frames for each gripper:
     # Cables are attached passing through the attachment point along the Z axis of the body's coordinate frame.
@@ -125,9 +128,9 @@ def build_simulation():
     # Try to initialize cable
     report = cable.tryInitialize()
     if report.successful():
-        print("Successful cable initialization.")
+        logger.debug("Successful cable initialization.")
     else:
-        print(report.getActualError())
+        logger.error(report.getActualError())
 
     # Add cable plasticity
     plasticity = agxCable.CablePlasticity()
@@ -211,20 +214,20 @@ def main(args):
     for i, rb in enumerate(rbs):
         name = rbs[i].getName()
         if name == "":
-            print("Object: segment_{}".format(i - 2))
+            logger.info("Object: segment_{}".format(i - 2))
         else:
-            print("Object: {}".format(rbs[i].getName()))
-        print("Position:")
-        print(rbs[i].getPosition())
-        print("Velocity:")
-        print(rbs[i].getVelocity())
-        print("Rotation:")
-        print(rbs[i].getRotation())
-        print("Angular velocity:")
-        print(rbs[i].getAngularVelocity())
+            logger.info("Object: {}".format(rbs[i].getName()))
+        logger.info("Position: {}".format(rbs[i].getPosition()))
+        logger.info("Velocity: {}".format(rbs[i].getVelocity()))
+        logger.info("Rotation: {}".format(rbs[i].getRotation()))
+        logger.info("Angular velocity: {}".format(rbs[i].getAngularVelocity()))
 
     # Save simulation to file
-    save_simulation(sim, FILE_NAME)
+    success = save_simulation(sim, FILE_NAME)
+    if success:
+        logger.debug("Simulation saved!")
+    else:
+        logger.debug("Simulation not saved!")
 
     # Render simulation
     app = add_rendering(sim, LENGTH)
@@ -233,7 +236,7 @@ def main(args):
     app.initSimulation(sim, True)  # This changes timestep and Gravity!
     sim.setTimeStep(TIMESTEP)
     if not GRAVITY:
-        print("Gravity off.")
+        logger.info("Gravity off.")
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 
@@ -265,7 +268,11 @@ def main(args):
             t = sim.getTimeStamp()
 
     # Save goal simulation to file
-    save_simulation(sim, FILE_NAME + "_goal")
+    success = save_simulation(sim, FILE_NAME + "_goal")
+    if success:
+        logger.debug("Goal simulation saved!")
+    else:
+        logger.debug("Goal simulation not saved!")
 
 
 if __name__ == '__main__':

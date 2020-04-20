@@ -9,7 +9,7 @@ import logging
 import numpy as np
 from enum import Enum
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('gym_agx.utils')
 
 
 class GripperConstraint:
@@ -86,6 +86,7 @@ class Gripper:
                 if constraint.velocity_control:
                     gripper_velocity = self.get_gripper_velocity(sim, constraint.gripper_dof)
                     velocity = self.rescale_velocity(action[constraint.velocity_index], gripper_velocity, dt)
+                    logger.debug(f'{key} velocity: {velocity}')
                     motor.setSpeed(np.float64(velocity))
                 if constraint.compliance_control:
                     motor_param = motor.getRegularizationParameters()
@@ -119,16 +120,21 @@ class Gripper:
             state = []
             for key, constraint in self.constraints.items():
                 if constraint.compute_forces_enabled:
-                    state.append(get_gripper_state(sim, key).ravel())
+                    constraint_state = get_gripper_state(sim, key).ravel()
+                    logger.debug(f"{key} state: {constraint_state}")
+                    state.append(constraint_state)
             return np.asarray(state)
         else:
             logger.error("Received get_state command for unobservable gripper.")
 
     def rescale_velocity(self, velocity, gripper_velocity, dt):
+        logger.debug(f'Gripper velocity: {gripper_velocity}')
+        logger.debug(f'Initial target velocity: {velocity}')
         if abs(velocity - gripper_velocity) > self.max_acceleration:
             velocity = gripper_velocity + np.sign(velocity - gripper_velocity) * (self.max_acceleration * dt)
         if abs(velocity) > self.max_velocity:
             velocity = self.max_velocity * np.sign(velocity)
+        logger.debug(f'Rescaled target velocity: {velocity}')
         return velocity
 
     def rescale_compliance(self, compliance):
