@@ -3,8 +3,8 @@ import sys
 import agx
 import logging
 
-from gym_agx.envs import wire_env
-from gym_agx.utils.agx_utils import CameraSpecs, Gripper, GripperConstraint
+from gym_agx.envs import dlo_env
+from gym_agx.utils.agx_utils import CameraSpecs, EndEffector, EndEffectorConstraint
 
 FILE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 PACKAGE_DIRECTORY = os.path.split(FILE_DIRECTORY)[0]
@@ -14,7 +14,7 @@ GOAL_SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_hinge_goa
 logger = logging.getLogger('gym_agx.envs')
 
 
-class BendWireEnv(wire_env.WireEnv):
+class BendWireEnv(dlo_env.DloEnv):
     """Subclass which inherits from Wire environment.
     """
 
@@ -24,6 +24,7 @@ class BendWireEnv(wire_env.WireEnv):
         :param reward_type: either 'sparse' or 'dense'
         """
         length = 0.1  # meters
+
         camera_distance = 0.5  # meters
         camera = CameraSpecs(
             eye=agx.Vec3(length / 2, -5 * length, 0),
@@ -33,7 +34,7 @@ class BendWireEnv(wire_env.WireEnv):
             light_direction=agx.Vec3(0., 0., -1.)
         )
 
-        gripper_right = Gripper(
+        gripper_right = EndEffector(
             name='gripper_right',
             controllable=True,
             observable=True,
@@ -43,27 +44,27 @@ class BendWireEnv(wire_env.WireEnv):
             max_compliance=1e12  # 1/Nm
         )
         gripper_right.add_constraint(name='prismatic_joint_right',
-                                     gripper_dof=GripperConstraint.Dof.X_TRANSLATIONAL,
+                                     end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATIONAL,
                                      compute_forces_enabled=True,
                                      velocity_control=True,
                                      compliance_control=False)
         gripper_right.add_constraint(name='hinge_joint_right',
-                                     gripper_dof=GripperConstraint.Dof.Y_ROTATIONAL,
+                                     end_effector_dof=EndEffectorConstraint.Dof.Y_ROTATIONAL,
                                      compute_forces_enabled=False,
                                      velocity_control=False,
                                      compliance_control=False)
 
-        gripper_left = Gripper(
+        gripper_left = EndEffector(
             name='gripper_left',
             controllable=False,
             observable=False,
         )
         gripper_left.add_constraint(name='prismatic_joint_left',
-                                    gripper_dof=GripperConstraint.Dof.X_TRANSLATIONAL,
+                                    end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATIONAL,
                                     compute_forces_enabled=False,
                                     velocity_control=False)
         gripper_left.add_constraint(name='hinge_joint_left',
-                                    gripper_dof=GripperConstraint.Dof.Y_ROTATIONAL,
+                                    end_effector_dof=EndEffectorConstraint.Dof.Y_ROTATIONAL,
                                     compute_forces_enabled=False,
                                     velocity_control=False)
 
@@ -76,7 +77,7 @@ class BendWireEnv(wire_env.WireEnv):
 
         super(BendWireEnv, self).__init__(scene_path=SCENE_PATH,
                                           n_substeps=n_substeps,
-                                          grippers=grippers,
+                                          end_effectors=grippers,
                                           camera=camera,
                                           args=args,
                                           distance_threshold=0.06,  # 0.16

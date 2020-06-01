@@ -5,7 +5,7 @@ import numpy as np
 logger = logging.getLogger('gym_agx.utils')
 
 
-def sinusoidal_trajectory(A, w, t):
+def sinusoidal_trajectory(A, w, t,  phase=0):
     """Assuming a position trajectory of the type: x(t) = A cos(w*t) , the velocity trajectory becomes:
     x'(t) = - A*w sin(w*t)
     :param A: Amplitude in meters
@@ -13,7 +13,7 @@ def sinusoidal_trajectory(A, w, t):
     :param t: current timestamp in seconds
     :return: instant velocity, x'
     """
-    return -A * w * math.sin(w * t)
+    return -A * w * math.sin(w * t + phase)
 
 
 def find_reference_angle(angle):

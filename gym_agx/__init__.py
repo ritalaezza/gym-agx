@@ -40,3 +40,33 @@ for reward_type in ['sparse', 'dense']:
         kwargs=kwargs,
         max_episode_steps=int(1000),
     )
+
+
+for reward_type in ['sparse', 'dense']:
+    suffix = 'Dense' if reward_type == 'dense' else ''
+    kwargs = {
+        'reward_type': reward_type,
+        'n_substeps': 2,
+    }
+
+    register(
+        id='BendWireObstacle{}-v0'.format(suffix),
+        entry_point='gym_agx.envs:BendWireObstacleEnv',
+        kwargs=kwargs,
+        max_episode_steps=int(3000),
+    )
+
+
+for reward_type in ['sparse', 'dense']:
+    suffix = 'Dense' if reward_type == 'dense' else ''
+    kwargs = {
+        'reward_type': reward_type,
+        'n_substeps': 20,
+    }
+
+    register(
+        id='PushRope{}-v0'.format(suffix),
+        entry_point='gym_agx.envs:PushRopeEnv',
+        kwargs=kwargs,
+        max_episode_steps=int(3000),
+    )

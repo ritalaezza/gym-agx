@@ -4,6 +4,7 @@ import logging
 
 from gym import error, spaces
 from gym.utils import seeding
+
 import gym
 
 try:

@@ -29,15 +29,15 @@ def goal_distance(achieved_goal, goal, norm="l2"):
         logger.error("Unexpected norm.")
 
 
-class WireEnv(agx_env.AgxEnv):
-    """Superclass for all Wire environments.
+class DloEnv(agx_env.AgxEnv):
+    """Superclass for all DLO environments.
     """
-    def __init__(self, scene_path, n_substeps, grippers, camera, args, distance_threshold,
-                 reward_type, reward_limit, randomized_goal, goal_scene_path):
-        """Initializes a WireEnv object
+    def __init__(self, scene_path, n_substeps, end_effectors, camera, args, distance_threshold, reward_type, reward_limit,
+                 randomized_goal, goal_scene_path):
+        """Initializes a DloEnv object
         :param scene_path: path to binary file containing serialized simulation defined in sim/ folder
         :param n_substeps: number os simulation steps per call to step()
-        :param grippers: list of Gripper objects
+        :param end_effectors: list of EndEffector objects
         :param camera: dictionary containing EYE, CENTER, UP information for rendering together with lighting info
         :param args: sys.argv
         :param distance_threshold: threshold for reward function
@@ -52,19 +52,19 @@ class WireEnv(agx_env.AgxEnv):
         self.reward_type = reward_type
         self.reward_limit = reward_limit
         self.light_pose = camera.light_pose
-        self.grippers = grippers
+        self.end_effectors = end_effectors
 
         n_actions = 0
-        for gripper in grippers:
-            if gripper.controllable:
-                for key, constraint in gripper.constraints.items():
+        for end_effector in end_effectors:
+            if end_effector.controllable:
+                for key, constraint in end_effector.constraints.items():
                     if constraint.velocity_control:
                         n_actions += 1
                     if constraint.compliance_control:
                         n_actions += 1
 
-        super(WireEnv, self).__init__(scene_path=scene_path, n_substeps=n_substeps, n_actions=n_actions,
-                                      camera_pose=camera.camera_pose, args=args)
+        super(DloEnv, self).__init__(scene_path=scene_path, n_substeps=n_substeps, n_actions=n_actions,
+                                     camera_pose=camera.camera_pose, args=args)
 
         # Keep track of latest action
         self.last_action = self.action_space.sample()*0
@@ -74,7 +74,7 @@ class WireEnv(agx_env.AgxEnv):
         return False
 
     def render(self, mode="human"):
-        return super(WireEnv, self).render(mode)
+        return super(DloEnv, self).render(mode)
 
     # GoalEnv methods
     # ----------------------------
@@ -115,18 +115,23 @@ class WireEnv(agx_env.AgxEnv):
         self.root = self.app.getRoot()
         rbs = self.sim.getRigidBodies()
         for rb in rbs:
-            if rb.getName() == "ground":
-                ground_node = agxOSG.createVisual(rb, self.root)
-                agxOSG.setDiffuseColor(ground_node, agxRender.Color(1.0, 1.0, 1.0, 1.0))
-            elif rb.getName() == "gripper_left":
-                gripper_left_node = agxOSG.createVisual(rb, self.root)
-                agxOSG.setDiffuseColor(gripper_left_node, agxRender.Color(1.0, 0.0, 0.0, 1.0))
-            elif rb.getName() == "gripper_right":
-                gripper_right_node = agxOSG.createVisual(rb, self.root)
-                agxOSG.setDiffuseColor(gripper_right_node, agxRender.Color(0.0, 0.0, 1.0, 1.0))
-            else:  # Cable segments
-                cable_node = agxOSG.createVisual(rb, self.root)
-                agxOSG.setDiffuseColor(cable_node, agxRender.Color(0.0, 1.0, 0.0, 1.0))
+            name = rb.getName()
+            node = agxOSG.createVisual(rb, self.root)
+            if name == "ground":
+                agxOSG.setDiffuseColor(node, agxRender.Color.Gray())
+            elif name == "gripper_left" or "obstacle" in name:
+                agxOSG.setDiffuseColor(node, agxRender.Color.Red())
+            elif name == "gripper_right" or name == "pusher":
+                agxOSG.setDiffuseColor(node, agxRender.Color.Blue())
+            elif "dlo" in name:
+                agxOSG.setDiffuseColor(node, agxRender.Color.Green())
+            elif "obstacle" in name:
+                agxOSG.setDiffuseColor(node, agxRender.Color.DimGray())
+            elif "base" in name or name == "bounding_box":
+                agxOSG.setDiffuseColor(node, agxRender.Color.White())
+                agxOSG.setAlpha(node, 0.2)
+            else:
+                agxOSG.setDiffuseColor(node, agxRender.Color.Orange())
 
         scene_decorator = self.app.getSceneDecorator()
         light_source_0 = scene_decorator.getLightSource(agxOSG.SceneDecorator.LIGHT0)
@@ -148,16 +153,17 @@ class WireEnv(agx_env.AgxEnv):
 
         cable = agxCable.Cable.find(self.sim, "DLO")
         cable_state = get_cable_state(cable)
+        logger.debug("cable state: {}".format(cable_state))
         cable_curvature = get_cable_curvature(cable_state)
 
-        grippers_state = []
-        for i, gripper in enumerate(self.grippers):
-            if gripper.observable:
-                grippers_state.append(gripper.get_state(self.sim).ravel(order='F'))
-        grippers_state = np.asarray(grippers_state).flatten()
+        end_effector_state = []
+        for i, end_effector in enumerate(self.end_effectors):
+            if end_effector.observable:
+                end_effector_state.append(end_effector.get_state(self.sim).ravel(order='F'))
+        end_effector_state = np.asarray(end_effector_state).flatten()
 
-        if len(grippers_state) > 0:
-            observation = np.concatenate((cable_curvature, grippers_state))
+        if len(end_effector_state) > 0:
+            observation = np.concatenate((cable_curvature, end_effector_state))
         else:
             observation = cable_state
         obs['observation'] = observation.ravel(order='F')
@@ -167,9 +173,10 @@ class WireEnv(agx_env.AgxEnv):
         return obs
 
     def _set_action(self, action):
-        for i, gripper in enumerate(self.grippers):
-            if gripper.controllable:
-                gripper.apply_control(self.sim, action, self.dt)
+        for i, end_effector in enumerate(self.end_effectors):
+            if end_effector.controllable:
+                logger.debug("action: {}".format(action))
+                end_effector.apply_control(self.sim, action, self.dt)
 
         self.last_action = action
 
@@ -179,19 +186,7 @@ class WireEnv(agx_env.AgxEnv):
 
     def _sample_goal(self):
         if self.randomized_goal:
-            n_steps = 1000
-            dt = self.sim.getTimeStep()
-            min_period = n_steps*dt
-
-            # Define initial linear and angular velocities
-            gripper_right = self.sim.getRigidBody('gripper_right')
-            amplitude = np.random.uniform(low=0.0, high=0.025)
-            period = np.random.uniform(low=min_period, high=2 * min_period)
-            rad_frequency = 2 * math.pi * (1 / period)
-            for k in range(n_steps):
-                velocity_x = sinusoidal_trajectory(amplitude, rad_frequency, k * dt)
-                gripper_right.setVelocity(velocity_x, 0, 0)
-                self.sim.stepForward()
+            raise NotImplementedError
         else:
             self.sim.cleanup(agxSDK.Simulation.CLEANUP_ALL, True)
             if not self.sim.restore(self.goal_scene_path, agxSDK.Simulation.READ_ALL):
