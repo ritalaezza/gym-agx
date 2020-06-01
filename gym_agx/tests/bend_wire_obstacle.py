@@ -1,7 +1,5 @@
-import math
 import logging
 import gym_wrappers
-from gym_agx.utils.utils import sinusoidal_trajectory
 
 N_EPISODES = 1
 EPISODE_LENGTH = 3000
