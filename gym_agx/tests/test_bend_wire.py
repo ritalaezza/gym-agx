@@ -1,6 +1,6 @@
 import math
 import logging
-import gym_wrappers
+import gym
 from gym_agx.utils.utils import sinusoidal_trajectory
 
 LENGTH = 0.1
@@ -18,7 +18,7 @@ def main():
     # compliance = 1e12
     # decay = 0.1
 
-    env = gym_wrappers.make('BendWireDense-v0')
+    env = gym.make('BendWireDense-v0')
     for _ in range(N_EPISODES):
         env.reset()
         n_steps = int(n_seconds / env.dt)

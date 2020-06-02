@@ -40,6 +40,7 @@ for reward_type in ['sparse', 'dense']:
         kwargs=kwargs,
         max_episode_steps=int(1000),
     )
+    print("Registered {}".format('BendWire{}-v0'.format(suffix)))
 
 
 for reward_type in ['sparse', 'dense']:
@@ -55,6 +56,7 @@ for reward_type in ['sparse', 'dense']:
         kwargs=kwargs,
         max_episode_steps=int(3000),
     )
+    print("Registered {}".format('BendWireObstacle{}-v0'.format(suffix)))
 
 
 for reward_type in ['sparse', 'dense']:
@@ -70,3 +72,4 @@ for reward_type in ['sparse', 'dense']:
         kwargs=kwargs,
         max_episode_steps=int(3000),
     )
+    print("Registered {}".format('PushRope{}-v0'.format(suffix)))

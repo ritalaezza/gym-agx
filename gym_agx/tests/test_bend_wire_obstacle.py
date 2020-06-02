@@ -1,5 +1,7 @@
 import logging
-import gym_wrappers
+import gym
+
+from gym_agx import envs
 
 N_EPISODES = 1
 EPISODE_LENGTH = 3000
@@ -8,7 +10,7 @@ logger = logging.getLogger('gym_agx.tests')
 
 
 def main():
-    env = gym_wrappers.make('BendWireObstacleDense-v0')
+    env = gym.make('BendWireObstacleDense-v0')
     for _ in range(N_EPISODES):
         env.reset()
         for t in range(EPISODE_LENGTH):
