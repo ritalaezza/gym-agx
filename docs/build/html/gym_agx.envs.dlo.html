@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>gym_agx.envs.wire package &mdash; gym-agx  documentation</title>
+  <title>gym_agx.envs.dlo package &mdash; gym-agx  documentation</title>
   
 
   
@@ -88,7 +88,7 @@
 <li class="toctree-l4 current"><a class="reference internal" href="gym_agx.envs.html#subpackages">Subpackages</a></li>
 <li class="toctree-l4"><a class="reference internal" href="gym_agx.envs.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="gym_agx.envs.html#module-gym_agx.envs.agx_env">gym_agx.envs.agx_env module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="gym_agx.envs.html#module-gym_agx.envs.wire_env">gym_agx.envs.wire_env module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="gym_agx.envs.html#module-gym_agx.envs.dlo_env">gym_agx.envs.dlo_env module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="gym_agx.envs.html#module-gym_agx.envs">Module contents</a></li>
 </ul>
 </li>
@@ -149,13 +149,13 @@
         
           <li><a href="gym_agx.envs.html">gym_agx.envs package</a> &raquo;</li>
         
-      <li>gym_agx.envs.wire package</li>
+      <li>gym_agx.envs.dlo package</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/gym_agx.envs.wire.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/gym_agx.envs.dlo.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -168,23 +168,43 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="gym-agx-envs-wire-package">
-<h1>gym_agx.envs.wire package<a class="headerlink" href="#gym-agx-envs-wire-package" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="gym-agx-envs-dlo-package">
+<h1>gym_agx.envs.dlo package<a class="headerlink" href="#gym-agx-envs-dlo-package" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-gym_agx.envs.wire.bend_wire_env">
-<span id="gym-agx-envs-wire-bend-wire-env-module"></span><h2>gym_agx.envs.wire.bend_wire_env module<a class="headerlink" href="#module-gym_agx.envs.wire.bend_wire_env" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-gym_agx.envs.dlo.bend_wire_env">
+<span id="gym-agx-envs-dlo-bend-wire-env-module"></span><h2>gym_agx.envs.dlo.bend_wire_env module<a class="headerlink" href="#module-gym_agx.envs.dlo.bend_wire_env" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
-<dt id="gym_agx.envs.wire.bend_wire_env.BendWireEnv">
-<em class="property">class </em><code class="sig-prename descclassname">gym_agx.envs.wire.bend_wire_env.</code><code class="sig-name descname">BendWireEnv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">reward_type</span><span class="o">=</span><span class="default_value">'sparse'</span></em>, <em class="sig-param"><span class="n">n_substeps</span><span class="o">=</span><span class="default_value">2</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.wire.bend_wire_env.BendWireEnv" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="gym_agx.envs.html#gym_agx.envs.wire_env.WireEnv" title="gym_agx.envs.wire_env.WireEnv"><code class="xref py py-class docutils literal notranslate"><span class="pre">gym_agx.envs.wire_env.WireEnv</span></code></a></p>
+<dt id="gym_agx.envs.dlo.bend_wire_env.BendWireEnv">
+<em class="property">class </em><code class="sig-prename descclassname">gym_agx.envs.dlo.bend_wire_env.</code><code class="sig-name descname">BendWireEnv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">reward_type</span><span class="o">=</span><span class="default_value">'sparse'</span></em>, <em class="sig-param"><span class="n">n_substeps</span><span class="o">=</span><span class="default_value">2</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.dlo.bend_wire_env.BendWireEnv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="gym_agx.envs.html#gym_agx.envs.dlo_env.DloEnv" title="gym_agx.envs.dlo_env.DloEnv"><code class="xref py py-class docutils literal notranslate"><span class="pre">gym_agx.envs.dlo_env.DloEnv</span></code></a></p>
 <p>Subclass which inherits from Wire environment.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-gym_agx.envs.wire">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-gym_agx.envs.wire" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="gym-agx-envs-dlo-bend-wire-obstacle-env-module">
+<h2>gym_agx.envs.dlo.bend_wire_obstacle_env module<a class="headerlink" href="#gym-agx-envs-dlo-bend-wire-obstacle-env-module" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-gym_agx.envs.dlo.bend_wire_obstacle_env"></span><dl class="py class">
+<dt id="gym_agx.envs.dlo.bend_wire_obstacle_env.BendWireObstacleEnv">
+<em class="property">class </em><code class="sig-prename descclassname">gym_agx.envs.dlo.bend_wire_obstacle_env.</code><code class="sig-name descname">BendWireObstacleEnv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">reward_type</span><span class="o">=</span><span class="default_value">'sparse'</span></em>, <em class="sig-param"><span class="n">n_substeps</span><span class="o">=</span><span class="default_value">2</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.dlo.bend_wire_obstacle_env.BendWireObstacleEnv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="gym_agx.envs.html#gym_agx.envs.dlo_env.DloEnv" title="gym_agx.envs.dlo_env.DloEnv"><code class="xref py py-class docutils literal notranslate"><span class="pre">gym_agx.envs.dlo_env.DloEnv</span></code></a></p>
+<p>Subclass which inherits from Wire environment.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-gym_agx.envs.dlo.push_rope_env">
+<span id="gym-agx-envs-dlo-push-rope-env-module"></span><h2>gym_agx.envs.dlo.push_rope_env module<a class="headerlink" href="#module-gym_agx.envs.dlo.push_rope_env" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="gym_agx.envs.dlo.push_rope_env.PushRopeEnv">
+<em class="property">class </em><code class="sig-prename descclassname">gym_agx.envs.dlo.push_rope_env.</code><code class="sig-name descname">PushRopeEnv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">reward_type</span><span class="o">=</span><span class="default_value">'sparse'</span></em>, <em class="sig-param"><span class="n">n_substeps</span><span class="o">=</span><span class="default_value">20</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.dlo.push_rope_env.PushRopeEnv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="gym_agx.envs.html#gym_agx.envs.dlo_env.DloEnv" title="gym_agx.envs.dlo_env.DloEnv"><code class="xref py py-class docutils literal notranslate"><span class="pre">gym_agx.envs.dlo_env.DloEnv</span></code></a></p>
+<p>Subclass which inherits from Wire environment.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-gym_agx.envs.dlo">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-gym_agx.envs.dlo" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 

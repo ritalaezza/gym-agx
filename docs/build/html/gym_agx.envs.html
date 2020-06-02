@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="gym_agx.envs.wire package" href="gym_agx.envs.wire.html" />
+    <link rel="next" title="gym_agx.envs.dlo package" href="gym_agx.envs.dlo.html" />
     <link rel="prev" title="gym_agx package" href="gym_agx.html" /> 
 </head>
 
@@ -88,7 +88,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#subpackages">Subpackages</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.envs.agx_env">gym_agx.envs.agx_env module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.envs.wire_env">gym_agx.envs.wire_env module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.envs.dlo_env">gym_agx.envs.dlo_env module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.envs">Module contents</a></li>
 </ul>
 </li>
@@ -172,10 +172,12 @@
 <h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="gym_agx.envs.wire.html">gym_agx.envs.wire package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="gym_agx.envs.wire.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="gym_agx.envs.wire.html#module-gym_agx.envs.wire.bend_wire_env">gym_agx.envs.wire.bend_wire_env module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="gym_agx.envs.wire.html#module-gym_agx.envs.wire">Module contents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.envs.dlo.html">gym_agx.envs.dlo package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.envs.dlo.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.envs.dlo.html#module-gym_agx.envs.dlo.bend_wire_env">gym_agx.envs.dlo.bend_wire_env module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.envs.dlo.html#gym-agx-envs-dlo-bend-wire-obstacle-env-module">gym_agx.envs.dlo.bend_wire_obstacle_env module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.envs.dlo.html#module-gym_agx.envs.dlo.push_rope_env">gym_agx.envs.dlo.push_rope_env module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.envs.dlo.html#module-gym_agx.envs.dlo">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -327,16 +329,16 @@ info (dict): contains auxiliary diagnostic information (helpful for debugging, a
 </dd></dl>
 
 </div>
-<div class="section" id="module-gym_agx.envs.wire_env">
-<span id="gym-agx-envs-wire-env-module"></span><h2>gym_agx.envs.wire_env module<a class="headerlink" href="#module-gym_agx.envs.wire_env" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-gym_agx.envs.dlo_env">
+<span id="gym-agx-envs-dlo-env-module"></span><h2>gym_agx.envs.dlo_env module<a class="headerlink" href="#module-gym_agx.envs.dlo_env" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
-<dt id="gym_agx.envs.wire_env.WireEnv">
-<em class="property">class </em><code class="sig-prename descclassname">gym_agx.envs.wire_env.</code><code class="sig-name descname">WireEnv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scene_path</span></em>, <em class="sig-param"><span class="n">n_substeps</span></em>, <em class="sig-param"><span class="n">grippers</span></em>, <em class="sig-param"><span class="n">camera</span></em>, <em class="sig-param"><span class="n">args</span></em>, <em class="sig-param"><span class="n">distance_threshold</span></em>, <em class="sig-param"><span class="n">reward_type</span></em>, <em class="sig-param"><span class="n">reward_limit</span></em>, <em class="sig-param"><span class="n">randomized_goal</span></em>, <em class="sig-param"><span class="n">goal_scene_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.wire_env.WireEnv" title="Permalink to this definition">¶</a></dt>
+<dt id="gym_agx.envs.dlo_env.DloEnv">
+<em class="property">class </em><code class="sig-prename descclassname">gym_agx.envs.dlo_env.</code><code class="sig-name descname">DloEnv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scene_path</span></em>, <em class="sig-param"><span class="n">n_substeps</span></em>, <em class="sig-param"><span class="n">end_effectors</span></em>, <em class="sig-param"><span class="n">camera</span></em>, <em class="sig-param"><span class="n">args</span></em>, <em class="sig-param"><span class="n">distance_threshold</span></em>, <em class="sig-param"><span class="n">reward_type</span></em>, <em class="sig-param"><span class="n">reward_limit</span></em>, <em class="sig-param"><span class="n">randomized_goal</span></em>, <em class="sig-param"><span class="n">goal_scene_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.dlo_env.DloEnv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#gym_agx.envs.agx_env.AgxEnv" title="gym_agx.envs.agx_env.AgxEnv"><code class="xref py py-class docutils literal notranslate"><span class="pre">gym_agx.envs.agx_env.AgxEnv</span></code></a></p>
-<p>Superclass for all Wire environments.</p>
+<p>Superclass for all DLO environments.</p>
 <dl class="py method">
-<dt id="gym_agx.envs.wire_env.WireEnv.compute_reward">
-<code class="sig-name descname">compute_reward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">achieved_goal</span></em>, <em class="sig-param"><span class="n">goal</span></em>, <em class="sig-param"><span class="n">info</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.wire_env.WireEnv.compute_reward" title="Permalink to this definition">¶</a></dt>
+<dt id="gym_agx.envs.dlo_env.DloEnv.compute_reward">
+<code class="sig-name descname">compute_reward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">achieved_goal</span></em>, <em class="sig-param"><span class="n">goal</span></em>, <em class="sig-param"><span class="n">info</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.dlo_env.DloEnv.compute_reward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the step reward. This externalizes the reward function and makes
 it dependent on an a desired goal and the one that was achieved. If you wish to include
 additional rewards that are independent of the goal, you can include the necessary values
@@ -357,13 +359,13 @@ assert reward == env.compute_reward(ob['achieved_goal'], ob['goal'], info)</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="gym_agx.envs.wire_env.WireEnv.done">
-<em class="property">property </em><code class="sig-name descname">done</code><a class="headerlink" href="#gym_agx.envs.wire_env.WireEnv.done" title="Permalink to this definition">¶</a></dt>
+<dt id="gym_agx.envs.dlo_env.DloEnv.done">
+<em class="property">property </em><code class="sig-name descname">done</code><a class="headerlink" href="#gym_agx.envs.dlo_env.DloEnv.done" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="gym_agx.envs.wire_env.WireEnv.render">
-<code class="sig-name descname">render</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'human'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.wire_env.WireEnv.render" title="Permalink to this definition">¶</a></dt>
+<dt id="gym_agx.envs.dlo_env.DloEnv.render">
+<code class="sig-name descname">render</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'human'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.dlo_env.DloEnv.render" title="Permalink to this definition">¶</a></dt>
 <dd><p>Renders the environment.</p>
 <p>The set of supported modes varies per environment. (And some
 environments do not support rendering at all.) By convention,
@@ -409,8 +411,8 @@ in implementations to use the functionality of this method.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="gym_agx.envs.wire_env.goal_distance">
-<code class="sig-prename descclassname">gym_agx.envs.wire_env.</code><code class="sig-name descname">goal_distance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">achieved_goal</span></em>, <em class="sig-param"><span class="n">goal</span></em>, <em class="sig-param"><span class="n">norm</span><span class="o">=</span><span class="default_value">'l2'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.wire_env.goal_distance" title="Permalink to this definition">¶</a></dt>
+<dt id="gym_agx.envs.dlo_env.goal_distance">
+<code class="sig-prename descclassname">gym_agx.envs.dlo_env.</code><code class="sig-name descname">goal_distance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">achieved_goal</span></em>, <em class="sig-param"><span class="n">goal</span></em>, <em class="sig-param"><span class="n">norm</span><span class="o">=</span><span class="default_value">'l2'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.envs.dlo_env.goal_distance" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -427,7 +429,7 @@ in implementations to use the functionality of this method.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="gym_agx.envs.wire.html" class="btn btn-neutral float-right" title="gym_agx.envs.wire package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="gym_agx.envs.dlo.html" class="btn btn-neutral float-right" title="gym_agx.envs.dlo package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="gym_agx.html" class="btn btn-neutral float-left" title="gym_agx package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

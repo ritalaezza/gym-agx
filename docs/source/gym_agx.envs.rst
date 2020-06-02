@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   gym_agx.envs.wire
+   gym_agx.envs.dlo
 
 Submodules
 ----------
@@ -20,10 +20,10 @@ gym\_agx.envs.agx\_env module
    :undoc-members:
    :show-inheritance:
 
-gym\_agx.envs.wire\_env module
+gym\_agx.envs.dlo\_env module
 ------------------------------
 
-.. automodule:: gym_agx.envs.wire_env
+.. automodule:: gym_agx.envs.dlo_env
    :members:
    :undoc-members:
    :show-inheritance:

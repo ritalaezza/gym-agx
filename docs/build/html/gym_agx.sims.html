@@ -36,7 +36,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="gym_agx.tests package" href="gym_agx.tests.html" />
-    <link rel="prev" title="gym_agx.envs.wire package" href="gym_agx.envs.wire.html" /> 
+    <link rel="prev" title="gym_agx.envs.dlo package" href="gym_agx.envs.dlo.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -88,6 +88,9 @@
 <li class="toctree-l3 current"><a class="current reference internal" href="#">gym_agx.sims package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.sims.bend_wire">gym_agx.sims.bend_wire module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.sims.bend_wire_obstacle">gym_agx.sims.bend_wire_obstacle module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.sims.push_rope">gym_agx.sims.push_rope module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.sims.insert_o_ring">gym_agx.sims.insert_o_ring module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.sims">Module contents</a></li>
 </ul>
 </li>
@@ -176,7 +179,7 @@
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).</p>
 <dl class="py function">
 <dt id="gym_agx.sims.bend_wire.add_rendering">
-<code class="sig-prename descclassname">gym_agx.sims.bend_wire.</code><code class="sig-name descname">add_rendering</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sim</span></em>, <em class="sig-param"><span class="n">length</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.bend_wire.add_rendering" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gym_agx.sims.bend_wire.</code><code class="sig-name descname">add_rendering</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sim</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.bend_wire.add_rendering" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -187,6 +190,69 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
 <dl class="py function">
 <dt id="gym_agx.sims.bend_wire.main">
 <code class="sig-prename descclassname">gym_agx.sims.bend_wire.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">args</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.bend_wire.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-gym_agx.sims.bend_wire_obstacle">
+<span id="gym-agx-sims-bend-wire-obstacle-module"></span><h2>gym_agx.sims.bend_wire_obstacle module<a class="headerlink" href="#module-gym_agx.sims.bend_wire_obstacle" title="Permalink to this headline">¶</a></h2>
+<p>Simulation for bend_wire with obstacle environment</p>
+<p>This module creates the simulation files which will be used in bend_wire with obstacle environments.
+TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).</p>
+<dl class="py function">
+<dt id="gym_agx.sims.bend_wire_obstacle.add_rendering">
+<code class="sig-prename descclassname">gym_agx.sims.bend_wire_obstacle.</code><code class="sig-name descname">add_rendering</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sim</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.bend_wire_obstacle.add_rendering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.sims.bend_wire_obstacle.build_simulation">
+<code class="sig-prename descclassname">gym_agx.sims.bend_wire_obstacle.</code><code class="sig-name descname">build_simulation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.bend_wire_obstacle.build_simulation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.sims.bend_wire_obstacle.main">
+<code class="sig-prename descclassname">gym_agx.sims.bend_wire_obstacle.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">args</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.bend_wire_obstacle.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-gym_agx.sims.push_rope">
+<span id="gym-agx-sims-push-rope-module"></span><h2>gym_agx.sims.push_rope module<a class="headerlink" href="#module-gym_agx.sims.push_rope" title="Permalink to this headline">¶</a></h2>
+<p>Simulation of cable pushing</p>
+<p>This module creates the simulation files which will be used in cable_pushing environments.
+TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).</p>
+<dl class="py function">
+<dt id="gym_agx.sims.push_rope.add_rendering">
+<code class="sig-prename descclassname">gym_agx.sims.push_rope.</code><code class="sig-name descname">add_rendering</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sim</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.push_rope.add_rendering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.sims.push_rope.build_simulation">
+<code class="sig-prename descclassname">gym_agx.sims.push_rope.</code><code class="sig-name descname">build_simulation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.push_rope.build_simulation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.sims.push_rope.main">
+<code class="sig-prename descclassname">gym_agx.sims.push_rope.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">args</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.push_rope.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-gym_agx.sims.insert_o_ring">
+<span id="gym-agx-sims-insert-o-ring-module"></span><h2>gym_agx.sims.insert_o_ring module<a class="headerlink" href="#module-gym_agx.sims.insert_o_ring" title="Permalink to this headline">¶</a></h2>
+<p>Simulation for ORing environment</p>
+<p>This module creates the simulation files which will be used in ORing environments.
+TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).</p>
+<dl class="py function">
+<dt id="gym_agx.sims.insert_o_ring.add_rendering">
+<code class="sig-prename descclassname">gym_agx.sims.insert_o_ring.</code><code class="sig-name descname">add_rendering</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sim</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.insert_o_ring.add_rendering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.sims.insert_o_ring.build_simulation">
+<code class="sig-prename descclassname">gym_agx.sims.insert_o_ring.</code><code class="sig-name descname">build_simulation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.insert_o_ring.build_simulation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="gym_agx.sims.insert_o_ring.main">
+<code class="sig-prename descclassname">gym_agx.sims.insert_o_ring.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">args</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.insert_o_ring.main" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -206,7 +272,7 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
         <a href="gym_agx.tests.html" class="btn btn-neutral float-right" title="gym_agx.tests package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="gym_agx.envs.wire.html" class="btn btn-neutral float-left" title="gym_agx.envs.wire package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="gym_agx.envs.dlo.html" class="btn btn-neutral float-left" title="gym_agx.envs.dlo package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
