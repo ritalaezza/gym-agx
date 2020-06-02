@@ -15,12 +15,12 @@ logger = logging.getLogger('gym_agx.envs')
 
 
 class BendWireEnv(dlo_env.DloEnv):
-    """Subclass which inherits from Wire environment.
+    """Subclass which inherits from DLO environment.
     """
 
     def __init__(self, reward_type='sparse', n_substeps=2):
         """Initializes BendWire environment
-        The radius and length should be consistent with the model defined in 'SCENE_PATH'.
+        The length should be consistent with the model defined in 'SCENE_PATH'.
         :param reward_type: either 'sparse' or 'dense'
         """
         length = 0.1  # meters
@@ -68,8 +68,6 @@ class BendWireEnv(dlo_env.DloEnv):
                                     compute_forces_enabled=False,
                                     velocity_control=False)
 
-        grippers = [gripper_right, gripper_left]
-
         args = sys.argv
         if not os.path.exists(SCENE_PATH):
             raise IOError("File %s does not exist" % SCENE_PATH)
@@ -77,7 +75,7 @@ class BendWireEnv(dlo_env.DloEnv):
 
         super(BendWireEnv, self).__init__(scene_path=SCENE_PATH,
                                           n_substeps=n_substeps,
-                                          end_effectors=grippers,
+                                          end_effectors=[gripper_right, gripper_left],
                                           camera=camera,
                                           args=args,
                                           distance_threshold=0.06,  # 0.16

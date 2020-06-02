@@ -15,7 +15,7 @@ logger = logging.getLogger('gym_agx.envs')
 
 
 class BendWireObstacleEnv(dlo_env.DloEnv):
-    """Subclass which inherits from Wire environment.
+    """Subclass which inherits from DLO environment.
     """
 
     def __init__(self, reward_type='sparse', n_substeps=2):

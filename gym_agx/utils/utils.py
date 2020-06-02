@@ -5,7 +5,7 @@ import numpy as np
 logger = logging.getLogger('gym_agx.utils')
 
 
-def sinusoidal_trajectory(A, w, t,  phase=0):
+def sinusoidal_trajectory(A, w, t, phase=0):
     """Assuming a position trajectory of the type: x(t) = A cos(w*t) , the velocity trajectory becomes:
     x'(t) = - A*w sin(w*t)
     :param A: Amplitude in meters
