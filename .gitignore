@@ -14,5 +14,6 @@ logs/
 *.aagx
 *.h5f
 
-# Ignore file
+# Ignore files
 agx_statistics.txt
+tests/test_*.py
