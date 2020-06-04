@@ -20,7 +20,7 @@ import numpy as np
 import logging
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, KeyboardMotorHandler, create_prismatic_base, save_simulation
+from gym_agx.utils.agx_utils import create_body, KeyboardMotorHandler, create_locked_prismatic_base, save_simulation
 
 logger = logging.getLogger('gym_agx.sims')
 
@@ -232,10 +232,10 @@ def build_simulation():
     sim.add(pusher)
 
     # Create base for pusher motors
-    prismatic_base = create_prismatic_base("pusher", pusher.getRigidBody("pusher"),
-                                           position_ranges=[(-GROUND_LENGTH_X, GROUND_LENGTH_X),
+    prismatic_base = create_locked_prismatic_base("pusher", pusher.getRigidBody("pusher"),
+                                                  position_ranges=[(-GROUND_LENGTH_X, GROUND_LENGTH_X),
                                                             (-GROUND_LENGTH_Y, GROUND_LENGTH_Y), (0., 3*RADIUS)],
-                                           motor_ranges=[(-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE),
+                                                  motor_ranges=[(-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE),
                                                          (-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE),
                                                          (-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE)])
 

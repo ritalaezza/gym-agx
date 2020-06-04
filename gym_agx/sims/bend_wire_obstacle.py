@@ -19,7 +19,7 @@ import math
 import logging
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, create_prismatic_base, save_simulation, KeyboardMotorHandler
+from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, KeyboardMotorHandler
 
 logger = logging.getLogger('gym_agx.sims')
 
@@ -248,14 +248,14 @@ def build_simulation():
     sim.add(hinge_joint_right)
 
     # Create bases for gripper motors
-    prismatic_base_left = create_prismatic_base("gripper_left", gripper_left_body, compliance=0,
-                                                position_ranges=[(-LENGTH / 2 + CYLINDER_RADIUS,
+    prismatic_base_left = create_locked_prismatic_base("gripper_left", gripper_left_body, compliance=0,
+                                                       position_ranges=[(-LENGTH / 2 + CYLINDER_RADIUS,
                                                                   LENGTH / 2 - CYLINDER_RADIUS),
                                                                  (-CYLINDER_LENGTH / 3, CYLINDER_LENGTH / 3),
                                                                  (-(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH), 0)])
     sim.add(prismatic_base_left)
-    prismatic_base_right = create_prismatic_base("gripper_right", gripper_right_body, compliance=0,
-                                                 position_ranges=[(-LENGTH / 2 + CYLINDER_RADIUS,
+    prismatic_base_right = create_locked_prismatic_base("gripper_right", gripper_right_body, compliance=0,
+                                                        position_ranges=[(-LENGTH / 2 + CYLINDER_RADIUS,
                                                                    LENGTH / 2 - CYLINDER_RADIUS),
                                                                   (-CYLINDER_LENGTH / 3, CYLINDER_LENGTH / 3),
                                                                   (-(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH), 0)])

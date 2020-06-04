@@ -14,7 +14,7 @@ from enum import Enum
 try:
     import matplotlib.pyplot as plt
 except:
-    print("Could not find matplotlib. Continuing without displaying depth buffer image.")
+    print("Could not find matplotlib.")
     plt = None
 
 logger = logging.getLogger('gym_agx.utils')
@@ -479,22 +479,25 @@ def create_body(shape, name="", position=agx.Vec3(0, 0, 0), rotation=agx.OrthoMa
         return assembly
 
 
-def create_ring(name, radius, element_shape, num_elements, constraint, rotation_shift=0,
-                compliance=0, material=None, center=agx.Vec3(), normal=agx.Vec3.Z_AXIS()):
+def create_ring(name, radius, element_shape, num_elements, constraint_type=agx.LockJoint, rotation_shift=0,
+                translation_shift=0, compliance=None, material=None, center=agx.Vec3(), normal=agx.Vec3.Z_AXIS()):
     """Creates a Ring object.
     :param string name: name of ring object as a string
     :param float radius: radius of the ring circumference, centered on the composing elements
     :param agxCollide.Shape element_shape: AGX shape type to be used as building block of ring
     :param int num_elements: number of elements of element_type which will be used to construct ring
-    :param agx.Constraint constraint: type of constraint that should connect each element
+    :param agx.Constraint constraint_type: type of constraint that should connect each element
     :param float rotation_shift: positive rotation around z axis of seed element (radians). Useful for shapes which are
     initialized along axis other than x.
-    :param float compliance: compliance of constraints linking each element of the ring
+    :param float translation_shift: translation of constraints, off the center of mass, along y axis of the object
+    :param list compliance: compliance of constraints along 6DOF linking each element of the ring
     :param agx.Vec3 center: position in world coordinates of the center of the ring
     :param agx.Material material: material the ring elements are made of
     :param agx.Vec3 normal: unit vector placed at the center position to define plane where the ring should lie
     :return assembly
     """
+    if compliance is None:
+        compliance = [0, 0, 0, 0, 0, 0]
     elements = []
     constraints = []
     assembly = agxSDK.Assembly()
@@ -504,6 +507,13 @@ def create_ring(name, radius, element_shape, num_elements, constraint, rotation_
 
         prev_element = None
         step_angle = 360 / num_elements
+
+        # Frames for constraints
+        frame1 = agx.Frame()
+        frame1.setLocalTranslate(0, -translation_shift, 0)
+        frame1.setLocalRotate(agx.EulerAngles(0, 0, -math.radians(step_angle)))
+        frame2 = agx.Frame()
+        frame2.setLocalTranslate(0, translation_shift, 0)
         for i in range(1, num_elements + 1):
             x = math.sin(math.radians(i * step_angle)) * radius
             y = math.cos(math.radians(i * step_angle)) * radius
@@ -519,31 +529,18 @@ def create_ring(name, radius, element_shape, num_elements, constraint, rotation_
             elements.append(element)
 
             if prev_element:
-                f1 = agx.Frame()
-                f2 = agx.Frame()
-                result = agx.Constraint.calculateFramesFromWorld(element.getPosition(), agx.Vec3(0, 1, 0),
-                                                                 prev_element, f1, element, f2)
-                if not result:
-                    logger.debug("Problem calculating frames when creating ring.")
-
-                element_constraint = constraint(prev_element, f1, element, f2)
+                element_constraint = constraint_type(prev_element, frame1, element, frame2)
+                element_constraint.setName("ring_constraint_" + str(i))
                 constraints.append(element_constraint)
                 assembly.add(element_constraint)
 
-                geometry = prev_element.getGeometry(name + "_" + str(i-1))
+                geometry = prev_element.getGeometry(name + "_" + str(i - 1))
                 geometry.setEnableCollisions(element.getGeometry(name + "_" + str(i)), False)
 
             prev_element = element
 
-        # Constraint first and last element
-        f1 = agx.Frame()
-        f2 = agx.Frame()
-        result = agx.Constraint.calculateFramesFromWorld(elements[0].getPosition(), agx.Vec3(0, 1, 0),
-                                                         elements[-1], f1, elements[0], f2)
-        if not result:
-            logger.debug("Problem calculating last frame when creating ring.")
-
-        element_constraint = constraint(elements[-1], f1, elements[0], f2)
+        element_constraint = constraint_type(elements[-1], frame1, elements[0], frame2)
+        element_constraint.setName("ring_constraint_" + str(num_elements + 1))
         constraints.append(element_constraint)
         assembly.add(element_constraint)
 
@@ -552,7 +549,12 @@ def create_ring(name, radius, element_shape, num_elements, constraint, rotation_
 
         # Set compliance of ring:
         for c in constraints:
-            c.setCompliance(compliance)
+            c.setCompliance(compliance[0], agx.LockJoint.TRANSLATIONAL_1)
+            c.setCompliance(compliance[1], agx.LockJoint.TRANSLATIONAL_2)
+            c.setCompliance(compliance[2], agx.LockJoint.TRANSLATIONAL_3)
+            c.setCompliance(compliance[3], agx.LockJoint.ROTATIONAL_1)
+            c.setCompliance(compliance[4], agx.LockJoint.ROTATIONAL_2)
+            c.setCompliance(compliance[5], agx.LockJoint.ROTATIONAL_3)
 
         assembly.setPosition(center)
         assembly.setRotation(assembly_rotation)
@@ -582,17 +584,16 @@ def create_ring_element(name, element_shape, material):
         return None
 
 
-def create_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, position_ranges=None,
-                          motor_ranges=None, locked_at_zero_speed=None,
-                          radius=0.005, length=0.050):
-    """Creates a prismatic, collision free, base object and attaches a rigid body to it.
+def create_locked_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, position_ranges=None,
+                                 motor_ranges=None, locked_at_zero_speed=None, radius=0.005, length=0.050):
+    """Creates a prismatic, collision free, base object and attaches a rigid body to it, via LockJoint.
     :param string name: name of prismatic base object as a string
     :param agx.RigidBody rigid_body: AGX rigid body object which should be attached to prismatic base
     :param float compliance: compliance of the LockJoint which attaches the rigid body to the base
     :param float damping: damping of the LockJoint which attaches the rigid body to the base
-    :param list position_ranges: a list containing three tuples with the position range for each coordinate (x,y,z)
-    :param list motor_ranges: a list containing three tuples with the position range for each coordinate (x,y,z)
-    :param list locked_at_zero_speed: a list containing three Booleans indicating zero speed behaviour each coordinate
+    :param list position_ranges: a list containing three tuples with the position range for each constraint (x,y,z)
+    :param list motor_ranges: a list containing three tuples with the position range for each constraint (x,y,z)
+    :param list locked_at_zero_speed: a list containing three Booleans indicating zero speed behaviour each constraint
     (x,y,z)
     :param float radius: radius of the cylinders making up the base. For visualization purposes only.
     :param float length: radius of the cylinders making up the base. For visualization purposes only.
@@ -604,13 +605,105 @@ def create_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, positio
         motor_ranges = [(-1, 1), (-1, 1), (-1, 1)]
     if position_ranges is None:
         position_ranges = [(-1, 1), (-1, 1), (-1, 1)]
-    assembly = agxSDK.Assembly()
 
     position_ranges = {'x': position_ranges[0], 'y': position_ranges[1], 'z': position_ranges[2]}
     motor_ranges = {'x': motor_ranges[0], 'y': motor_ranges[1], 'z': motor_ranges[2]}
     locked_at_zero_speed = {'x': locked_at_zero_speed[0],
                             'y': locked_at_zero_speed[1],
                             'z': locked_at_zero_speed[2]}
+
+    assembly = create_prismatic_base(name, radius, length, position_ranges, motor_ranges, locked_at_zero_speed)
+
+    # Add constraint between base and rigid body
+    f1 = agx.Frame()
+    f2 = agx.Frame()
+    base_z_body = assembly.getRigidBody(name + "_base_z")
+    result = agx.Constraint.calculateFramesFromWorld(rigid_body.getPosition(), agx.Vec3(0, 1, 0), rigid_body, f1,
+                                                     base_z_body, f2)
+    if not result:
+        logger.error("There was an error when calculating frames from world.")
+    joint_rb = agx.LockJoint(rigid_body, f1, base_z_body, f2)
+    joint_rb.setName(name + "_joint_rb")
+    joint_rb.setEnableComputeForces(True)
+    joint_rb.setCompliance(compliance)
+    joint_rb.setDamping(damping)
+    assembly.add(joint_rb)
+
+    return assembly
+
+
+def create_universal_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, position_ranges=None,
+                                    motor_ranges=None, locked_at_zero_speed=None, radius=0.005, length=0.050):
+    """Creates a prismatic, collision free, base object and attaches a rigid body to it, via UniversalJoint.
+    :param string name: name of prismatic base object as a string
+    :param agx.RigidBody rigid_body: AGX rigid body object which should be attached to prismatic base
+    :param float compliance: compliance of the UniversalJoint which attaches the rigid body to the base
+    :param float damping: damping of the UniversalJoint which attaches the rigid body to the base
+    :param list position_ranges: a list containing three tuples with the position range for each constraint (x,y,z,2rb)
+    :param list motor_ranges: a list containing three tuples with the position range for each constraint (x,y,z,2rb)
+    :param list locked_at_zero_speed: a list containing three Booleans indicating zero speed behaviour each constraint
+    (x,y,z,rb)
+    :param float radius: radius of the cylinders making up the base. For visualization purposes only.
+    :param float length: radius of the cylinders making up the base. For visualization purposes only.
+    :return assembly
+    """
+    if locked_at_zero_speed is None:
+        locked_at_zero_speed = [False, False, False, False, False]
+    if motor_ranges is None:
+        motor_ranges = [(-1, 1), (-1, 1), (-1, 1), (-1, 1), (-1, 1)]
+    if position_ranges is None:
+        position_ranges = [(-1, 1), (-1, 1), (-1, 1), (-1, 1), (-1, 1)]
+
+    position_ranges = {'x': position_ranges[0], 'y': position_ranges[1], 'z': position_ranges[2],
+                       'rb_1': position_ranges[3], 'rb_2': position_ranges[4]}
+    motor_ranges = {'x': motor_ranges[0], 'y': motor_ranges[1], 'z': motor_ranges[2], 'rb_1': motor_ranges[3],
+                    'rb_2': motor_ranges[4]}
+    locked_at_zero_speed = {'x': locked_at_zero_speed[0],
+                            'y': locked_at_zero_speed[1],
+                            'z': locked_at_zero_speed[2],
+                            'rb_1': locked_at_zero_speed[3],
+                            'rb_2': locked_at_zero_speed[4]}
+
+    assembly = create_prismatic_base(name, radius, length, position_ranges, motor_ranges, locked_at_zero_speed)
+
+    # Add constraint between base and rigid body
+    f1 = agx.Frame()
+    f2 = agx.Frame()
+    base_z_body = assembly.getRigidBody(name + "_base_z")
+    result = agx.Constraint.calculateFramesFromWorld(rigid_body.getPosition(), agx.Vec3(0, 0, 1), rigid_body, f1,
+                                                     base_z_body, f2)
+    if not result:
+        logger.error("There was an error when calculating frames from world.")
+    joint_rb = agx.UniversalJoint(rigid_body, f1, base_z_body, f2)
+    joint_rb.setName(name + "_joint_rb")
+    joint_rb.setEnableComputeForces(True)
+    joint_rb.setCompliance(compliance)
+    joint_rb.setDamping(damping)
+    assembly.add(joint_rb)
+
+    # Enable ranges and motors
+    joint_rb_range_1 = joint_rb.getRange1D(agx.UniversalJoint.ROTATIONAL_CONTROLLER_1)
+    joint_rb_range_1.setEnable(True)
+    joint_rb_range_1.setRange(position_ranges['rb_1'][0], position_ranges['rb_1'][1])
+    joint_rb_motor_1 = joint_rb.getMotor1D(agx.UniversalJoint.ROTATIONAL_CONTROLLER_1)
+    joint_rb_motor_1.setName(name + "_joint_rb_motor_1")
+    joint_rb_motor_1.setEnable(True)
+    joint_rb_motor_1.setForceRange(motor_ranges['rb_1'][0], motor_ranges['rb_1'][1])
+    joint_rb_motor_1.setLockedAtZeroSpeed(locked_at_zero_speed['rb_1'])
+    joint_rb_range_2 = joint_rb.getRange1D(agx.UniversalJoint.ROTATIONAL_CONTROLLER_2)
+    joint_rb_range_2.setEnable(True)
+    joint_rb_range_2.setRange(position_ranges['rb_2'][0], position_ranges['rb_2'][1])
+    joint_rb_motor_2 = joint_rb.getMotor1D(agx.UniversalJoint.ROTATIONAL_CONTROLLER_2)
+    joint_rb_motor_2.setName(name + "_joint_rb_motor_2")
+    joint_rb_motor_2.setEnable(True)
+    joint_rb_motor_2.setForceRange(motor_ranges['rb_2'][0], motor_ranges['rb_2'][1])
+    joint_rb_motor_2.setLockedAtZeroSpeed(locked_at_zero_speed['rb_2'])
+
+    return assembly
+
+
+def create_prismatic_base(name, radius, length, position_ranges, motor_ranges, locked_at_zero_speed):
+    assembly = agxSDK.Assembly()
 
     rotation_y_to_z = agx.OrthoMatrix3x3()
     rotation_y_to_z.setRotate(agx.Vec3.Y_AXIS(), agx.Vec3.Z_AXIS())
@@ -684,12 +777,5 @@ def create_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, positio
     joint_base_z_motor.setEnable(True)
     joint_base_z_motor.setForceRange(motor_ranges['z'][0], motor_ranges['z'][1])
     joint_base_z_motor.setLockedAtZeroSpeed(locked_at_zero_speed['z'])
-
-    # Add lock joints between base and rigid body
-    lock_joint = agx.LockJoint(rigid_body, base_z_body)
-    lock_joint.setEnableComputeForces(True)
-    lock_joint.setCompliance(compliance)
-    lock_joint.setDamping(damping)
-    assembly.add(lock_joint)
 
     return assembly

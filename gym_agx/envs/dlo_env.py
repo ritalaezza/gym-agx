@@ -1,5 +1,4 @@
 import sys
-import math
 import logging
 import numpy as np
 
@@ -10,7 +9,7 @@ import agxRender
 
 from gym_agx.envs import agx_env
 from gym_agx.utils.agx_utils import get_cable_state
-from gym_agx.utils.utils import get_cable_curvature, sinusoidal_trajectory
+from gym_agx.utils.utils import get_cable_curvature
 
 logger = logging.getLogger('gym_agx.envs')
 
