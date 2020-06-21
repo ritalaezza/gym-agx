@@ -1,5 +1,7 @@
 import os
+import logging
 import logging.config
+import logging.handlers
 from gym.envs.registration import register
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))  # Project Root
@@ -12,9 +14,10 @@ if os.path.exists(LOG_DIR):
             current_dir = os.getcwd()
             os.chdir(ROOT_DIR)
             logging.config.fileConfig(LOG_DIR)
-            os.chdir(current_dir)
         except Exception as e:
-            print(e)
+            print("Problem setting log directory: {}".format(e))
+        finally:
+            os.chdir(current_dir)
 else:
     logging.basicConfig(level=logging.DEBUG)
     print('Failed to load configuration file. Using default configs.')
@@ -54,7 +57,7 @@ for reward_type in ['sparse', 'dense']:
         id='BendWireObstacle{}-v0'.format(suffix),
         entry_point='gym_agx.envs:BendWireObstacleEnv',
         kwargs=kwargs,
-        max_episode_steps=int(3000),
+        max_episode_steps=int(1500),
     )
     print("Registered {}".format('BendWireObstacle{}-v0'.format(suffix)))
 
@@ -73,3 +76,19 @@ for reward_type in ['sparse', 'dense']:
         max_episode_steps=int(3000),
     )
     print("Registered {}".format('PushRope{}-v0'.format(suffix)))
+
+
+for reward_type in ['sparse', 'dense']:
+    suffix = 'Dense' if reward_type == 'dense' else ''
+    kwargs = {
+        'reward_type': reward_type,
+        'n_substeps': 20,
+    }
+
+    register(
+        id='InsertORing{}-v0'.format(suffix),
+        entry_point='gym_agx.envs:InsertORingEnv',
+        kwargs=kwargs,
+        max_episode_steps=int(1500),
+    )
+    print("Registered {}".format('InsertORing{}-v0'.format(suffix)))

@@ -5,6 +5,20 @@ import numpy as np
 logger = logging.getLogger('gym_agx.utils')
 
 
+def goal_distance(achieved_goal, goal, norm="l2"):
+    assert achieved_goal.shape == goal.shape
+    if norm == "l1":
+        return np.sum(abs(achieved_goal - goal))
+    elif norm == "l2":
+        return np.linalg.norm(achieved_goal - goal)
+    elif norm == 'inf':
+        return np.linalg.norm(achieved_goal - goal,  np.inf)
+    elif norm == '-inf':
+        return np.linalg.norm(achieved_goal - goal,  -np.inf)
+    else:
+        logger.error("Unexpected norm.")
+
+
 def sinusoidal_trajectory(A, w, t, phase=0):
     """Assuming a position trajectory of the type: x(t) = A cos(w*t) , the velocity trajectory becomes:
     x'(t) = - A*w sin(w*t)

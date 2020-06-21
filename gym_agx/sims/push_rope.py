@@ -14,13 +14,12 @@ import agxOSG
 import agxRender
 
 # Python modules
-import math
 import sys
-import numpy as np
 import logging
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, KeyboardMotorHandler, create_locked_prismatic_base, save_simulation
+from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation
+from gym_agx.utils.agx_classes import KeyboardMotorHandler
 
 logger = logging.getLogger('gym_agx.sims')
 
@@ -158,23 +157,23 @@ def build_simulation():
                          material=material_ground)
     sim.add(ground)
 
-    bounding_box = create_body(name="bounding_box", shape=agxCollide.Box(GROUND_LENGTH_X, GROUND_WIDTH, RADIUS * 2),
-                               position=agx.Vec3(0, GROUND_LENGTH_Y, RADIUS * 2),
+    bounding_box = create_body(name="bounding_box", shape=agxCollide.Box(GROUND_LENGTH_X, GROUND_WIDTH, RADIUS * 4),
+                               position=agx.Vec3(0, GROUND_LENGTH_Y, RADIUS * 4),
                                motion_control=agx.RigidBody.STATIC,
                                material=material_ground)
     sim.add(bounding_box)
-    bounding_box = create_body(name="bounding_box", shape=agxCollide.Box(GROUND_LENGTH_X, GROUND_WIDTH, RADIUS * 2),
-                               position=agx.Vec3(0, - GROUND_LENGTH_Y, RADIUS * 2),
+    bounding_box = create_body(name="bounding_box", shape=agxCollide.Box(GROUND_LENGTH_X, GROUND_WIDTH, RADIUS * 4),
+                               position=agx.Vec3(0, - GROUND_LENGTH_Y, RADIUS * 4),
                                motion_control=agx.RigidBody.STATIC,
                                material=material_ground)
     sim.add(bounding_box)
-    bounding_box = create_body(name="bounding_box", shape=agxCollide.Box(GROUND_WIDTH, GROUND_LENGTH_Y, RADIUS * 2),
-                               position=agx.Vec3(GROUND_LENGTH_X, 0, RADIUS * 2),
+    bounding_box = create_body(name="bounding_box", shape=agxCollide.Box(GROUND_WIDTH, GROUND_LENGTH_Y, RADIUS * 4),
+                               position=agx.Vec3(GROUND_LENGTH_X, 0, RADIUS * 4),
                                motion_control=agx.RigidBody.STATIC,
                                material=material_ground)
     sim.add(bounding_box)
-    bounding_box = create_body(name="bounding_box", shape=agxCollide.Box(GROUND_WIDTH, GROUND_LENGTH_Y, RADIUS * 2),
-                               position=agx.Vec3(- GROUND_LENGTH_X, 0, RADIUS * 2),
+    bounding_box = create_body(name="bounding_box", shape=agxCollide.Box(GROUND_WIDTH, GROUND_LENGTH_Y, RADIUS * 4),
+                               position=agx.Vec3(- GROUND_LENGTH_X, 0, RADIUS * 4),
                                motion_control=agx.RigidBody.STATIC,
                                material=material_ground)
     sim.add(bounding_box)
@@ -190,6 +189,11 @@ def build_simulation():
     properties.setYoungsModulus(YOUNG_MODULUS_BEND, agxCable.BEND)
     properties.setYoungsModulus(YOUNG_MODULUS_TWIST, agxCable.TWIST)
     properties.setYoungsModulus(YOUNG_MODULUS_STRETCH, agxCable.STRETCH)
+
+    # Add cable plasticity
+    # plasticity = agxCable.CablePlasticity()
+    # plasticity.setYieldPoint(10, agxCable.BEND)  # set torque required for permanent deformation
+    # rope.addComponent(plasticity)  # NOTE: Stretch direction is always elastic
 
     # Try to initialize rope
     report = rope.tryInitialize()
@@ -285,7 +289,7 @@ def main(args):
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 
-    n_seconds = 50
+    n_seconds = 60
     n_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
     for k in range(n_steps):
         app.executeOneStepWithGraphics()

@@ -9,36 +9,23 @@ import agxRender
 
 from gym_agx.envs import agx_env
 from gym_agx.utils.agx_utils import get_cable_state
-from gym_agx.utils.utils import get_cable_curvature
+from gym_agx.utils.utils import get_cable_curvature, goal_distance
 
 logger = logging.getLogger('gym_agx.envs')
-
-
-def goal_distance(achieved_goal, goal, norm="l2"):
-    assert achieved_goal.shape == goal.shape
-    if norm == "l1":
-        return np.sum(abs(achieved_goal - goal))
-    elif norm == "l2":
-        return np.linalg.norm(achieved_goal - goal)
-    elif norm == 'inf':
-        return np.linalg.norm(achieved_goal - goal,  np.inf)
-    elif norm == '-inf':
-        return np.linalg.norm(achieved_goal - goal,  -np.inf)
-    else:
-        logger.error("Unexpected norm.")
 
 
 class DloEnv(agx_env.AgxEnv):
     """Superclass for all DLO environments.
     """
-    def __init__(self, scene_path, n_substeps, end_effectors, camera, args, distance_threshold, reward_type, reward_limit,
-                 randomized_goal, goal_scene_path):
+
+    def __init__(self, args, scene_path, n_substeps, end_effectors, camera, distance_threshold, reward_type,
+                 reward_limit, randomized_goal, goal_scene_path):
         """Initializes a DloEnv object
+        :param args: arguments for agxViewer
         :param scene_path: path to binary file containing serialized simulation defined in sim/ folder
         :param n_substeps: number os simulation steps per call to step()
         :param end_effectors: list of EndEffector objects
         :param camera: dictionary containing EYE, CENTER, UP information for rendering together with lighting info
-        :param args: sys.argv
         :param distance_threshold: threshold for reward function
         :param reward_type: reward type, i.e. 'sparse' or 'dense'
         :param reward_limit: reward limit to bound reward
@@ -66,7 +53,7 @@ class DloEnv(agx_env.AgxEnv):
                                      camera_pose=camera.camera_pose, args=args)
 
         # Keep track of latest action
-        self.last_action = self.action_space.sample()*0
+        self.last_action = self.action_space.sample() * 0
 
     @property
     def done(self):
@@ -79,15 +66,14 @@ class DloEnv(agx_env.AgxEnv):
     # ----------------------------
 
     def compute_reward(self, achieved_goal, goal, info):
-        # Compute distance between goal and the achieved goal
         curvature_distance = goal_distance(achieved_goal, goal)
+        info['distance'] = curvature_distance
         if self.reward_type == 'sparse':
             if self._is_success(achieved_goal, goal):
                 return self.reward_limit
             else:
                 return -self.reward_limit
         else:
-            reward = 0
             if not self._is_success(achieved_goal, goal):
                 # penalize large distances to goal
                 reward = np.clip(-curvature_distance, -self.reward_limit, self.reward_limit)
@@ -95,7 +81,7 @@ class DloEnv(agx_env.AgxEnv):
                 # reward achieving goal
                 total_action = abs(self.last_action).sum()
                 reward = np.clip(self.reward_limit - total_action, 0, self.reward_limit)
-            return reward
+            return reward, info
 
     # AgxEnv methods
     # ----------------------------
@@ -118,20 +104,21 @@ class DloEnv(agx_env.AgxEnv):
             node = agxOSG.createVisual(rb, self.root)
             if name == "ground":
                 agxOSG.setDiffuseColor(node, agxRender.Color.Gray())
-            elif name == "gripper_left" or "obstacle" in name:
+            elif name == "gripper_left":
                 agxOSG.setDiffuseColor(node, agxRender.Color.Red())
-            elif name == "gripper_right" or name == "pusher":
+            elif name == "gripper_right":
                 agxOSG.setDiffuseColor(node, agxRender.Color.Blue())
+            elif "pusher" in name and "base" not in name:
+                agxOSG.setDiffuseColor(node, agxRender.Color.Yellow())
             elif "dlo" in name:
                 agxOSG.setDiffuseColor(node, agxRender.Color.Green())
-            elif "obstacle" in name:
+            elif "obstacle" in name or "cylinder" in name:
                 agxOSG.setDiffuseColor(node, agxRender.Color.DimGray())
-            elif "base" in name or name == "bounding_box":
+            elif name == "bounding_box":
                 agxOSG.setDiffuseColor(node, agxRender.Color.White())
                 agxOSG.setAlpha(node, 0.2)
             else:
                 agxOSG.setDiffuseColor(node, agxRender.Color.Orange())
-
         scene_decorator = self.app.getSceneDecorator()
         light_source_0 = scene_decorator.getLightSource(agxOSG.SceneDecorator.LIGHT0)
         light_source_0.setPosition(self.light_pose['light_position'])
@@ -167,17 +154,18 @@ class DloEnv(agx_env.AgxEnv):
             observation = cable_state
         obs['observation'] = observation.ravel(order='F')
         obs['achieved_goal'] = cable_curvature
-
         obs['desired_goal'] = self.goal
         return obs
 
     def _set_action(self, action):
+        info = dict()
         for i, end_effector in enumerate(self.end_effectors):
             if end_effector.controllable:
                 logger.debug("action: {}".format(action))
-                end_effector.apply_control(self.sim, action, self.dt)
+                info[end_effector.name] = end_effector.apply_control(self.sim, action, self.dt)
 
         self.last_action = action
+        return info
 
     def _is_success(self, achieved_goal, desired_goal):
         curvature_distance = goal_distance(achieved_goal, desired_goal)

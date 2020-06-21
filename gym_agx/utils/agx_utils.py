@@ -2,294 +2,13 @@ import agx
 import agxIO
 import agxSDK
 import agxCollide
-from agxPythonModules.utils.numpy_utils import create_numpy_array
 
 import os
 import math
 import logging
-import tempfile
 import numpy as np
-from enum import Enum
-
-try:
-    import matplotlib.pyplot as plt
-except:
-    print("Could not find matplotlib.")
-    plt = None
 
 logger = logging.getLogger('gym_agx.utils')
-
-
-class EndEffectorConstraint:
-    class Dof(Enum):
-        X_TRANSLATIONAL = 0,
-        Y_TRANSLATIONAL = 1,
-        Z_TRANSLATIONAL = 2,
-        X_ROTATIONAL = 3,
-        Y_ROTATIONAL = 4,
-        Z_ROTATIONAL = 5
-
-    def __init__(self, end_effector_dof, compute_forces_enabled, velocity_control, compliance_control, velocity_index,
-                 compliance_index):
-        """End effector constraint object, defining important parameters.
-        :param end_effector_dof: (GDof) degree of freedom of end effector that this constraint controls
-        :param compute_forces_enabled: (Boolean) force and torque can be measured
-        :param velocity_control: (Boolean) is velocity controlled
-        :param compliance_control: (Boolean) is compliance controlled
-        :param velocity_index: (int) index of action vector which controls velocity of this constraint's motor
-        :param compliance_index: (int) index of action vector which controls compliance of this constraint's motor"""
-        self.end_effector_dof = end_effector_dof
-        self.velocity_control = velocity_control
-        self.compute_forces_enabled = compute_forces_enabled
-        self.compliance_control = compliance_control
-        self.velocity_index = velocity_index
-        self.compliance_index = compliance_index
-
-    @property
-    def is_active(self):
-        return True if self.velocity_control or self.compliance_control else False
-
-
-class EndEffector:
-    last_action_index = -1
-
-    def __init__(self, name, controllable, observable, max_velocity=1, max_acceleration=1, min_compliance=0,
-                 max_compliance=1e6):
-        """EndEffector class which keeps track of end effector constraints and action indices.
-        :param name
-        :param controllable
-        :param observable
-        :param max_velocity
-        :param max_acceleration
-        :param max_compliance
-        """
-        self.name = name
-        self.controllable = controllable
-        self.observable = observable
-        self.max_velocity = max_velocity
-        self.max_acceleration = max_acceleration
-        self.min_compliance = min_compliance
-        self.max_compliance = max_compliance
-        self.constraints = {}
-
-    def add_constraint(self, name, end_effector_dof, compute_forces_enabled=False, velocity_control=False,
-                       compliance_control=False):
-        velocity_index = None
-        compliance_index = None
-        if velocity_control:
-            self.last_action_index += 1
-            velocity_index = self.last_action_index
-        if compliance_control:
-            self.last_action_index += 1
-            compliance_index = self.last_action_index
-        end_effector_constraint = EndEffectorConstraint(end_effector_dof, compute_forces_enabled, velocity_control,
-                                                        compliance_control, velocity_index, compliance_index)
-        self.constraints.update({name: end_effector_constraint})
-
-    def apply_control(self, sim, action, dt):
-        if self.controllable:
-            for key, constraint in self.constraints.items():
-                joint = sim.getConstraint1DOF(key)
-                motor = joint.getMotor1D()
-                if constraint.velocity_control:
-                    current_velocity = self.get_velocity(sim, constraint.end_effector_dof)
-                    velocity = self.rescale_velocity(action[constraint.velocity_index], current_velocity, dt)
-                    logger.debug(f'{key} velocity: {velocity}')
-                    motor.setSpeed(np.float64(velocity))
-                if constraint.compliance_control:
-                    motor_param = motor.getRegularizationParameters()
-                    compliance = self.rescale_compliance(action[constraint.compliance_index])
-                    motor_param.setCompliance(np.float64(compliance))
-        else:
-            logger.debug("Received apply_control command for uncontrollable end effector.")
-
-    def get_velocity(self, sim, constraint_dof):
-        end_effector = sim.getRigidBody(self.name)
-        if constraint_dof == EndEffectorConstraint.Dof.X_TRANSLATIONAL:
-            velocity = end_effector.getVelocity()[0]
-        elif constraint_dof == EndEffectorConstraint.Dof.Y_TRANSLATIONAL:
-            velocity = end_effector.getVelocity()[1]
-        elif constraint_dof == EndEffectorConstraint.Dof.Z_TRANSLATIONAL:
-            velocity = end_effector.getVelocity()[2]
-        elif constraint_dof == EndEffectorConstraint.Dof.X_ROTATIONAL:
-            velocity = end_effector.getAngularVelocity()[0]
-        elif constraint_dof == EndEffectorConstraint.Dof.Y_ROTATIONAL:
-            velocity = end_effector.getAngularVelocity()[1]
-        elif constraint_dof == EndEffectorConstraint.Dof.Z_ROTATIONAL:
-            velocity = end_effector.getAngularVelocity()[2]
-        else:
-            logger.error("Unexpected EndEffectorConstraint.Dof.")
-
-        return velocity
-
-    def get_state(self, sim):
-        if self.observable:
-            state = []
-            for key, constraint in self.constraints.items():
-                if constraint.compute_forces_enabled:
-                    constraint_state = get_end_effector_state(sim, key).ravel()
-                    logger.debug(f"{key} state: {constraint_state}")
-                    state.append(constraint_state)
-            return np.asarray(state)
-        else:
-            logger.error("Received get_state command for unobservable end effector.")
-
-    def rescale_velocity(self, velocity, current_velocity, dt):
-        logger.debug(f'Current velocity: {current_velocity}')
-        logger.debug(f'Initial target velocity: {velocity}')
-        if abs(velocity - current_velocity) > self.max_acceleration:
-            velocity = current_velocity + np.sign(velocity - current_velocity) * (self.max_acceleration * dt)
-        if abs(velocity) > self.max_velocity:
-            velocity = self.max_velocity * np.sign(velocity)
-        logger.debug(f'Rescaled target velocity: {velocity}')
-        return velocity
-
-    def rescale_compliance(self, compliance):
-        # Assumes an action range between -1 and 1
-        return (compliance + 1) / 2 * (self.max_compliance - self.min_compliance) + self.min_compliance
-
-
-class CameraSpecs:
-    def __init__(self, eye, center, up, light_position, light_direction):
-        self.camera_pose = {'eye': eye,
-                            'center': center,
-                            'up': up}
-        self.light_pose = {'light_position': light_position,
-                           'light_direction': light_direction}
-
-
-class ShowImages(agxSDK.StepEventListener):
-    def __init__(self, rti_depth, rti_color, size_depth, size_color):
-        super().__init__()
-
-        self.rti_depth = rti_depth
-        self.rti_color = rti_color
-        self.size_color = size_color
-        self.size_depth = size_depth
-
-        if plt is not None:
-            self.fig, self.ax = plt.subplots(2, figsize=(10, 10))
-            self.obj_color = self.ax[0].imshow(np.ones(self.size_color, dtype=np.uint8))
-            self.obj_depth = self.ax[1].imshow(np.ones((self.size_depth[0], size_depth[1]), dtype=np.float32), vmin=0,
-                                               vmax=1, cmap='gray')
-
-            plt.ion()
-            plt.show()
-
-    def post(self, t):
-        # Get pointer to the image
-        ptr_color = self.rti_color.getImageData()
-        image_color = create_numpy_array(ptr_color, self.size_color, np.uint8)
-
-        ptr_depth = self.rti_depth.getImageData()
-        image_depth = create_numpy_array(ptr_depth, self.size_depth, np.float32)
-
-        # check that numpy arrays are created correctly
-        if image_color is None or image_depth is None:
-            return
-
-        if plt is not None:
-            self.obj_color.set_data(np.flip(image_color, 0))
-            self.obj_depth.set_data(np.flip(np.squeeze(image_depth), 0))
-            plt.draw()
-            plt.pause(1e-5)
-        else:
-            print("Max depth buffer value at time {}: {}".format(t, np.max(image_depth)))
-            print("Min depth buffer value at time {}: {}".format(t, np.min(image_depth)))
-
-        # save images to disk at second timestep
-        if self.getSimulation().getTimeStep() < t < self.getSimulation().getTimeStep() * 3:
-            temp_dir = tempfile.mkdtemp(prefix="agxRenderToImage_")
-            filename_color = os.path.join(temp_dir, "color.png")
-            filename_depth = os.path.join(temp_dir, "depth.png")
-            # Try to save color image to disk. This will work.
-            if self.rti_color.saveImage(filename_color):
-                print("Saving color image as {} succeeded ".format(filename_color))
-            else:
-                print("Saving color image as {} failed".format(filename_color))
-            # Try to save depth image to disk. This will fail.
-            if self.rti_depth.saveImage(filename_depth):
-                print("Saving depth image as {} succeeded".format(filename_depth))
-            else:
-                print("Saving depth image as {} failed".format(filename_depth))
-
-
-class KeyboardMotorHandler(agxSDK.GuiEventListener):
-    """General class to control simulations using keyboard.
-    """
-
-    def __init__(self, key_motor_maps):
-        """Each instance of this class takes a dictionary
-        :param dict key_motor_maps: This dictionary of tuples will assign a motor per key and set the desired speed when
-        pressed, taking into account desired direction {agxSDK.GuiEventListener.KEY: (motor, speed)}
-        :return Boolean handled: indicates success"""
-        super().__init__()
-        self.key_motor_maps = key_motor_maps
-
-    def keyboard(self, pressed_key, x, y, alt, down):
-        handled = False
-        for key, motor_map in self.key_motor_maps.items():
-            if pressed_key == key:
-                if down:
-                    motor_map[0].setSpeed(motor_map[1])
-                else:
-                    motor_map[0].setSpeed(0)
-            handled = True
-
-        return handled
-
-
-class InfoPrinter(agxSDK.StepEventListener):
-    def __init__(self, app, text_table, text_color):
-        """Write help text. textTable is a table with strings that will be drawn above the default text.
-        :param app: OSG Example Application object
-        :param text_table: table with text to be printed on screen
-        :return: AGX simulation object
-        """
-        super().__init__(agxSDK.StepEventListener.POST_STEP)
-        self.text_table = text_table
-        self.text_color = text_color
-        self.app = app
-        self.row = 31
-
-    def post(self, t):
-        if self.textTable:
-            color = agx.Vec4(0.3, 0.6, 0.7, 1)
-            if self.text_color:
-                color = self.text_color
-            for i, v in enumerate(self.text_table):
-                self.app.getSceneDecorator().setText(i, str(v[0]) + " " + v[1](), color)
-
-
-class HelpListener(agxSDK.StepEventListener):
-    def __init__(self, app, text_table):
-        """Write information to screen from lambda functions during the simulation.
-        :param app: OSG Example Application object
-        :param text_table: table with text to be printed on screen
-        :return: AGX simulation object
-        """
-        super().__init__(agxSDK.StepEventListener.PRE_STEP)
-        self.text_table = text_table
-        self.app = app
-        self.row = 31
-
-    def pre(self, t):
-        if t > 3.0:
-            self.app.getSceneDecorator().setText(self.row, "", agx.Vec4f(1, 1, 1, 1))
-            if self.text_table:
-                start_row = self.row - len(self.text_table)
-                for i, v in enumerate(self.text_table):
-                    self.app.getSceneDecorator().setText(start_row + i - 1, "", agx.Vec4f(0.3, 0.6, 0.7, 1))
-
-            self.getSimulation().remove(self)
-
-    def addNotification(self):
-        if self.text_table:
-            start_row = self.row - len(self.text_table)
-            for i, v in enumerate(self.text_table):
-                self.app.getSceneDecorator().setText(start_row + i - 1, v, agx.Vec4f(0.3, 0.6, 0.7, 1))
-
-        self.app.getSceneDecorator().setText(self.row, "Press e to start simulation", agx.Vec4f(0.3, 0.6, 0.7, 1))
 
 
 def save_simulation(sim, file_name):
@@ -403,6 +122,30 @@ def get_cable_state(cable, gain=1):
             logger.error('AGX segment iteration finished early. Number or cable segments may be wrong.')
 
     return cable_state * gain
+
+
+def get_ring_state(sim, ring_name, num_segments=None):
+    """Get ring segments positions.
+    :param sim: AGX Dynamics simulation object
+    :param ring_name: name of ring object
+    :param num_segments: number of segments making up the ring (possibly saves search time)
+    :return: NumPy array with segments' position
+    """
+    if not num_segments:
+        rbs = sim.getRigidBodies()
+        ring_state = np.zeros(shape=(3,))
+        for rb in rbs:
+            if ring_name in rb.getName():
+                position = to_numpy_array(rb.getPosition())
+                ring_state = np.vstack((ring_state, position))
+        ring_state = ring_state[1:, :].transpose()
+    else:
+        ring_state = np.zeros(shape=(3, num_segments + 1))
+        for i in range(1, num_segments + 1):
+            rb = sim.getRigidBody(ring_name + "_" + str(i))
+            ring_state[:, i-1] = to_numpy_array(rb.getPosition())
+
+    return ring_state
 
 
 def get_end_effector_state(sim, key, include_position=False, gain=1):
@@ -584,8 +327,9 @@ def create_ring_element(name, element_shape, material):
         return None
 
 
-def create_locked_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, position_ranges=None,
-                                 motor_ranges=None, locked_at_zero_speed=None, radius=0.005, length=0.050):
+def create_locked_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, position_ranges=None, motor_ranges=None,
+                                 locked_at_zero_speed=None, lock_status=None, compute_forces=False,
+                                 radius=0.005, length=0.050):
     """Creates a prismatic, collision free, base object and attaches a rigid body to it, via LockJoint.
     :param string name: name of prismatic base object as a string
     :param agx.RigidBody rigid_body: AGX rigid body object which should be attached to prismatic base
@@ -595,16 +339,20 @@ def create_locked_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, 
     :param list motor_ranges: a list containing three tuples with the position range for each constraint (x,y,z)
     :param list locked_at_zero_speed: a list containing three Booleans indicating zero speed behaviour each constraint
     (x,y,z)
+    :param list lock_status: a list containing boolean values for whether to activate the constraint locks (x,y,z)
+    :param boolean compute_forces: set whether forces are computed for this base.
     :param float radius: radius of the cylinders making up the base. For visualization purposes only.
     :param float length: radius of the cylinders making up the base. For visualization purposes only.
     :return assembly
     """
-    if locked_at_zero_speed is None:
-        locked_at_zero_speed = [False, False, False]
-    if motor_ranges is None:
-        motor_ranges = [(-1, 1), (-1, 1), (-1, 1)]
     if position_ranges is None:
         position_ranges = [(-1, 1), (-1, 1), (-1, 1)]
+    if motor_ranges is None:
+        motor_ranges = [(-1, 1), (-1, 1), (-1, 1)]
+    if locked_at_zero_speed is None:
+        locked_at_zero_speed = [False, False, False]
+    if lock_status is None:
+        lock_status = [False, False, False]
 
     position_ranges = {'x': position_ranges[0], 'y': position_ranges[1], 'z': position_ranges[2]}
     motor_ranges = {'x': motor_ranges[0], 'y': motor_ranges[1], 'z': motor_ranges[2]}
@@ -612,7 +360,8 @@ def create_locked_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, 
                             'y': locked_at_zero_speed[1],
                             'z': locked_at_zero_speed[2]}
 
-    assembly = create_prismatic_base(name, radius, length, position_ranges, motor_ranges, locked_at_zero_speed)
+    assembly = create_prismatic_base(name, radius, length, compute_forces,
+                                     position_ranges, motor_ranges, locked_at_zero_speed, lock_status)
 
     # Add constraint between base and rigid body
     f1 = agx.Frame()
@@ -632,9 +381,78 @@ def create_locked_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, 
     return assembly
 
 
+def create_hinge_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, position_ranges=None,
+                                motor_ranges=None, locked_at_zero_speed=None, lock_status=None, axis=agx.Vec3(1, 0, 0),
+                                compute_forces=False, radius=0.005, length=0.050):
+    """Creates a prismatic, collision free, base object and attaches a rigid body to it, via Hinge.
+    :param string name: name of prismatic base object as a string
+    :param agx.RigidBody rigid_body: AGX rigid body object which should be attached to prismatic base
+    :param float compliance: compliance of the Hinge which attaches the rigid body to the base
+    :param float damping: damping of the Hinge which attaches the rigid body to the base
+    :param list position_ranges: a list containing three tuples with the position range for each constraint (x,y,z,rb)
+    :param list motor_ranges: a list containing three tuples with the position range for each constraint (x,y,z,rb)
+    :param list locked_at_zero_speed: a list containing three Booleans indicating zero speed behaviour each constraint
+    (x,y,z,rb)
+    :param list lock_status: a list containing boolean values for whether to activate the constraint locks (x,y,z)
+    :param agx.Vec3 axis: vector determining axis of rotation of rigid body
+    :param boolean compute_forces: set whether forces are computed for this base.
+    :param float radius: radius of the cylinders making up the base. For visualization purposes only.
+    :param float length: radius of the cylinders making up the base. For visualization purposes only.
+    :return assembly
+    """
+    if locked_at_zero_speed is None:
+        locked_at_zero_speed = [False, False, False, False]
+    if motor_ranges is None:
+        motor_ranges = [(-1, 1), (-1, 1), (-1, 1), (-1, 1)]
+    if position_ranges is None:
+        position_ranges = [(-1, 1), (-1, 1), (-1, 1), (-1, 1)]
+    if lock_status is None:
+        lock_status = [False, False, False]
+
+    position_ranges = {'x': position_ranges[0], 'y': position_ranges[1], 'z': position_ranges[2],
+                       'rb': position_ranges[3]}
+    motor_ranges = {'x': motor_ranges[0], 'y': motor_ranges[1], 'z': motor_ranges[2], 'rb': motor_ranges[3]}
+    locked_at_zero_speed = {'x': locked_at_zero_speed[0],
+                            'y': locked_at_zero_speed[1],
+                            'z': locked_at_zero_speed[2],
+                            'rb': locked_at_zero_speed[3]}
+
+    assembly = create_prismatic_base(name, radius, length, compute_forces,
+                                     position_ranges, motor_ranges, locked_at_zero_speed, lock_status)
+
+    # Add constraint between base and rigid body
+    base_z_body = assembly.getRigidBody(name + "_base_z")
+    f1 = agx.Frame()
+    f2 = agx.Frame()
+    result = agx.Constraint.calculateFramesFromWorld(rigid_body.getPosition(), axis, rigid_body, f1,
+                                                     base_z_body, f2)
+    if not result:
+        logger.error("There was an error when calculating frames from world.")
+
+    joint_rb = agx.Hinge(rigid_body, f1, base_z_body, f2)
+    joint_rb.setName(name + "_joint_rb")
+    joint_rb.setEnableComputeForces(True)
+    joint_rb.setCompliance(compliance)
+    joint_rb.setDamping(damping)
+    assembly.add(joint_rb)
+
+    # Enable ranges and motors
+    joint_rb_range = joint_rb.getRange1D()
+    joint_rb_range.setEnable(True)
+    joint_rb_range.setRange(position_ranges['rb'][0], position_ranges['rb'][1])
+    joint_rb_motor = joint_rb.getMotor1D()
+    joint_rb_motor.setEnable(True)
+    joint_rb_motor.setForceRange(motor_ranges['rb'][0], motor_ranges['rb'][1])
+    joint_rb_motor.setLockedAtZeroSpeed(locked_at_zero_speed['rb'])
+
+    return assembly
+
+
 def create_universal_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, position_ranges=None,
-                                    motor_ranges=None, locked_at_zero_speed=None, radius=0.005, length=0.050):
-    """Creates a prismatic, collision free, base object and attaches a rigid body to it, via UniversalJoint.
+                                    motor_ranges=None, locked_at_zero_speed=None, lock_status=None,
+                                    compute_forces=False, radius=0.005, length=0.050):
+    """Creates a prismatic, collision free, base object and attaches a rigid body to it, via UniversalJoint. Note that
+    at this time, the UniversalJoint constraint has known issues. I should be avoided if possible.
     :param string name: name of prismatic base object as a string
     :param agx.RigidBody rigid_body: AGX rigid body object which should be attached to prismatic base
     :param float compliance: compliance of the UniversalJoint which attaches the rigid body to the base
@@ -642,7 +460,9 @@ def create_universal_prismatic_base(name, rigid_body, compliance=0, damping=1 / 
     :param list position_ranges: a list containing three tuples with the position range for each constraint (x,y,z,2rb)
     :param list motor_ranges: a list containing three tuples with the position range for each constraint (x,y,z,2rb)
     :param list locked_at_zero_speed: a list containing three Booleans indicating zero speed behaviour each constraint
-    (x,y,z,rb)
+    (x,y,z,2rb)
+    :param list lock_status: a list containing boolean values for whether to activate the constraint locks (x,y,z)
+    :param boolean compute_forces: set whether forces are computed for this base.
     :param float radius: radius of the cylinders making up the base. For visualization purposes only.
     :param float length: radius of the cylinders making up the base. For visualization purposes only.
     :return assembly
@@ -653,6 +473,8 @@ def create_universal_prismatic_base(name, rigid_body, compliance=0, damping=1 / 
         motor_ranges = [(-1, 1), (-1, 1), (-1, 1), (-1, 1), (-1, 1)]
     if position_ranges is None:
         position_ranges = [(-1, 1), (-1, 1), (-1, 1), (-1, 1), (-1, 1)]
+    if lock_status is None:
+        lock_status = [False, False, False]
 
     position_ranges = {'x': position_ranges[0], 'y': position_ranges[1], 'z': position_ranges[2],
                        'rb_1': position_ranges[3], 'rb_2': position_ranges[4]}
@@ -664,7 +486,8 @@ def create_universal_prismatic_base(name, rigid_body, compliance=0, damping=1 / 
                             'rb_1': locked_at_zero_speed[3],
                             'rb_2': locked_at_zero_speed[4]}
 
-    assembly = create_prismatic_base(name, radius, length, position_ranges, motor_ranges, locked_at_zero_speed)
+    assembly = create_prismatic_base(name, radius, length, compute_forces,
+                                     position_ranges, motor_ranges, locked_at_zero_speed, lock_status)
 
     # Add constraint between base and rigid body
     f1 = agx.Frame()
@@ -702,7 +525,8 @@ def create_universal_prismatic_base(name, rigid_body, compliance=0, damping=1 / 
     return assembly
 
 
-def create_prismatic_base(name, radius, length, position_ranges, motor_ranges, locked_at_zero_speed):
+def create_prismatic_base(name, radius, length, compute_forces,
+                          position_ranges, motor_ranges, locked_at_zero_speed, lock_status):
     assembly = agxSDK.Assembly()
 
     rotation_y_to_z = agx.OrthoMatrix3x3()
@@ -739,17 +563,17 @@ def create_prismatic_base(name, radius, length, position_ranges, motor_ranges, l
 
     # Add prismatic joints between bases
     joint_base_x = agx.Prismatic(agx.Vec3(1, 0, 0), base_x_body)
-    joint_base_x.setEnableComputeForces(True)
+    joint_base_x.setEnableComputeForces(compute_forces)
     joint_base_x.setName(name + "_joint_base_x")
     assembly.add(joint_base_x)
 
     joint_base_y = agx.Prismatic(agx.Vec3(0, -1, 0), base_x_body, base_y_body)
-    joint_base_y.setEnableComputeForces(True)
+    joint_base_y.setEnableComputeForces(compute_forces)
     joint_base_y.setName(name + "_joint_base_y")
     assembly.add(joint_base_y)
 
     joint_base_z = agx.Prismatic(agx.Vec3(0, 0, -1), base_y_body, base_z_body)
-    joint_base_z.setEnableComputeForces(True)
+    joint_base_z.setEnableComputeForces(compute_forces)
     joint_base_z.setName(name + "_joint_base_z")
     assembly.add(joint_base_z)
 
@@ -757,9 +581,11 @@ def create_prismatic_base(name, radius, length, position_ranges, motor_ranges, l
     joint_base_x_range = joint_base_x.getRange1D()
     joint_base_x_range.setEnable(True)
     joint_base_x_range.setRange(position_ranges['x'][0], position_ranges['x'][1])
+
     joint_base_y_range = joint_base_y.getRange1D()
     joint_base_y_range.setEnable(True)
     joint_base_y_range.setRange(position_ranges['y'][0], position_ranges['y'][1])
+
     joint_base_z_range = joint_base_z.getRange1D()
     joint_base_z_range.setEnable(True)
     joint_base_z_range.setRange(position_ranges['z'][0], position_ranges['z'][1])
@@ -769,13 +595,28 @@ def create_prismatic_base(name, radius, length, position_ranges, motor_ranges, l
     joint_base_x_motor.setEnable(True)
     joint_base_x_motor.setForceRange(motor_ranges['x'][0], motor_ranges['x'][1])
     joint_base_x_motor.setLockedAtZeroSpeed(locked_at_zero_speed['x'])
+
     joint_base_y_motor = joint_base_y.getMotor1D()
     joint_base_y_motor.setEnable(True)
     joint_base_y_motor.setForceRange(motor_ranges['y'][0], motor_ranges['y'][1])
     joint_base_y_motor.setLockedAtZeroSpeed(locked_at_zero_speed['y'])
+
     joint_base_z_motor = joint_base_z.getMotor1D()
     joint_base_z_motor.setEnable(True)
     joint_base_z_motor.setForceRange(motor_ranges['z'][0], motor_ranges['z'][1])
     joint_base_z_motor.setLockedAtZeroSpeed(locked_at_zero_speed['z'])
+
+    # Set and enable locks
+    if lock_status[0]:
+        joint_base_x_lock = joint_base_x.getLock1D()
+        joint_base_x_lock.setEnable(True)
+
+    if lock_status[1]:
+        joint_base_y_lock = joint_base_y.getLock1D()
+        joint_base_y_lock.setEnable(True)
+
+    if lock_status[2]:
+        joint_base_z_lock = joint_base_z.getLock1D()
+        joint_base_z_lock.setEnable(True)
 
     return assembly

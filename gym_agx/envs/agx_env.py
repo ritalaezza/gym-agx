@@ -34,7 +34,7 @@ class AgxEnv(gym.GoalEnv):
         :param n_substeps: number os simulation steps per call to step()
         :param n_actions: number of actions (DoF)
         :param camera_pose: dictionary containing EYE, CENTER, UP information for rendering
-        :param args: sys.argv
+        :param args: arguments for agxViewer
         """
         self.scene_path = scene_path
         self.n_substeps = n_substeps
@@ -92,14 +92,12 @@ class AgxEnv(gym.GoalEnv):
     def step(self, action):
         logger.info("step")
         action = np.clip(action, self.action_space.low, self.action_space.high)
-        self._set_action(action)
+        info = self._set_action(action)
         self._step_callback()
 
         obs = self._get_obs()
-        info = {
-            'is_success': self._is_success(obs['achieved_goal'], self.goal),
-        }
-        reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
+        info['is_success'] = self._is_success(obs['achieved_goal'], self.goal)
+        reward, info = self.compute_reward(obs['achieved_goal'], self.goal, info)
         done = self.done
         return obs, reward, done, info
 

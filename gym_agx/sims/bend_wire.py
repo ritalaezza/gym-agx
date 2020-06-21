@@ -5,7 +5,6 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
 """
 # AGX Dynamics imports
 import agx
-import agxUtil
 import agxPython
 import agxCollide
 import agxRender
@@ -68,13 +67,13 @@ def add_rendering(sim):
             agxOSG.setDiffuseColor(ground_node, agxRender.Color.Gray())
         elif rb.getName() == "gripper_left":
             gripper_left_node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(gripper_left_node, agxRender.Color(1.0, 0.0, 0.0, 1.0))
+            agxOSG.setDiffuseColor(gripper_left_node, agxRender.Color.Red())
         elif rb.getName() == "gripper_right":
             gripper_right_node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(gripper_right_node, agxRender.Color(0.0, 0.0, 1.0, 1.0))
+            agxOSG.setDiffuseColor(gripper_right_node, agxRender.Color.Blue())
         else:  # Cable segments
             cable_node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(cable_node, agxRender.Color(0.0, 1.0, 0.0, 1.0))
+            agxOSG.setDiffuseColor(cable_node, agxRender.Color.Green())
 
     scene_decorator = app.getSceneDecorator()
     light_source_0 = scene_decorator.getLightSource(agxOSG.SceneDecorator.LIGHT0)
@@ -231,13 +230,6 @@ def build_simulation():
     lock = prismatic_joint_left.getLock1D()
     lock.setEnable(True)
     sim.add(prismatic_joint_left)
-
-    # Now find all constraints in the system
-    # To do this,we create a vector of constraint pointers (agx..Constraint *)
-    constraints = agx.ConstraintPtrVector()
-
-    # We give it to this function which will fill it with all the constraints in the system
-    agxUtil.extractConstraints(constraints, sim.getDynamicsSystem())
 
     return sim
 

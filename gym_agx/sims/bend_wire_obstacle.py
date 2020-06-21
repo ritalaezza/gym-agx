@@ -19,11 +19,12 @@ import math
 import logging
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, KeyboardMotorHandler
+from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation
+from gym_agx.utils.agx_classes import KeyboardMotorHandler
 
 logger = logging.getLogger('gym_agx.sims')
 
-FILE_NAME = 'bend_wire_obstacle'
+FILE_NAME = 'bend_wire_obstacle_planar'
 # Simulation parameters
 N_SUBSTEPS = 2
 TIMESTEP = 1 / 100
@@ -154,8 +155,8 @@ def build_simulation():
     right_transform.setRotate(agx.Vec3.Z_AXIS(), -agx.Vec3.Y_AXIS())  # Rotation matrix which switches Z with -Y
     frame_right = agx.Frame(right_transform)
 
-    cable.add(agxCable.FreeNode(agx.Vec3(-LENGTH/2 + SIZE_GRIPPER + RADIUS, 0, 0)))  # Fix cable to gripper_left
-    cable.add(agxCable.FreeNode(agx.Vec3(LENGTH/2 - SIZE_GRIPPER - RADIUS, 0, 0)))  # Fix cable to gripper_right
+    cable.add(agxCable.FreeNode(agx.Vec3(-LENGTH / 2 + SIZE_GRIPPER + RADIUS, 0, 0)))  # Fix cable to gripper_left
+    cable.add(agxCable.FreeNode(agx.Vec3(LENGTH / 2 - SIZE_GRIPPER - RADIUS, 0, 0)))  # Fix cable to gripper_right
 
     material_cylinder = agx.Material("cylinder_material")
     bulk_material_cylinder = material_cylinder.getBulkMaterial()
@@ -250,15 +251,19 @@ def build_simulation():
     # Create bases for gripper motors
     prismatic_base_left = create_locked_prismatic_base("gripper_left", gripper_left_body, compliance=0,
                                                        position_ranges=[(-LENGTH / 2 + CYLINDER_RADIUS,
-                                                                  LENGTH / 2 - CYLINDER_RADIUS),
-                                                                 (-CYLINDER_LENGTH / 3, CYLINDER_LENGTH / 3),
-                                                                 (-(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH), 0)])
+                                                                         LENGTH / 2 - CYLINDER_RADIUS),
+                                                                        (-CYLINDER_LENGTH / 3, CYLINDER_LENGTH / 3),
+                                                                        (-(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH),
+                                                                         0)],
+                                                       lock_status=[False, True, False])
     sim.add(prismatic_base_left)
     prismatic_base_right = create_locked_prismatic_base("gripper_right", gripper_right_body, compliance=0,
                                                         position_ranges=[(-LENGTH / 2 + CYLINDER_RADIUS,
-                                                                   LENGTH / 2 - CYLINDER_RADIUS),
-                                                                  (-CYLINDER_LENGTH / 3, CYLINDER_LENGTH / 3),
-                                                                  (-(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH), 0)])
+                                                                          LENGTH / 2 - CYLINDER_RADIUS),
+                                                                         (-CYLINDER_LENGTH / 3, CYLINDER_LENGTH / 3),
+                                                                         (-(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH),
+                                                                          0)],
+                                                        lock_status=[False, True, False])
     sim.add(prismatic_base_right)
 
     # Add keyboard listener
@@ -307,11 +312,10 @@ def main(args):
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 
-    n_seconds = 60
+    n_seconds = 30
     n_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
     for k in range(n_steps):
         app.executeOneStepWithGraphics()
-
 
         t = sim.getTimeStamp()
         t_0 = t
