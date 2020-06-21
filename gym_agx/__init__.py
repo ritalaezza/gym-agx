@@ -77,18 +77,3 @@ for reward_type in ['sparse', 'dense']:
     )
     print("Registered {}".format('PushRope{}-v0'.format(suffix)))
 
-
-for reward_type in ['sparse', 'dense']:
-    suffix = 'Dense' if reward_type == 'dense' else ''
-    kwargs = {
-        'reward_type': reward_type,
-        'n_substeps': 20,
-    }
-
-    register(
-        id='InsertORing{}-v0'.format(suffix),
-        entry_point='gym_agx.envs:InsertORingEnv',
-        kwargs=kwargs,
-        max_episode_steps=int(1500),
-    )
-    print("Registered {}".format('InsertORing{}-v0'.format(suffix)))

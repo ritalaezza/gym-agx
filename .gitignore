@@ -16,4 +16,3 @@ logs/
 
 # Ignore files
 agx_statistics.txt
-test_*.py
