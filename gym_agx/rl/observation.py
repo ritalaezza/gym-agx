@@ -4,8 +4,8 @@ import logging
 import numpy as np
 from enum import Enum
 
-from gym_agx.utils.agx_utils import to_numpy_array
-from gym_agx.utils.utils import get_cable_segment_edges, get_cable_torsion, get_cable_curvature
+from gym_agx.utils.agx_utils import to_numpy_array, get_cable_segment_edges
+from gym_agx.utils.utils import get_cable_torsion, get_cable_curvature
 
 logger = logging.getLogger('gym_agx.rl')
 

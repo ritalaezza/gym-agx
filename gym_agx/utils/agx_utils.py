@@ -109,6 +109,29 @@ def to_agx_list(np_array, agx_type):
     return agx_list
 
 
+def get_cable_segment_edges(cable):
+    """Get AGX Cable segments' begin and end positions.
+    :param cable: AGX Cable object
+    :return: NumPy array with segments' edge positions
+    """
+    num_segments = cable.getNumSegments()
+    cable_state = np.zeros(shape=(3, num_segments + 1))
+    segment_iterator = cable.begin()
+    for i in range(num_segments):
+        if not segment_iterator.isEnd():
+            position_begin = segment_iterator.getBeginPosition()
+            cable_state[:3, i] = to_numpy_array(position_begin)
+            if i == num_segments - 1:
+                position_end = segment_iterator.getEndPosition()
+                cable_state[:3, -1] = to_numpy_array(position_end)
+
+            segment_iterator.inc()
+        else:
+            logger.error('AGX segment iteration finished early. Number or cable segments may be wrong.')
+
+    return cable_state
+
+
 def create_body(shape, name="", position=agx.Vec3(0, 0, 0), rotation=agx.OrthoMatrix3x3(),
                 geometry_transform=agx.AffineMatrix4x4(), motion_control=agx.RigidBody.DYNAMICS, material=None):
     """Helper function that creates a RigidBody according to the given definition.

@@ -3,8 +3,6 @@ import logging
 import numpy as np
 from gym import spaces
 
-from gym_agx.utils.agx_utils import to_numpy_array
-
 logger = logging.getLogger('gym_agx.utils')
 
 
@@ -55,29 +53,6 @@ def goal_area(achieved_goal, goal):
     """
     assert achieved_goal.shape == goal.shape
     return abs(np.trapz(achieved_goal) - np.trapz(goal))
-
-
-def get_cable_segment_edges(cable):
-    """Get AGX Cable segments' begin and end positions.
-    :param cable: AGX Cable object
-    :return: NumPy array with segments' edge positions
-    """
-    num_segments = cable.getNumSegments()
-    cable_state = np.zeros(shape=(3, num_segments + 1))
-    segment_iterator = cable.begin()
-    for i in range(num_segments):
-        if not segment_iterator.isEnd():
-            position_begin = segment_iterator.getBeginPosition()
-            cable_state[:3, i] = to_numpy_array(position_begin)
-            if i == num_segments - 1:
-                position_end = segment_iterator.getEndPosition()
-                cable_state[:3, -1] = to_numpy_array(position_end)
-
-            segment_iterator.inc()
-        else:
-            logger.error('AGX segment iteration finished early. Number or cable segments may be wrong.')
-
-    return cable_state
 
 
 def sinusoidal_trajectory(A, w, t, phase=0):
