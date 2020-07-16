@@ -5,7 +5,7 @@ import numpy as np
 from enum import Enum
 
 from gym_agx.utils.agx_utils import to_numpy_array
-from gym_agx.utils.utils import compute_curvature, compute_torsion, get_cable_segment_edges
+from gym_agx.utils.utils import get_cable_segment_edges, get_cable_torsion, get_cable_curvature
 
 logger = logging.getLogger('gym_agx.rl')
 
@@ -234,33 +234,6 @@ def get_cable_segment_positions(cable):
             logger.error('AGX segment iteration finished early. Number or cable segments may be wrong.')
 
     return cable_positions
-
-
-def get_cable_curvature(cable_segment_edges, segment_length=1):
-    """Iterates through cable state to compute curvature between three adjacent points.
-    :param cable_segment_edges: Numpy array with coordinates of cable segments
-    :param segment_length: length of AGX Cable segment (default 1)
-    """
-    cable_vectors = np.diff(cable_segment_edges)
-    curvature = np.zeros(shape=cable_segment_edges.shape[1] - 2)
-    for i in range(cable_segment_edges.shape[1] - 2):
-        curvature[i] = compute_curvature(cable_vectors[:, i], cable_vectors[:, i + 1], segment_length)
-
-    return curvature
-
-
-def get_cable_torsion(cable_state, segment_length=1):
-    """Iterates through cable state to compute torsion between four adjacent points.
-    :param cable_state: Numpy array with coordinates of cable segments
-    :param segment_length: length of AGX Cable segment (default 1)
-    """
-    cable_vectors = np.diff(cable_state)
-    torsion = np.zeros(shape=cable_state.shape[1] - 3)
-    for i in range(cable_state.shape[1] - 3):
-        torsion[i] = compute_torsion(cable_vectors[:, i], cable_vectors[:, i + 1], cable_vectors[:, i + 2],
-                                     segment_length)
-
-    return torsion
 
 
 def get_ring_segment_positions(sim, ring_name, num_segments=None):
