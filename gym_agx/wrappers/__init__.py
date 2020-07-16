@@ -1,0 +1,1 @@
+from gym_agx.wrappers.observation_wrapper import GoalEnvFlattenObservation

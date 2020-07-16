@@ -2,10 +2,11 @@ import sys
 import numpy as np
 import logging
 
+import gym
 from gym import error, spaces
 from gym.utils import seeding
 
-import gym
+from gym_agx.utils.utils import construct_space
 
 try:
     import agx
@@ -24,11 +25,10 @@ logger = logging.getLogger('gym_agx.envs')
 
 
 class AgxEnv(gym.GoalEnv):
-    """Superclass for all AGX Dynamics environments. Initializes AGX, loads scene from file and builds it.
-    """
+    """Superclass for all AGX Dynamics environments. Initializes AGX, loads scene from file and builds it."""
     metadata = {'render.modes': ['osg', 'debug']}
 
-    def __init__(self, scene_path, n_substeps, n_actions, camera_pose, args):
+    def __init__(self, scene_path, n_substeps, n_actions, observation_config, camera_pose, args):
         """Initializes a AgxEnv object
         :param scene_path: path to binary file containing serialized simulation defined in sim/ folder
         :param n_substeps: number os simulation steps per call to step()
@@ -59,16 +59,20 @@ class AgxEnv(gym.GoalEnv):
         self.np_random = None
         self.seed()
 
-        self.goal = self._sample_goal()
-        obs = self._get_obs()
-
         self.n_actions = n_actions
+        self.observation_config = observation_config
+
+        self.goal = self._sample_goal()
+        obs = self._get_observation()
+
+        self.obs_space = construct_space(obs['observation'])
+        self.goal_space = construct_space(obs['desired_goal'])
 
         self.action_space = spaces.Box(-1., 1., shape=(self.n_actions,), dtype='float32')
         self.observation_space = spaces.Dict(dict(
-            desired_goal=spaces.Box(-np.inf, np.inf, shape=obs['desired_goal'].shape, dtype='float32'),
-            achieved_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
-            observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32'),
+            desired_goal=self.goal_space,
+            achieved_goal=self.goal_space,
+            observation=self.obs_space
         ))
 
     @property
@@ -95,10 +99,9 @@ class AgxEnv(gym.GoalEnv):
         info = self._set_action(action)
         self._step_callback()
 
-        obs = self._get_obs()
-        info['is_success'] = self._is_success(obs['achieved_goal'], self.goal)
+        obs = self._get_observation()
+        info['is_success'], done = self._is_success(obs['achieved_goal'], self.goal)
         reward, info = self.compute_reward(obs['achieved_goal'], self.goal, info)
-        done = self.done
         return obs, reward, done, info
 
     def reset(self):
@@ -108,7 +111,7 @@ class AgxEnv(gym.GoalEnv):
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
         self.goal = self._sample_goal().copy()
-        obs = self._get_obs()
+        obs = self._get_observation()
         return obs
 
     def close(self):
@@ -130,6 +133,7 @@ class AgxEnv(gym.GoalEnv):
 
         if not agxIO.readFile(self.scene_path, self.sim, scene, agxSDK.Simulation.READ_ALL):
             raise RuntimeError("Unable to open file \'" + self.scene_path + "\'")
+        scene.setName("main_assembly")
         self.sim.add(scene)
         self.gravity = self.sim.getUniformGravity()
         self.time_step = self.sim.getTimeStep()
@@ -164,7 +168,7 @@ class AgxEnv(gym.GoalEnv):
     # Extension methods
     # ----------------------------
 
-    def _get_obs(self):
+    def _get_observation(self):
         """Returns the observation.
         """
         raise NotImplementedError()

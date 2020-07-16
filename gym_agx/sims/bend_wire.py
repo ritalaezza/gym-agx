@@ -19,7 +19,7 @@ import math
 import sys
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, save_simulation
+from gym_agx.utils.agx_utils import create_body, save_simulation, save_goal_simulation
 from gym_agx.utils.utils import sinusoidal_trajectory
 
 logger = logging.getLogger('gym_agx.sims')
@@ -128,6 +128,12 @@ def build_simulation():
                                 motion_control=agx.RigidBody.DYNAMICS)
     sim.add(gripper_right)
 
+    # Disable collisions for grippers
+    gripper_left_body = sim.getRigidBody("gripper_left")
+    gripper_left_body.getGeometry("gripper_left").setEnableCollisions(False)
+    gripper_right_body = sim.getRigidBody("gripper_right")
+    gripper_right_body.getGeometry("gripper_right").setEnableCollisions(False)
+
     logger.info("Mass of grippers: {}".format(sim.getRigidBody("gripper_right").calculateMass()))
 
     # Create Frames for each gripper:
@@ -152,6 +158,8 @@ def build_simulation():
         logger.debug("Successful cable initialization.")
     else:
         logger.error(report.getActualError())
+
+    actual_length = report.getLength()
 
     # Add cable plasticity
     plasticity = agxCable.CablePlasticity()
@@ -189,9 +197,9 @@ def build_simulation():
     motor_left.setLockedAtZeroSpeed(False)
     lock_left = hinge_joint_left.getLock1D()
     lock_left.setEnable(False)
-    range_left = hinge_joint_left.getRange1D()
-    range_left.setEnable(True)
-    range_left.setRange(agx.RangeReal(-math.pi / 2, math.pi / 2))
+    # range_left = hinge_joint_left.getRange1D()
+    # range_left.setEnable(True)
+    # range_left.setRange(agx.RangeReal(-math.pi / 2, math.pi / 2))
     sim.add(hinge_joint_left)
 
     hinge_joint_right = agx.Hinge(sim.getRigidBody("gripper_right"), frame_right, segment_right)
@@ -203,9 +211,9 @@ def build_simulation():
     motor_right.setLockedAtZeroSpeed(False)
     lock_right = hinge_joint_right.getLock1D()
     lock_right.setEnable(False)
-    range_right = hinge_joint_right.getRange1D()
-    range_right.setEnable(True)
-    range_right.setRange(agx.RangeReal(-math.pi / 2, math.pi / 2))
+    # range_right = hinge_joint_right.getRange1D()
+    # range_right.setEnable(True)
+    # range_right.setRange(agx.RangeReal(-math.pi / 2, math.pi / 2))
     sim.add(hinge_joint_right)
 
     # Add prismatic constraints
@@ -221,7 +229,7 @@ def build_simulation():
     lock_right.setEnable(False)
     range_right = prismatic_joint_right.getRange1D()
     range_right.setEnable(True)
-    range_right.setRange(agx.RangeReal(-LENGTH, 0))
+    range_right.setRange(agx.RangeReal(-actual_length + + SIZE_GRIPPER/2 + 2 * RADIUS, 0))
     sim.add(prismatic_joint_right)
 
     prismatic_frame_left = agx.PrismaticFrame(agx.Vec3(LENGTH, 0, 0), agx.Vec3.X_AXIS())
@@ -293,8 +301,10 @@ def main(args):
             sim.stepForward()
             t = sim.getTimeStamp()
 
-    # Save goal simulation to file
-    success = save_simulation(sim, FILE_NAME + "_goal")
+    # Save goal simulation to file (but first make grippers static, disable collisions, remove clutter and rename)
+    cable = agxCable.Cable.find(sim, "DLO")
+    cable.setName("DLO_goal")
+    success = save_goal_simulation(sim, FILE_NAME, ['ground'])
     if success:
         logger.debug("Goal simulation saved!")
     else:

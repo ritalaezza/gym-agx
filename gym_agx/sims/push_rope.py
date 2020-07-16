@@ -18,7 +18,7 @@ import sys
 import logging
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation
+from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, save_goal_simulation
 from gym_agx.utils.agx_classes import KeyboardMotorHandler
 
 logger = logging.getLogger('gym_agx.sims')
@@ -300,8 +300,10 @@ def main(args):
             sim.stepForward()
             t = sim.getTimeStamp()
 
-    # Save goal simulation to file
-    success = save_simulation(sim, FILE_NAME + "_goal")
+    # Save goal simulation to file (but first make grippers static, remove clutter and rename)
+    cable = agxCable.Cable.find(sim, "DLO")
+    cable.setName("DLO_goal")
+    success = save_goal_simulation(sim, FILE_NAME, ['obstacle', 'ground', "pusher_prismatic_base", "bounding_box"])
     if success:
         logger.debug("Goal simulation saved!")
     else:

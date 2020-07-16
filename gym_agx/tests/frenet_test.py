@@ -2,7 +2,7 @@ import math
 import pytest
 import logging
 import numpy as np
-from gym_agx.utils.utils import get_cable_curvature, get_cable_torsion
+from gym_agx.rl.observation import get_cable_curvature, get_cable_torsion
 
 logger = logging.getLogger('gym_agx.tests')
 helix_parameters = [([1, 2, 3], [1, 0.5, 0.25], 0.01)]

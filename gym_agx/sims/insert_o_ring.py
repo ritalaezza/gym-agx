@@ -18,8 +18,8 @@ import math
 import sys
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, create_ring, create_universal_prismatic_base, KeyboardMotorHandler
-from gym_agx.utils.agx_utils import save_simulation
+from gym_agx.utils.agx_utils import create_body, create_ring, create_hinge_prismatic_base, save_simulation
+from gym_agx.utils.agx_classes import KeyboardMotorHandler
 
 logger = logging.getLogger('gym_agx.sims')
 
@@ -36,8 +36,8 @@ RING_RADIUS = CYLINDER_RADIUS - GROOVE_DEPTH  # meters
 CIRCUMFERENCE = 2 * math.pi * RING_RADIUS
 NUM_RING_ELEMENTS = 40  # number of segments
 RING_SEGMENT_LENGTH = (CIRCUMFERENCE / NUM_RING_ELEMENTS)
-RING_CROSS_SECTION = RING_SEGMENT_LENGTH / 4
-GROOVE_WIDTH = RING_CROSS_SECTION * 2
+RING_CROSS_SECTION = RING_SEGMENT_LENGTH / 3
+GROOVE_WIDTH = RING_CROSS_SECTION * 3
 RING_COMPLIANCE = [1e-5, 1.5e-3, 1e-5, 1, 1, 1e-5]
 GRIPPER_COMPLIANCE = 1e-8
 # Material Parameters
@@ -101,15 +101,6 @@ def add_rendering(sim):
     light_source_0.setDirection(light_dir)
     scene_decorator.setEnableLogo(False)
 
-    # for i in range(1, NUM_RING_ELEMENTS + 2):
-    #     ring_constraint = sim.getConstraint("ring_constraint_" + str(i))
-    #     agxOSG.createAxes(ring_constraint, root, 0.005)
-
-    # gripper_left_joint_rb = sim.getConstraint("gripper_left_joint_rb")
-    # agxOSG.createAxes(gripper_left_joint_rb, root, 0.005)
-
-    # gripper_right_joint_rb = sim.getConstraint("gripper_right_joint_rb")
-    # agxOSG.createAxes(gripper_right_joint_rb, root, 0.005)
     return app
 
 
@@ -182,15 +173,12 @@ def build_simulation():
 
     ring = create_ring(name="ring", radius=RING_RADIUS,
                        element_shape=agxCollide.Capsule(RING_CROSS_SECTION, RING_SEGMENT_LENGTH),
-                       # element_shape=agxCollide.Cylinder(RING_CROSS_SECTION, RING_SEGMENT_LENGTH),
-                       # element_shape=agxCollide.Sphere(RING_CROSS_SECTION),
-                       # element_shape=agxCollide.Box(RING_CROSS_SECTION, RING_CROSS_SECTION, RING_CROSS_SECTION),
                        num_elements=NUM_RING_ELEMENTS,
                        constraint_type=agx.LockJoint,
                        rotation_shift=math.pi / 2,
-                       translation_shift=RING_SEGMENT_LENGTH / 2,  # + RING_CROSS_SECTION,
+                       translation_shift=RING_SEGMENT_LENGTH / 2,
                        compliance=RING_COMPLIANCE,
-                       center=agx.Vec3(0, 0, CYLINDER_LENGTH + 2 * RING_RADIUS),  # normal=agx.Vec3(0, 0.5, 0.5),
+                       center=agx.Vec3(0, 0, CYLINDER_LENGTH + RING_RADIUS),
                        material=material_ring)
     sim.add(ring)
 
@@ -245,32 +233,37 @@ def build_simulation():
     contact_material = sim.getMaterialManager().getOrCreateContactMaterial(material_cylinder, material_ring)
     contact_material.setYoungsModulus(CONTACT_YOUNG_MODULUS)
 
-    # Create friction model
-    fm = agx.IterativeProjectedConeFriction()
-    fm.setSolveType(agx.FrictionModel.DIRECT)
-    contact_material.setFrictionModel(fm)
+    # Create friction model, DIRECT is more accurate, but slower
+    # fm = agx.IterativeProjectedConeFriction()
+    # fm.setSolveType(agx.FrictionModel.DIRECT)
+    # contact_material.setFrictionModel(fm)
 
     # Create bases for gripper motors
-    prismatic_base_left = create_universal_prismatic_base("gripper_left", gripper_left_body)
+    prismatic_base_left = create_hinge_prismatic_base("gripper_left", gripper_left_body,
+                                                      position_ranges=[(-CYLINDER_RADIUS, CYLINDER_RADIUS),
+                                                                       (-CYLINDER_RADIUS, CYLINDER_RADIUS),
+                                                                       (-(CYLINDER_LENGTH + 2 * RING_RADIUS),
+                                                                        RING_RADIUS),
+                                                                       (-math.pi / 4, math.pi / 4)])
     sim.add(prismatic_base_left)
-    prismatic_base_right = create_universal_prismatic_base("gripper_right", gripper_right_body)
+
+    prismatic_base_right = create_hinge_prismatic_base("gripper_right", gripper_right_body,
+                                                       position_ranges=[(-CYLINDER_RADIUS, CYLINDER_RADIUS),
+                                                                        (-CYLINDER_RADIUS, CYLINDER_RADIUS),
+                                                                        (-CYLINDER_LENGTH - RING_RADIUS,
+                                                                         RING_RADIUS),
+                                                                        (-math.pi / 4, math.pi / 4)])
     sim.add(prismatic_base_right)
 
     # Add keyboard listener
     left_motor_x = sim.getConstraint1DOF("gripper_left_joint_base_x").getMotor1D()
     left_motor_y = sim.getConstraint1DOF("gripper_left_joint_base_y").getMotor1D()
     left_motor_z = sim.getConstraint1DOF("gripper_left_joint_base_z").getMotor1D()
-    left_motor_rb_1 = agx.Motor1D_safeCast(
-        sim.getConstraint("gripper_left_joint_rb").getSecondaryConstraintGivenName("gripper_left_joint_rb_motor_1"))
-    left_motor_rb_2 = agx.Motor1D_safeCast(
-        sim.getConstraint("gripper_left_joint_rb").getSecondaryConstraintGivenName("gripper_left_joint_rb_motor_2"))
+    left_motor_rb = sim.getConstraint1DOF("gripper_left_joint_rb").getMotor1D()
     right_motor_x = sim.getConstraint1DOF("gripper_right_joint_base_x").getMotor1D()
     right_motor_y = sim.getConstraint1DOF("gripper_right_joint_base_y").getMotor1D()
     right_motor_z = sim.getConstraint1DOF("gripper_right_joint_base_z").getMotor1D()
-    right_motor_rb_1 = agx.Motor1D_safeCast(
-        sim.getConstraint("gripper_right_joint_rb").getSecondaryConstraintGivenName("gripper_right_joint_rb_motor_1"))
-    right_motor_rb_2 = agx.Motor1D_safeCast(
-        sim.getConstraint("gripper_right_joint_rb").getSecondaryConstraintGivenName("gripper_right_joint_rb_motor_2"))
+    right_motor_rb = sim.getConstraint1DOF("gripper_right_joint_rb").getMotor1D()
     key_motor_map = {agxSDK.GuiEventListener.KEY_Right: (right_motor_x, 0.1),
                      agxSDK.GuiEventListener.KEY_Left: (right_motor_x, -0.1),
                      agxSDK.GuiEventListener.KEY_Up: (right_motor_y, 0.1),
@@ -283,14 +276,10 @@ def build_simulation():
                      0x73: (left_motor_y, -0.1),
                      0x71: (left_motor_z, 0.1),
                      0x65: (left_motor_z, -0.1),
-                     0x72: (left_motor_rb_2, 0.1),  # E
-                     0x74: (left_motor_rb_2, -0.1),  # R
-                     0x6f: (right_motor_rb_2, 0.1),  # O
-                     0x70: (right_motor_rb_2, -0.1),  # P
-                     0x7a: (left_motor_rb_1, 0.1),  # Z
-                     0x78: (left_motor_rb_1, -0.1),  # X
-                     0x6e: (right_motor_rb_1, 0.1),  # N
-                     0x6d: (right_motor_rb_1, -0.1)}  # M
+                     0x72: (left_motor_rb, 0.1),  # R
+                     0x74: (left_motor_rb, -0.1),  # T
+                     0x6f: (right_motor_rb, 0.1),  # O
+                     0x70: (right_motor_rb, -0.1)}  # P
     sim.add(KeyboardMotorHandler(key_motor_map))
 
     return sim
@@ -319,7 +308,7 @@ def main(args):
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 
-    n_seconds = 50
+    n_seconds = 30
     n_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
     for k in range(n_steps):
         app.executeOneStepWithGraphics()

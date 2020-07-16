@@ -5,7 +5,6 @@ import os
 import logging
 import tempfile
 import numpy as np
-from enum import Enum
 
 try:
     import matplotlib.pyplot as plt
@@ -13,164 +12,12 @@ except:
     print("Could not find matplotlib.")
     plt = None
 
-from gym_agx.utils.agx_utils import get_end_effector_state
 from agxPythonModules.utils.numpy_utils import create_numpy_array
 
 logger = logging.getLogger('gym_agx.utils')
 
 
-class EndEffectorConstraint:
-    class Dof(Enum):
-        X_TRANSLATIONAL = 0,
-        Y_TRANSLATIONAL = 1,
-        Z_TRANSLATIONAL = 2,
-        X_ROTATIONAL = 3,
-        Y_ROTATIONAL = 4,
-        Z_ROTATIONAL = 5
-
-    def __init__(self, end_effector_dof, compute_forces_enabled, velocity_control, compliance_control, velocity_index,
-                 compliance_index):
-        """End effector constraint object, defining important parameters.
-        :param end_effector_dof: (GDof) degree of freedom of end effector that this constraint controls
-        :param compute_forces_enabled: (Boolean) force and torque can be measured
-        :param velocity_control: (Boolean) is velocity controlled
-        :param compliance_control: (Boolean) is compliance controlled
-        :param velocity_index: (int) index of action vector which controls velocity of this constraint's motor
-        :param compliance_index: (int) index of action vector which controls compliance of this constraint's motor"""
-        self.end_effector_dof = end_effector_dof
-        self.velocity_control = velocity_control
-        self.compute_forces_enabled = compute_forces_enabled
-        self.compliance_control = compliance_control
-        self.velocity_index = velocity_index
-        self.compliance_index = compliance_index
-
-    @property
-    def is_active(self):
-        return True if self.velocity_control or self.compliance_control else False
-
-
-class EndEffector:
-    last_action_index = -1
-
-    def __init__(self, name, controllable, observable, max_velocity=1, max_angular_velocity=1, max_acceleration=1,
-                 max_angular_acceleration=1, min_compliance=0, max_compliance=1e6):
-        """EndEffector class which keeps track of end effector constraints and action indices.
-        :param name
-        :param controllable
-        :param observable
-        :param max_velocity
-        :param max_angular_velocity
-        :param max_acceleration
-        :param max_angular_acceleration
-        :param max_compliance
-        """
-        self.name = name
-        self.controllable = controllable
-        self.observable = observable
-        self.max_velocity = max_velocity
-        self.max_angular_velocity = max_angular_velocity
-        self.max_acceleration = max_acceleration
-        self.max_angular_acceleration = max_angular_acceleration
-        self.min_compliance = min_compliance
-        self.max_compliance = max_compliance
-        self.constraints = {}
-
-    def add_constraint(self, name, end_effector_dof, compute_forces_enabled=False, velocity_control=False,
-                       compliance_control=False):
-        velocity_index = None
-        compliance_index = None
-        if velocity_control:
-            self.last_action_index += 1
-            velocity_index = self.last_action_index
-        if compliance_control:
-            self.last_action_index += 1
-            compliance_index = self.last_action_index
-        end_effector_constraint = EndEffectorConstraint(end_effector_dof, compute_forces_enabled, velocity_control,
-                                                        compliance_control, velocity_index, compliance_index)
-        self.constraints.update({name: end_effector_constraint})
-
-    def apply_control(self, sim, action, dt):
-        control_actions = []
-        if self.controllable:
-            for key, constraint in self.constraints.items():
-                joint = sim.getConstraint1DOF(key)
-                motor = joint.getMotor1D()
-                if constraint.velocity_control:
-                    current_velocity, linear = self.get_velocity(sim, constraint.end_effector_dof)
-                    velocity = self.rescale_velocity(action[constraint.velocity_index], current_velocity, dt, linear)
-                    motor.setSpeed(np.float64(velocity))
-                    control_actions.append(velocity)
-                if constraint.compliance_control:
-                    motor_param = motor.getRegularizationParameters()
-                    compliance = self.rescale_compliance(action[constraint.compliance_index])
-                    motor_param.setCompliance(np.float64(compliance))
-                    control_actions.append(compliance)
-        else:
-            logger.debug("Received apply_control command for uncontrollable end effector.")
-
-        return control_actions
-
-    def get_velocity(self, sim, constraint_dof):
-        end_effector = sim.getRigidBody(self.name)
-        if constraint_dof == EndEffectorConstraint.Dof.X_TRANSLATIONAL:
-            velocity = end_effector.getVelocity()[0]
-            linear = True
-        elif constraint_dof == EndEffectorConstraint.Dof.Y_TRANSLATIONAL:
-            velocity = end_effector.getVelocity()[1]
-            linear = True
-        elif constraint_dof == EndEffectorConstraint.Dof.Z_TRANSLATIONAL:
-            velocity = end_effector.getVelocity()[2]
-            linear = True
-        elif constraint_dof == EndEffectorConstraint.Dof.X_ROTATIONAL:
-            velocity = end_effector.getAngularVelocity()[0]
-            linear = False
-        elif constraint_dof == EndEffectorConstraint.Dof.Y_ROTATIONAL:
-            velocity = end_effector.getAngularVelocity()[1]
-            linear = False
-        elif constraint_dof == EndEffectorConstraint.Dof.Z_ROTATIONAL:
-            velocity = end_effector.getAngularVelocity()[2]
-            linear = False
-        else:
-            logger.error("Unexpected EndEffectorConstraint.Dof.")
-
-        return velocity, linear
-
-    def get_state(self, sim):
-        if self.observable:
-            state = []
-            for key, constraint in self.constraints.items():
-                if constraint.compute_forces_enabled:
-                    constraint_state = get_end_effector_state(sim, key).ravel()
-                    logger.debug(f"{key} state: {constraint_state}")
-                    state.append(constraint_state)
-            return np.asarray(state)
-        else:
-            logger.error("Received get_state command for unobservable end effector.")
-
-    def rescale_velocity(self, velocity, current_velocity, dt, linear):
-        if linear:
-            logger.debug(f'Current linear velocity: {current_velocity} m/s')
-            logger.debug(f'Initial target velocity: {velocity} m/s')
-            max_acceleration = self.max_acceleration
-            max_velocity = self.max_velocity
-        else:
-            logger.debug(f'Current angular velocity: {current_velocity} rad/s')
-            logger.debug(f'Initial target velocity: {velocity} rad/s')
-            max_acceleration = self.max_angular_acceleration
-            max_velocity = self.max_angular_velocity
-        if abs(velocity - current_velocity) > max_acceleration:
-            velocity = current_velocity + np.sign(velocity - current_velocity) * (max_acceleration * dt)
-        if abs(velocity) > max_velocity:
-            velocity = max_velocity * np.sign(velocity)
-        logger.debug(f'Rescaled target velocity: {velocity}')
-        return velocity
-
-    def rescale_compliance(self, compliance):
-        # Assumes an action range between -1 and 1
-        return (compliance + 1) / 2 * (self.max_compliance - self.min_compliance) + self.min_compliance
-
-
-class CameraSpecs:
+class CameraConfig:
     def __init__(self, eye, center, up, light_position, light_direction):
         self.camera_pose = {'eye': eye,
                             'center': center,

@@ -30,6 +30,38 @@ def save_simulation(sim, file_name):
     return True
 
 
+def save_goal_simulation(sim, file_name, remove_assemblies=[]):
+    """Save AGX simulation object to file.
+    :param sim: AGX simulation object
+    :param file_name: name of the file
+    :param remove_assemblies: string list of assemblies to remove
+    :return: Boolean for success/failure
+    """
+    # Remove assemblies
+    for assembly in remove_assemblies:
+        ass = sim.getAssembly(assembly)
+        sim.remove(ass)
+    # Make all rigid bodies left static, collision free and add goal to their name
+    rbs = sim.getRigidBodies()
+    for rb in rbs:
+        name = rb.getName()
+        rb.setName(name + '_goal')
+        rb.setMotionControl(agx.RigidBody.STATIC)
+        rb_geometries = rb.getGeometries()
+        rb_geometries[0].setEnableCollisions(False)
+    file_directory = os.path.dirname(os.path.abspath(__file__))
+    package_directory = os.path.split(file_directory)[0]
+    markup_file = os.path.join(package_directory, 'envs/assets', file_name + "_goal.aagx")
+    if not agxIO.writeFile(markup_file, sim):
+        print("Unable to save simulation to markup file!")
+        return False
+    binary_file = os.path.join(package_directory, 'envs/assets', file_name + "_goal.agx")
+    if not agxIO.writeFile(binary_file, sim):
+        print("Unable to save simulation to binary file!")
+        return False
+    return True
+
+
 def to_numpy_array(agx_list):
     """Convert from AGX data structure to NumPy array.
     :param agx_list: AGX data structure
@@ -51,7 +83,7 @@ def to_numpy_array(agx_list):
             for j in range(3):
                 np_array[i, j] = row[j]
     else:
-        logger.warning('Conversion for type {} type is not supported.'.format(agx_type))
+        logger.warning('Conversion for {} type is not supported.'.format(agx_type))
 
     return np_array
 
@@ -72,120 +104,9 @@ def to_agx_list(np_array, agx_type):
                                       np_array[1, 0].item(), np_array[1, 1].item(), np_array[1, 2].item(),
                                       np_array[2, 0].item(), np_array[2, 1].item(), np_array[2, 2].item())
     else:
-        logger.warning('Conversion for type {} type is not supported.'.format(agx_type))
+        logger.warning('Conversion for {} type is not supported.'.format(agx_type))
 
     return agx_list
-
-
-def get_cable_pose(cable, gain=1):
-    """Get AGX Cable segments' positions and rotations.
-    :param cable: AGX Cable object
-    :param gain: gives possibility to rescale position values
-    :return: NumPy array with segments' position and rotations
-    """
-    num_segments = cable.getNumSegments()
-    cable_pose = np.zeros(shape=(7, num_segments))
-    segment_iterator = cable.begin()
-    for i in range(num_segments):
-        if not segment_iterator.isEnd():
-            position = segment_iterator.getGeometry().getPosition() * gain
-            cable_pose[:3, i] = to_numpy_array(position)
-
-            rotation = segment_iterator.getGeometry().getRotation()
-            cable_pose[3:, i] = to_numpy_array(rotation)
-            segment_iterator.inc()
-        else:
-            logger.error('AGX segment iteration finished early. Number or cable segments may be wrong.')
-
-    return cable_pose
-
-
-def get_cable_state(cable, gain=1):
-    """Get AGX Cable segments' begin and end positions.
-    :param cable: AGX Cable object
-    :param gain: gives possibility to rescale position values
-    :return: NumPy array with segments' position
-    """
-    num_segments = cable.getNumSegments()
-    cable_state = np.zeros(shape=(3, num_segments + 1))
-    segment_iterator = cable.begin()
-    for i in range(num_segments):
-        if not segment_iterator.isEnd():
-            position_begin = segment_iterator.getBeginPosition()
-            cable_state[:3, i] = to_numpy_array(position_begin)
-            if i == num_segments - 1:
-                position_end = segment_iterator.getEndPosition()
-                cable_state[:3, -1] = to_numpy_array(position_end)
-
-            segment_iterator.inc()
-        else:
-            logger.error('AGX segment iteration finished early. Number or cable segments may be wrong.')
-
-    return cable_state * gain
-
-
-def get_ring_state(sim, ring_name, num_segments=None):
-    """Get ring segments positions.
-    :param sim: AGX Dynamics simulation object
-    :param ring_name: name of ring object
-    :param num_segments: number of segments making up the ring (possibly saves search time)
-    :return: NumPy array with segments' position
-    """
-    if not num_segments:
-        rbs = sim.getRigidBodies()
-        ring_state = np.zeros(shape=(3,))
-        for rb in rbs:
-            if ring_name in rb.getName():
-                position = to_numpy_array(rb.getPosition())
-                ring_state = np.vstack((ring_state, position))
-        ring_state = ring_state[1:, :].transpose()
-    else:
-        ring_state = np.zeros(shape=(3, num_segments + 1))
-        for i in range(1, num_segments + 1):
-            rb = sim.getRigidBody(ring_name + "_" + str(i))
-            ring_state[:, i-1] = to_numpy_array(rb.getPosition())
-
-    return ring_state
-
-
-def get_end_effector_state(sim, key, include_position=False, gain=1):
-    """Get AGX 'end_effector' positions, force and torque.
-    :param sim: AGX Dynamics simulation object
-    :param key: name of end effector
-    :param include_position: Boolean to determine if end effector position is part of state
-    :param gain: gives possibility to rescale position values
-    :return: NumPy array with end effector position, rotations, force and torque
-    """
-    end_effector = sim.getRigidBody(key)
-    if include_position:
-        state = np.zeros(shape=(3, 3))
-        state[:, 0] = to_numpy_array(end_effector.getPosition()) * gain
-        state[:, 1], state[:, 2] = get_force_torque(sim, end_effector, key)
-    else:
-        state = np.zeros(shape=(3, 2))
-        state[:, 0], state[:, 1] = get_force_torque(sim, end_effector, key)
-    logger.debug("End effector {} state (force, torque): {}".format(key, state))
-
-    return state
-
-
-def get_force_torque(sim, rigid_body, constraint_name):
-    """Gets force an torque on rigid object, computed by a constraint defined by 'constraint_name'.
-    :param sim: AGX Simulation object
-    :param rigid_body: RigidBody object on which to compute force and torque
-    :param constraint_name: Name indicating which constraint contains force torque information for this object
-    :return: force an torque
-    """
-    force = agx.Vec3()
-    torque = agx.Vec3()
-
-    constraint = sim.getConstraint(constraint_name)
-    constraint.getLastForce(rigid_body, force, torque)
-
-    force = to_numpy_array(force)
-    torque = to_numpy_array(torque)
-
-    return force, torque
 
 
 def create_body(shape, name="", position=agx.Vec3(0, 0, 0), rotation=agx.OrthoMatrix3x3(),
@@ -204,6 +125,7 @@ def create_body(shape, name="", position=agx.Vec3(0, 0, 0), rotation=agx.OrthoMa
     :return: assembly
     """
     assembly = agxSDK.Assembly()
+    assembly.setName(name)
     try:
         body = agx.RigidBody(name)
         geometry = agxCollide.Geometry(shape)
@@ -528,6 +450,7 @@ def create_universal_prismatic_base(name, rigid_body, compliance=0, damping=1 / 
 def create_prismatic_base(name, radius, length, compute_forces,
                           position_ranges, motor_ranges, locked_at_zero_speed, lock_status):
     assembly = agxSDK.Assembly()
+    assembly.setName(name + "_prismatic_base")
 
     rotation_y_to_z = agx.OrthoMatrix3x3()
     rotation_y_to_z.setRotate(agx.Vec3.Y_AXIS(), agx.Vec3.Z_AXIS())

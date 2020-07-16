@@ -1,44 +1,39 @@
 import sys
 import logging
-import numpy as np
 
+import agxIO
 import agxSDK
 import agxOSG
-import agxCable
 import agxRender
 
 from gym_agx.envs import agx_env
-from gym_agx.utils.agx_utils import get_cable_state
-from gym_agx.utils.utils import get_cable_curvature, goal_distance
 
 logger = logging.getLogger('gym_agx.envs')
 
 
 class DloEnv(agx_env.AgxEnv):
-    """Superclass for all DLO environments.
-    """
+    """Superclass for all DLO environments."""
 
-    def __init__(self, args, scene_path, n_substeps, end_effectors, camera, distance_threshold, reward_type,
-                 reward_limit, randomized_goal, goal_scene_path):
+    def __init__(self, args, scene_path, n_substeps, end_effectors, observation_config, camera_config, reward_config,
+                 randomized_goal, goal_scene_path, show_goal):
         """Initializes a DloEnv object
-        :param args: arguments for agxViewer
-        :param scene_path: path to binary file containing serialized simulation defined in sim/ folder
-        :param n_substeps: number os simulation steps per call to step()
-        :param end_effectors: list of EndEffector objects
-        :param camera: dictionary containing EYE, CENTER, UP information for rendering together with lighting info
-        :param distance_threshold: threshold for reward function
-        :param reward_type: reward type, i.e. 'sparse' or 'dense'
-        :param reward_limit: reward limit to bound reward
-        :param randomized_goal: boolean deciding if a new goal is sampled for each episode
-        :param goal_scene_path: path to goal scene file
+        :param args: arguments for agxViewer.
+        :param scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/ folder
+        :param n_substeps: number os simulation steps per call to step().
+        :param end_effectors: list of EndEffector objects, defining controllable constraints.
+        :param observation_config: ObservationConfig object, defining the types of observations.
+        :param camera_config: dictionary containing EYE, CENTER, UP information for rendering, with lighting info.
+        :param reward_config: reward configuration object, defines success condition and reward function.
+        :param randomized_goal: boolean deciding if a new goal is sampled for each episode.
+        :param goal_scene_path: path to goal scene file.
+        :param show_goal: boolean determining whether goal is rendered or not.
         """
-        self.distance_threshold = distance_threshold
         self.goal_scene_path = goal_scene_path
         self.randomized_goal = randomized_goal
-        self.reward_type = reward_type
-        self.reward_limit = reward_limit
-        self.light_pose = camera.light_pose
+        self.reward_config = reward_config
+        self.light_pose = camera_config.light_pose
         self.end_effectors = end_effectors
+        self.show_goal = show_goal
 
         n_actions = 0
         for end_effector in end_effectors:
@@ -50,14 +45,8 @@ class DloEnv(agx_env.AgxEnv):
                         n_actions += 1
 
         super(DloEnv, self).__init__(scene_path=scene_path, n_substeps=n_substeps, n_actions=n_actions,
-                                     camera_pose=camera.camera_pose, args=args)
-
-        # Keep track of latest action
-        self.last_action = self.action_space.sample() * 0
-
-    @property
-    def done(self):
-        return False
+                                     observation_config=observation_config, camera_pose=camera_config.camera_pose,
+                                     args=args)
 
     def render(self, mode="human"):
         return super(DloEnv, self).render(mode)
@@ -65,23 +54,8 @@ class DloEnv(agx_env.AgxEnv):
     # GoalEnv methods
     # ----------------------------
 
-    def compute_reward(self, achieved_goal, goal, info):
-        curvature_distance = goal_distance(achieved_goal, goal)
-        info['distance'] = curvature_distance
-        if self.reward_type == 'sparse':
-            if self._is_success(achieved_goal, goal):
-                return self.reward_limit
-            else:
-                return -self.reward_limit
-        else:
-            if not self._is_success(achieved_goal, goal):
-                # penalize large distances to goal
-                reward = np.clip(-curvature_distance, -self.reward_limit, self.reward_limit)
-            else:
-                # reward achieving goal
-                total_action = abs(self.last_action).sum()
-                reward = np.clip(self.reward_limit - total_action, 0, self.reward_limit)
-            return reward, info
+    def compute_reward(self, achieved_goal, desired_goal, info):
+        return self.reward_config.compute_reward(achieved_goal, desired_goal, info)
 
     # AgxEnv methods
     # ----------------------------
@@ -104,9 +78,9 @@ class DloEnv(agx_env.AgxEnv):
             node = agxOSG.createVisual(rb, self.root)
             if name == "ground":
                 agxOSG.setDiffuseColor(node, agxRender.Color.Gray())
-            elif name == "gripper_left":
+            elif "gripper_left" in name and "base" not in name:
                 agxOSG.setDiffuseColor(node, agxRender.Color.Red())
-            elif name == "gripper_right":
+            elif "gripper_right" in name and "base" not in name:
                 agxOSG.setDiffuseColor(node, agxRender.Color.Blue())
             elif "pusher" in name and "base" not in name:
                 agxOSG.setDiffuseColor(node, agxRender.Color.Yellow())
@@ -118,7 +92,11 @@ class DloEnv(agx_env.AgxEnv):
                 agxOSG.setDiffuseColor(node, agxRender.Color.White())
                 agxOSG.setAlpha(node, 0.2)
             else:
-                agxOSG.setDiffuseColor(node, agxRender.Color.Orange())
+                agxOSG.setAlpha(node, 0)
+                logger.info("No color set for {}.".format(name))
+
+            if "goal" in name:
+                agxOSG.setAlpha(node, 0.2)
         scene_decorator = self.app.getSceneDecorator()
         light_source_0 = scene_decorator.getLightSource(agxOSG.SceneDecorator.LIGHT0)
         light_source_0.setPosition(self.light_pose['light_position'])
@@ -134,57 +112,49 @@ class DloEnv(agx_env.AgxEnv):
         self._add_rendering(mode='osg')
         return True
 
-    def _get_obs(self):
-        obs = dict.fromkeys({'observation', 'achieved_goal', 'desired_goal'})
+    def _get_observation(self):
+        observation, achieved_goal = self.observation_config.get_observations(self.sim, self.end_effectors, cable="DLO")
 
-        cable = agxCable.Cable.find(self.sim, "DLO")
-        cable_state = get_cable_state(cable)
-        logger.debug("cable state: {}".format(cable_state))
-        cable_curvature = get_cable_curvature(cable_state)
-
-        end_effector_state = []
-        for i, end_effector in enumerate(self.end_effectors):
-            if end_effector.observable:
-                end_effector_state.append(end_effector.get_state(self.sim).ravel(order='F'))
-        end_effector_state = np.asarray(end_effector_state).flatten()
-
-        if len(end_effector_state) > 0:
-            observation = np.concatenate((cable_curvature, end_effector_state))
-        else:
-            observation = cable_state
-        obs['observation'] = observation.ravel(order='F')
-        obs['achieved_goal'] = cable_curvature
-        obs['desired_goal'] = self.goal
-        return obs
+        # Note that this structure is necessary for GoalEnv environments
+        observation_goal = dict.fromkeys({'observation', 'achieved_goal', 'desired_goal'})
+        observation_goal['observation'] = observation
+        observation_goal['achieved_goal'] = achieved_goal
+        observation_goal['desired_goal'] = self.goal
+        return observation_goal
 
     def _set_action(self, action):
         info = dict()
-        for i, end_effector in enumerate(self.end_effectors):
+        for end_effector in self.end_effectors:
             if end_effector.controllable:
                 logger.debug("action: {}".format(action))
                 info[end_effector.name] = end_effector.apply_control(self.sim, action, self.dt)
 
-        self.last_action = action
         return info
 
     def _is_success(self, achieved_goal, desired_goal):
-        curvature_distance = goal_distance(achieved_goal, desired_goal)
-        return curvature_distance < self.distance_threshold
+        done = False
+        success = self.reward_config.is_success(achieved_goal, desired_goal)
+        if self.reward_config.set_done_on_success:
+            done = success
+        return success, done
 
     def _sample_goal(self):
         if self.randomized_goal:
             raise NotImplementedError
         else:
-            self.sim.cleanup(agxSDK.Simulation.CLEANUP_ALL, True)
-            if not self.sim.restore(self.goal_scene_path, agxSDK.Simulation.READ_ALL):
-                logger.error("Unable to restore goal!")
+            scene = agxSDK.Assembly()  # Create a new empty Assembly
+            scene.setName("goal_assembly")
 
-        cable = agxCable.Cable.find(self.sim, "DLO")
-        goal_state = get_cable_state(cable)
-        goal_curvature = get_cable_curvature(goal_state)
-        self._reset_sim()
+            if not agxIO.readFile(self.goal_scene_path, self.sim, scene, agxSDK.Simulation.READ_ALL):
+                raise RuntimeError("Unable to open goal file \'" + self.goal_scene_path + "\'")
 
-        return goal_curvature
+        self.sim.add(scene)
+        goal = self.observation_config.get_observations(self.sim, self.end_effectors, cable="DLO", goal_only=True)
+
+        if not self.show_goal:
+            self._reset_sim()
+
+        return goal
 
     def _step_callback(self):
         t = self.sim.getTimeStamp()
