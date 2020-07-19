@@ -60,11 +60,12 @@ class PushRopeEnv(dlo_env.DloEnv):
     def __init__(self, reward_type=RewardConfig.RewardType.DENSE, n_substeps=20, **kwargs):
         """Initializes PushRope environment
         The radius and length should be consistent with the model defined in 'SCENE_PATH'.
-        :param reward_type: either 'sparse' or 'dense'
+        :param RewardConfig.RewardType reward_type: type of reward.
+        :param int n_substeps: number of simulation steps between each action step.
         """
-        camera_distance = 0.5  # meters
+        camera_distance = 0.21  # meters
         camera_config = CameraConfig(
-            eye=agx.Vec3(0, 0, 0.5),
+            eye=agx.Vec3(0, 0, camera_distance),
             center=agx.Vec3(0, 0, 0),
             up=agx.Vec3(0., 0., 0.),
             light_position=agx.Vec4(0.1, - camera_distance, camera_distance, 1.),
@@ -103,15 +104,10 @@ class PushRopeEnv(dlo_env.DloEnv):
 
         reward_config = Reward(reward_type=reward_type, reward_range=(-1.5, 1.5), dlo_curvature_threshold=0.1)
 
-        if 'agxViewer' in kwargs:
-            args = sys.argv + kwargs['agxViewer']
-        else:
-            args = sys.argv
-
-        if 'show_goal' in kwargs:
-            show_goal = kwargs['show_goal']
-        else:
-            show_goal = False
+        args = kwargs['agxViewer'] if 'agxViewer' in kwargs else sys.argv
+        show_goal = kwargs['show_goal'] if 'show_goal' in kwargs else False
+        osg_window = kwargs['osg_window'] if 'osg_window' in kwargs else True
+        agx_only = kwargs['agx_only'] if 'agx_only' in kwargs else False
 
         if not os.path.exists(SCENE_PATH):
             raise IOError("File %s does not exist" % SCENE_PATH)
@@ -126,4 +122,6 @@ class PushRopeEnv(dlo_env.DloEnv):
                                           reward_config=reward_config,
                                           randomized_goal=False,
                                           goal_scene_path=GOAL_SCENE_PATH,
-                                          show_goal=show_goal)
+                                          show_goal=show_goal,
+                                          osg_window=osg_window,
+                                          agx_only=agx_only)

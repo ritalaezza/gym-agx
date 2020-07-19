@@ -21,7 +21,7 @@ class EndEffectorConstraint:
     def __init__(self, end_effector_dof, compute_forces_enabled, velocity_control, compliance_control, velocity_index,
                  compliance_index):
         """EndEffectorConstraint class, defining important parameters of individual constraints.
-        :param Dof end_effector_dof: degree of freedom of end-effector that this constraint controls
+        :param EndEffectorConstraint.Dof end_effector_dof: degree of freedom of end-effector controlled
         :param bool compute_forces_enabled: force and torque can be measured (should be consistent with simulation)
         :param bool velocity_control: is velocity controlled
         :param bool compliance_control: is compliance controlled
@@ -96,8 +96,8 @@ class EndEffector:
 
     def apply_control(self, sim, action, dt):
         """Apply control to simulation.
-        :param sim: AGX simulation object.
-        :param np.array action: Action from Gym interface.
+        :param agxSDK.Simulation sim: AGX simulation object.
+        :param np.ndarray action: Action from Gym interface.
         :param float dt: Action time-step, needed to compute velocity and acceleration.
         :return: Applied actions
         """
@@ -123,7 +123,7 @@ class EndEffector:
 
     def get_velocity(self, sim, constraint_dof):
         """Get current velocity of end_effector.
-        :param sim: AGX simulation object.
+        :param agxSDK.Simulation sim: AGX simulation object.
         :param EndEffectorConstraint.Dof constraint_dof: Degree of freedom to read velocity from.
         :return: End-effector velocity and boolean indicating if it is linear or angular.
         """

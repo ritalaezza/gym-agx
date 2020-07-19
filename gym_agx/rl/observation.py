@@ -4,6 +4,7 @@ import logging
 import numpy as np
 from enum import Enum
 
+from agxPythonModules.utils.numpy_utils import create_numpy_array
 from gym_agx.utils.agx_utils import to_numpy_array, get_cable_segment_edges
 from gym_agx.utils.utils import get_cable_torsion, get_cable_curvature
 
@@ -37,10 +38,19 @@ class ObservationConfig:
         else:
             self.observations = set(dict.fromkeys(observations))
 
-    def get_observations(self, sim, end_effectors, cable=None, goal_only=False):
+        self.rgb_in_obs = False
+        self.depth_in_obs = False
+        self.image_size = (512, 512)  # (default) all image data will have same first two dimensions.
+        if self.ObservationType.IMG_RGB in (self.observations | self.goals):
+            self.rgb_in_obs = True
+        if self.ObservationType.IMG_DEPTH in (self.observations | self.goals):
+            self.depth_in_obs = True
+
+    def get_observations(self, sim, rti, end_effectors, cable=None, goal_only=False):
         """Main function which gets observations, based on configuration. To avoid repeated calls to same observation,
         goals can be obtained at the same time, by taking the union of the two sets.
         :param agx.Simulation sim: AGX Dynamics simulation object.
+        :param list rti: agxOSG.RenderToImage buffers to render image observations.
         :param EndEffector end_effectors: List of EndEffector objects which are required to obtain observations of the
         end-effectors in the simulation.
         :param agx.Cable cable: If the simulation contains an AGX Cable structure, there are special functions to obtain
@@ -61,6 +71,15 @@ class ObservationConfig:
         else:
             raise NotImplementedError("Observations of non Cable objects are not available yet.")
 
+        rgb_buffer = None
+        depth_buffer = None
+        for buffer in rti:
+            name = buffer.getName()
+            if name == 'rgb_buffer':
+                rgb_buffer = buffer
+            elif name == 'depth_buffer':
+                depth_buffer = buffer
+
         goal_obs = dict()
         for gobs in observation_set:
             if gobs == self.ObservationType.DLO_POSITIONS:
@@ -72,9 +91,19 @@ class ObservationConfig:
             elif gobs == self.ObservationType.DLO_TORSION:
                 goal_obs[gobs.value] = get_cable_torsion(cable_segment_edges)
             elif gobs == self.ObservationType.IMG_RGB:
-                raise NotImplementedError("RGB image observations are not implemented yet")
+                if rgb_buffer:
+                    image_ptr = rgb_buffer.getImageData()
+                    image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1], 3), np.uint8)
+                    goal_obs[gobs.value] = np.flipud(image_data)
+                else:
+                    goal_obs[gobs.value] = np.zeros(shape=(self.image_size[0], self.image_size[1], 3))
             elif gobs == self.ObservationType.IMG_DEPTH:
-                raise NotImplementedError("Depth image observations are not implemented yet")
+                if depth_buffer:
+                    image_ptr = depth_buffer.getImageData()
+                    image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1]), np.float32)
+                    goal_obs[gobs.value] = np.flipud(image_data)
+                else:
+                    goal_obs[gobs.value] = np.zeros(shape=self.image_size)
             elif gobs == self.ObservationType.EE_FORCE_TORQUE:
                 ee_force_torque = dict()
                 for ee in end_effectors:
@@ -143,13 +172,23 @@ class ObservationConfig:
         self.observations.add(self.ObservationType.DLO_POSITIONS)
         self.observations.add(self.ObservationType.DLO_ROTATIONS)
 
-    def set_img_rgb(self):
-        """RGB image of scene containing DLO and end-effector(s)"""
+    def set_img_rgb(self, image_size=None):
+        """RGB image of scene containing DLO and end-effector(s)
+        :param tuple image_size: tuple with dimensions of image
+        """
         self.observations.add(self.ObservationType.IMG_RGB)
+        self.rgb_in_obs = True
+        if image_size:
+            self.image_size = image_size
 
-    def set_img_depth(self):
-        """Depth image of scene containing DLO and end-effector(s)"""
+    def set_img_depth(self, image_size=None):
+        """Depth image of scene containing DLO and end-effector(s)
+        :param tuple image_size: tuple with dimensions of image
+        """
         self.observations.add(self.ObservationType.IMG_DEPTH)
+        self.depth_in_obs = True
+        if image_size:
+            self.image_size = image_size
 
     def set_dlo_frenet_curvature(self):
         """Discrete Frenet curvature of DLO"""

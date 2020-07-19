@@ -13,8 +13,8 @@ logger = logging.getLogger('gym_agx.utils')
 
 def save_simulation(sim, file_name):
     """Save AGX simulation object to file.
-    :param sim: AGX simulation object
-    :param file_name: name of the file
+    :param agxSDK.Simulation sim: AGX simulation object
+    :param str file_name: name of the file
     :return: Boolean for success/failure
     """
     file_directory = os.path.dirname(os.path.abspath(__file__))
@@ -32,9 +32,9 @@ def save_simulation(sim, file_name):
 
 def save_goal_simulation(sim, file_name, remove_assemblies=[]):
     """Save AGX simulation object to file.
-    :param sim: AGX simulation object
-    :param file_name: name of the file
-    :param remove_assemblies: string list of assemblies to remove
+    :param agxSDK.Simulation sim: AGX simulation object
+    :param str file_name: name of the file
+    :param list remove_assemblies: string list of assemblies to remove
     :return: Boolean for success/failure
     """
     # Remove assemblies
@@ -90,7 +90,7 @@ def to_numpy_array(agx_list):
 
 def to_agx_list(np_array, agx_type):
     """Convert from Numpy array to AGX data structure.
-    :param np_array:  NumPy array
+    :param numpy.ndarray np_array:  NumPy array
     :param agx_type: Target AGX data structure
     :return: AGX data object
     """
@@ -111,7 +111,7 @@ def to_agx_list(np_array, agx_type):
 
 def get_cable_segment_edges(cable):
     """Get AGX Cable segments' begin and end positions.
-    :param cable: AGX Cable object
+    :param agxCable.Cable cable: AGX Cable object
     :return: NumPy array with segments' edge positions
     """
     num_segments = cable.getNumSegments()
@@ -146,6 +146,7 @@ def create_body(shape, name="", position=agx.Vec3(0, 0, 0), rotation=agx.OrthoMa
     :param agx.RigidBody.MotionControl motion_control: Optional. Defaults to DYNAMICS.
     :param agx.Material material: Optional. Ignored if not given. Material assigned to the geometry created for the
     body.
+    :param bool disable_collisions: Optional. Disable geometry collisions.
     :return: assembly
     """
     assembly = agxSDK.Assembly()
@@ -160,6 +161,7 @@ def create_body(shape, name="", position=agx.Vec3(0, 0, 0), rotation=agx.OrthoMa
 
         if material:
             geometry.setMaterial(material)
+
         body.add(geometry, geometry_transform)
         body.setMotionControl(motion_control)
         assembly.add(body)
@@ -263,7 +265,8 @@ def create_ring_element(name, element_shape, material):
     :param string name: name of ring element
     :param agxCollide.Shape element_shape: enum value of ring geometric shape
     :param agx.Material material: material of rigid body
-    :return ring_element"""
+    :return ring_element
+    """
     if element_shape.getType() in [agxCollide.Shape.SPHERE, agxCollide.Shape.CAPSULE,
                                    agxCollide.Shape.BOX, agxCollide.Shape.CYLINDER]:
         element = agx.RigidBody(name)

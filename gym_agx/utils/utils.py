@@ -93,8 +93,8 @@ def find_reference_angle(angle):
 
 def compute_linear_distance(v0, v1):
     """Computes linear distance between two points.
-    :param v0: NunPy array
-    :param v1: NunPy array
+    :param v0: NumPy array
+    :param v1: NumPy array
     :return: Euclidean distance between v0 and v1.
     """
     return math.sqrt(((v0 - v1) ** 2).sum())
@@ -102,8 +102,8 @@ def compute_linear_distance(v0, v1):
 
 def compute_curvature(v0, v1, segment_length=1):
     """Computes curvature between two segments (through circumscribed osculating circle).
-    :param v0: NunPy array
-    :param v1: NunPy array
+    :param v0: NumPy array
+    :param v1: NumPy array
     :param segment_length: length of AGX Cable segment (default 1)
     :return: a positive scalar corresponding to the curvature: K = 2*tan(tangent_angle/2) / segment_length
     """
@@ -131,9 +131,9 @@ def get_cable_curvature(cable_segment_edges, segment_length=1):
 
 def compute_torsion(v0, v1, v2, segment_length=1):
     """Computes torsion between two segments (through circumscribed osculating circle).
-    :param v0: NunPy array
-    :param v1: NunPy array
-    :param v2: NunPy array
+    :param v0: NumPy array
+    :param v1: NumPy array
+    :param v2: NumPy array
     :param segment_length: length of AGX Cable segment (default 1)
     :return: a positive scalar corresponding to the curvature: T = 2*tan(binormal_angle/2) / segment_length
     """

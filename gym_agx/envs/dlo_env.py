@@ -1,4 +1,3 @@
-import sys
 import logging
 
 import agxIO
@@ -15,18 +14,25 @@ class DloEnv(agx_env.AgxEnv):
     """Superclass for all DLO environments."""
 
     def __init__(self, args, scene_path, n_substeps, end_effectors, observation_config, camera_config, reward_config,
-                 randomized_goal, goal_scene_path, show_goal):
+                 randomized_goal, goal_scene_path, show_goal, osg_window=True, agx_only=False):
         """Initializes a DloEnv object
-        :param args: arguments for agxViewer.
-        :param scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/ folder
-        :param n_substeps: number os simulation steps per call to step().
-        :param end_effectors: list of EndEffector objects, defining controllable constraints.
-        :param observation_config: ObservationConfig object, defining the types of observations.
-        :param camera_config: dictionary containing EYE, CENTER, UP information for rendering, with lighting info.
-        :param reward_config: reward configuration object, defines success condition and reward function.
-        :param randomized_goal: boolean deciding if a new goal is sampled for each episode.
-        :param goal_scene_path: path to goal scene file.
-        :param show_goal: boolean determining whether goal is rendered or not.
+        :param list args: arguments for agxViewer.
+        :param str scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/
+        folder
+        :param int n_substeps: number os simulation steps per call to step().
+        :param list end_effectors: list of EndEffector objects, defining controllable constraints.
+        :param gym_agx.rl.observation.ObservationConfig observation_config: ObservationConfig object, defining the types
+        of observations.
+        :param gym_agx.utils.agx_classes.CameraConfig camera_config: dictionary containing EYE, CENTER, UP information
+        for rendering, with lighting info.
+        :param gym_agx.rl.reward.RewardConfig reward_config: reward configuration object, defines success condition and
+        reward function.
+        :param bool randomized_goal: boolean deciding if a new goal is sampled for each episode.
+        :param str goal_scene_path: path to goal scene file.
+        :param bool show_goal: boolean determining whether goal is rendered or not.
+        :param bool osg_window: boolean which enables/disables window rendering (useful for training).
+        :param bool agx_only: boolean which disables all rendering, including for observations of type RGB or depth
+        images.
         """
         self.goal_scene_path = goal_scene_path
         self.randomized_goal = randomized_goal
@@ -46,7 +52,7 @@ class DloEnv(agx_env.AgxEnv):
 
         super(DloEnv, self).__init__(scene_path=scene_path, n_substeps=n_substeps, n_actions=n_actions,
                                      observation_config=observation_config, camera_pose=camera_config.camera_pose,
-                                     args=args)
+                                     osg_window=osg_window, agx_only=agx_only, args=args)
 
     def render(self, mode="human"):
         return super(DloEnv, self).render(mode)
@@ -60,18 +66,11 @@ class DloEnv(agx_env.AgxEnv):
     # AgxEnv methods
     # ----------------------------
 
-    def _add_rendering(self, mode='osg'):
+    def _add_rendering(self):
         self.app.setAutoStepping(False)
-        if mode == 'osg':
-            self.app.setEnableDebugRenderer(False)
-            self.app.setEnableOSGRenderer(True)
-        elif mode == 'debug':
-            self.app.setEnableDebugRenderer(True)
-            self.app.setEnableOSGRenderer(False)
-        else:
-            logger.error("Unexpected rendering mode: {}".format(mode))
+        if not self.root:
+            self.root = self.app.getRoot()
 
-        self.root = self.app.getRoot()
         rbs = self.sim.getRigidBodies()
         for rb in rbs:
             name = rb.getName()
@@ -103,17 +102,12 @@ class DloEnv(agx_env.AgxEnv):
         light_source_0.setDirection(self.light_pose['light_direction'])
         scene_decorator.setEnableLogo(False)
 
-    def _reset_sim(self):
-        self.sim.cleanup(agxSDK.Simulation.CLEANUP_ALL, True)
-        if not self.sim.restore(self.scene_path, agxSDK.Simulation.READ_ALL):
-            logger.error("Unable to restore simulation!")
-            return False
-
-        self._add_rendering(mode='osg')
-        return True
+    # Extension methods
+    # ----------------------------
 
     def _get_observation(self):
-        observation, achieved_goal = self.observation_config.get_observations(self.sim, self.end_effectors, cable="DLO")
+        observation, achieved_goal = self.observation_config.get_observations(self.sim, self.render_to_image,
+                                                                              self.end_effectors, cable="DLO")
 
         # Note that this structure is necessary for GoalEnv environments
         observation_goal = dict.fromkeys({'observation', 'achieved_goal', 'desired_goal'})
@@ -149,27 +143,12 @@ class DloEnv(agx_env.AgxEnv):
                 raise RuntimeError("Unable to open goal file \'" + self.goal_scene_path + "\'")
 
         self.sim.add(scene)
-        goal = self.observation_config.get_observations(self.sim, self.end_effectors, cable="DLO", goal_only=True)
+        goal = self.observation_config.get_observations(self.sim, self.render_to_image, self.end_effectors, cable="DLO",
+                                                        goal_only=True)
 
-        if not self.show_goal:
+        if self.show_goal:
+            self._add_rendering()
+        else:
             self._reset_sim()
 
         return goal
-
-    def _step_callback(self):
-        t = self.sim.getTimeStamp()
-
-        t_0 = t
-        while t < t_0 + self.dt:
-            try:
-                self.sim.stepForward()
-                t = self.sim.getTimeStamp()
-            except:
-                logger.error("Unexpected error:", sys.exc_info()[0])
-
-    def _render_callback(self):
-        if not self.app.breakRequested():
-            self.app.executeOneStepWithGraphics()
-        else:
-            self._init_app(True)
-            self.app.executeOneStepWithGraphics()
