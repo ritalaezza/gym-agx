@@ -167,11 +167,11 @@ class AgxEnv(gym.GoalEnv):
             print("Matplotlib 'human' and 'depth' rendering is disabled, use 'osg' or 'debug'.")
         elif not self.osg_window and mode in ['osg', 'debug']:
             print("OSG window is disabled.")
-        elif not self.osg_window and mode is 'human':
+        elif not self.osg_window and mode == 'human':
             if not self.observation_config.rgb_in_obs or not self.render_to_image:
                 self._render_callback(add_background_rgb=True)
             self._matplotlib_rendering(buffer='rgb_buffer')
-        elif not self.osg_window and mode is 'depth':
+        elif not self.osg_window and mode == 'depth':
             if not self.observation_config.depth_in_obs or not self.render_to_image:
                 self._render_callback(add_background_depth=True)
             self._matplotlib_rendering(buffer='depth_buffer')
