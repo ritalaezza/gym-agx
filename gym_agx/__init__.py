@@ -62,3 +62,24 @@ register(
     kwargs={'n_substeps': 20},
     max_episode_steps=int(2000),
 )
+
+register(
+    id='PegInHole-v0',
+    entry_point='gym_agx.envs:PegInHoleEnv',
+    kwargs={'n_substeps': 1},
+    max_episode_steps=int(200),
+)
+
+register(
+    id='RubberBand-v0',
+    entry_point='gym_agx.envs:RubberBandEnv',
+    kwargs={'n_substeps': 5},
+    max_episode_steps=int(1000),
+)
+
+register(
+    id='ClipClosing-v0',
+    entry_point='gym_agx.envs:ClipClosingEnv',
+    kwargs={'n_substeps': 5},
+    max_episode_steps=int(250),
+)

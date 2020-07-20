@@ -133,7 +133,8 @@ def get_cable_segment_edges(cable):
 
 
 def create_body(shape, name="", position=agx.Vec3(0, 0, 0), rotation=agx.OrthoMatrix3x3(),
-                geometry_transform=agx.AffineMatrix4x4(), motion_control=agx.RigidBody.DYNAMICS, material=None):
+                geometry_transform=agx.AffineMatrix4x4(), motion_control=agx.RigidBody.DYNAMICS, material=None,
+                disable_collisions=False):
     """Helper function that creates a RigidBody according to the given definition.
     Returns the body itself, it's geometry and the OSG node that was created for it.
     :param agxCollide.Shape shape: shape of object.
@@ -153,6 +154,10 @@ def create_body(shape, name="", position=agx.Vec3(0, 0, 0), rotation=agx.OrthoMa
         body = agx.RigidBody(name)
         geometry = agxCollide.Geometry(shape)
         geometry.setName(name)
+
+        if disable_collisions:
+            geometry.setEnableCollisions(False)
+
         if material:
             geometry.setMaterial(material)
         body.add(geometry, geometry_transform)
@@ -566,3 +571,71 @@ def create_prismatic_base(name, radius, length, compute_forces,
         joint_base_z_lock.setEnable(True)
 
     return assembly
+
+
+def point_inside_polygon(polygon, point):
+    """
+    Point in polygon algorithm (Jordan theorem).
+    :param polygon:
+    :param point:
+    :return:
+    """
+    x = point[0]
+    y = point[1]
+    n = len(polygon)
+    inside =False
+
+    p1x,p1y = polygon[0]
+    for i in range(n+1):
+        p2x,p2y = polygon[i % n]
+        if y > min(p1y,p2y):
+            if y <= max(p1y,p2y):
+                if x <= max(p1x,p2x):
+                    if p1y != p2y:
+                        xinters = (y-p1y)*(p2x-p1x)/(p2y-p1y)+p1x
+                    if p1x == p2x or x <= xinters:
+                        inside = not inside
+        p1x,p1y = p2x,p2y
+
+    return inside
+
+
+def dlo_encompass_point(cable, point):
+    """
+    Creates polygon of using cable segment centers and checks
+    if polygon encompasses a certain point.
+    :param cable:
+    :param point:
+    :return:
+    """
+    polygon_corners = []
+
+    segment_iterator = cable.begin()
+    n_segments = cable.getNumSegments()
+    for i in range(n_segments):
+        if not segment_iterator.isEnd():
+            pos = segment_iterator.getGeometry().getPosition()
+            pos = to_numpy_array(pos)
+            polygon_corners.append((pos[0], pos[1]))
+            segment_iterator.inc()
+    polygon = polygon_corners
+    return point_inside_polygon(polygon, point)
+
+
+def all_segment_below_z(dlo, max_z):
+    """
+    Test if all segments are below a certain height.
+    :param dlo:
+    :param z:
+    :return:
+    """
+    segment_iterator = dlo.begin()
+    n_segments = dlo.getNumSegments()
+    for i in range(n_segments):
+        if not segment_iterator.isEnd():
+            pos = segment_iterator.getGeometry().getPosition()
+            pos = to_numpy_array(pos)
+            if pos[2] > max_z:
+                return False
+            segment_iterator.inc()
+    return True
