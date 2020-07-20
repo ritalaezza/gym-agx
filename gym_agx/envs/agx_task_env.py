@@ -6,8 +6,6 @@ import gym
 from gym import error, spaces
 from gym.utils import seeding
 
-from gym_agx.utils.utils import construct_space
-
 try:
     import agx
     import agxPython
@@ -69,12 +67,6 @@ class AgxTaskEnv(gym.Env):
     @property
     def dt(self):
         return self.sim.getTimeStep() * self.n_substeps
-
-    # GoalEnv methods
-    # ----------------------------
-
-    def compute_reward(self, achieved_goal, goal, info):
-        raise NotImplementedError()
 
     # Env methods
     # ----------------------------
@@ -154,15 +146,6 @@ class AgxTaskEnv(gym.Env):
         """
         raise NotImplementedError()
 
-    def _is_success(self, achieved_goal, desired_goal):
-        """Indicates whether or not the achieved goal successfully achieved the desired goal.
-        """
-        raise NotImplementedError()
-
-    def _sample_goal(self):
-        """Samples a new goal and returns it.
-        """
-        raise NotImplementedError()
 
     def _step_callback(self):
         """A custom callback that is called after stepping the simulation. Can be used

@@ -207,4 +207,3 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
                 info[end_effector.name] = end_effector.apply_control(self.sim, action, self.dt)
 
         return info
-

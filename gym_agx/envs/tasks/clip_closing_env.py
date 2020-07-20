@@ -5,11 +5,8 @@ import numpy as np
 
 import agx
 import agxCable
-import agxIO
-import agxSDK
 import agxOSG
 import agxRender
-from agxPythonModules.utils.numpy_utils import create_numpy_array
 from gym_agx.utils.agx_utils import dlo_encompass_point, all_segment_below_z
 
 from gym_agx.envs import agx_task_env
@@ -209,7 +206,6 @@ class ClipClosingEnv(agx_task_env.AgxTaskEnv):
                 agxOSG.setDiffuseColor(node, agxRender.Color.Beige())
                 agxOSG.setAlpha(node, 0.0)
 
-
         # Set rendering options
         scene_decorator = self.app.getSceneDecorator()
         scene_decorator.setEnableLogo(False)
@@ -235,4 +231,3 @@ class ClipClosingEnv(agx_task_env.AgxTaskEnv):
                 info[end_effector.name] = end_effector.apply_control(self.sim, action, self.dt)
 
         return info
-

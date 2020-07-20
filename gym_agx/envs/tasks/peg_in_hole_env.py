@@ -5,11 +5,8 @@ import numpy as np
 
 import agx
 import agxCable
-import agxIO
-import agxSDK
 import agxOSG
 import agxRender
-from agxPythonModules.utils.numpy_utils import create_numpy_array
 
 from gym_agx.envs import agx_task_env
 from gym_agx.rl.observation import get_cable_segment_positions
@@ -193,4 +190,3 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
         self.sim.getConstraint1DOF("gripper_joint_rot_y").getMotor1D().setSpeed(action[3])
 
         return info
-

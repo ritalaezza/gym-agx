@@ -22,7 +22,7 @@ import os
 import agxUtil
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, save_goal_simulation
+from gym_agx.utils.agx_utils import create_body, save_simulation
 from gym_agx.utils.agx_classes import KeyboardMotorHandler
 
 logger = logging.getLogger('gym_agx.sims')
@@ -393,7 +393,6 @@ def main(args):
 
         if is_goal_reached():
             print("Success!")
-
 
 
 if __name__ == '__main__':

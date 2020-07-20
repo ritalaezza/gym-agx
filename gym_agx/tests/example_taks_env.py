@@ -1,8 +1,8 @@
 import gym
 from gym_agx import envs
 
+# Create environment
 env = gym.make("ClipClosing-v0")
-
 
 for _ in range(10):
     done = False
@@ -20,3 +20,4 @@ for _ in range(10):
             break
 
 env.close()
+
