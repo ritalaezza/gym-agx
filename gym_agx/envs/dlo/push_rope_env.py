@@ -26,22 +26,11 @@ class Reward(RewardConfig):
         curvature_distance = goal_distance(achieved_goal['dlo_curvature'],
                                            desired_goal['dlo_curvature'])
         info['distance'] = curvature_distance
-        ee_position = achieved_goal['ee_position']['pusher']
-        min_distance = np.inf
-        dlo_positions = achieved_goal['dlo_positions']
-        for i in range(dlo_positions.shape[1]):
-            ee_distance = goal_distance(ee_position, dlo_positions[:, i])
-            if ee_distance < min_distance:
-                min_distance = ee_distance
-
-        if min_distance < 0.011:
-            bonus = 0.01
-        else:
-            bonus = 0
-        reward = -curvature_distance + bonus
 
         if self.is_success(achieved_goal, desired_goal):
             reward = self.reward_range[1]
+        else:
+            reward = -curvature_distance
 
         return reward, info
 
@@ -95,11 +84,8 @@ class PushRopeEnv(dlo_env.DloEnv):
                               velocity_control=False,
                               compliance_control=False)
 
-        observation_config = ObservationConfig(goals=[ObservationConfig.ObservationType.DLO_CURVATURE,
-                                                      ObservationConfig.ObservationType.DLO_POSITIONS,
-                                                      ObservationConfig.ObservationType.EE_POSITION])
+        observation_config = ObservationConfig(goals=[ObservationConfig.ObservationType.DLO_CURVATURE])
         observation_config.set_dlo_frenet_curvature()
-        observation_config.set_dlo_positions()
         observation_config.set_ee_position()
 
         reward_config = Reward(reward_type=reward_type, reward_range=(-1.5, 1.5), dlo_curvature_threshold=0.1)

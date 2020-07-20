@@ -1,6 +1,6 @@
-"""Simulation of cable pushing
+"""Simulation of rope pushing
 
-This module creates the simulation files which will be used in cable_pushing environments.
+This module creates the simulation files which will be used in PushRope environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).
 """
 # AGX Dynamics imports
@@ -157,22 +157,22 @@ def build_simulation():
                          material=material_ground)
     sim.add(ground)
 
-    bounding_box = create_body(name="bounding_box", shape=agxCollide.Box(GROUND_LENGTH_X, GROUND_WIDTH, RADIUS * 4),
+    bounding_box = create_body(name="bounding_box_1", shape=agxCollide.Box(GROUND_LENGTH_X, GROUND_WIDTH, RADIUS * 4),
                                position=agx.Vec3(0, GROUND_LENGTH_Y, RADIUS * 4),
                                motion_control=agx.RigidBody.STATIC,
                                material=material_ground)
     sim.add(bounding_box)
-    bounding_box = create_body(name="bounding_box", shape=agxCollide.Box(GROUND_LENGTH_X, GROUND_WIDTH, RADIUS * 4),
+    bounding_box = create_body(name="bounding_box_2", shape=agxCollide.Box(GROUND_LENGTH_X, GROUND_WIDTH, RADIUS * 4),
                                position=agx.Vec3(0, - GROUND_LENGTH_Y, RADIUS * 4),
                                motion_control=agx.RigidBody.STATIC,
                                material=material_ground)
     sim.add(bounding_box)
-    bounding_box = create_body(name="bounding_box", shape=agxCollide.Box(GROUND_WIDTH, GROUND_LENGTH_Y, RADIUS * 4),
+    bounding_box = create_body(name="bounding_box_3", shape=agxCollide.Box(GROUND_WIDTH, GROUND_LENGTH_Y, RADIUS * 4),
                                position=agx.Vec3(GROUND_LENGTH_X, 0, RADIUS * 4),
                                motion_control=agx.RigidBody.STATIC,
                                material=material_ground)
     sim.add(bounding_box)
-    bounding_box = create_body(name="bounding_box", shape=agxCollide.Box(GROUND_WIDTH, GROUND_LENGTH_Y, RADIUS * 4),
+    bounding_box = create_body(name="bounding_box_4", shape=agxCollide.Box(GROUND_WIDTH, GROUND_LENGTH_Y, RADIUS * 4),
                                position=agx.Vec3(- GROUND_LENGTH_X, 0, RADIUS * 4),
                                motion_control=agx.RigidBody.STATIC,
                                material=material_ground)
@@ -271,12 +271,15 @@ def main(args):
     # Save simulation to file
     save_simulation(sim, "test_sim.agx")
 
-    # Save simulation to file
-    success = save_simulation(sim, FILE_NAME)
-    if success:
-        logger.debug("Simulation saved!")
-    else:
-        logger.debug("Simulation not saved!")
+    # # Save goal simulation to file (but first make grippers static, remove clutter and rename)
+    # cable = agxCable.Cable.find(sim, "DLO")
+    # cable.setName("DLO_goal")
+    # success = save_goal_simulation(sim, FILE_NAME, ['obstacle', 'ground', "pusher_prismatic_base", "bounding_box_1",
+    #                                                 "bounding_box_2", "bounding_box_3", "bounding_box_4"])
+    # if success:
+    #     logger.debug("Goal simulation saved!")
+    # else:
+    #     logger.debug("Goal simulation not saved!")
 
     # Render simulation
     app = add_rendering(sim)
@@ -300,14 +303,12 @@ def main(args):
             sim.stepForward()
             t = sim.getTimeStamp()
 
-    # Save goal simulation to file (but first make grippers static, remove clutter and rename)
-    cable = agxCable.Cable.find(sim, "DLO")
-    cable.setName("DLO_goal")
-    success = save_goal_simulation(sim, FILE_NAME, ['obstacle', 'ground', "pusher_prismatic_base", "bounding_box"])
+    # Save simulation to file
+    success = save_simulation(sim, FILE_NAME)
     if success:
-        logger.debug("Goal simulation saved!")
+        logger.debug("Simulation saved!")
     else:
-        logger.debug("Goal simulation not saved!")
+        logger.debug("Simulation not saved!")
 
 
 if __name__ == '__main__':
