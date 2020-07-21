@@ -113,7 +113,7 @@ class EndEffector:
                     control_actions.append(velocity)
                 if constraint.compliance_control:
                     motor_param = motor.getRegularizationParameters()
-                    compliance = self.rescale_compliance(action[constraint])
+                    compliance = self.rescale_compliance(action[constraint.compliance_index])
                     motor_param.setCompliance(np.float64(compliance))
                     control_actions.append(compliance)
         else:
