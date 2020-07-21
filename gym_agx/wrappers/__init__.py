@@ -1,1 +1,3 @@
+from gym_agx.wrappers.observation_wrapper import GoalEnvObservation
+from gym_agx.wrappers.observation_wrapper import GoalEnvRGBObservation
 from gym_agx.wrappers.observation_wrapper import GoalEnvFlattenObservation

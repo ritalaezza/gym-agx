@@ -40,7 +40,7 @@ class ObservationConfig:
 
         self.rgb_in_obs = False
         self.depth_in_obs = False
-        self.image_size = (512, 512)  # (default) all image data will have same first two dimensions.
+        self.image_size = (256, 256)  # (default) all image data will have same first two dimensions.
         if self.ObservationType.IMG_RGB in (self.observations | self.goals):
             self.rgb_in_obs = True
         if self.ObservationType.IMG_DEPTH in (self.observations | self.goals):

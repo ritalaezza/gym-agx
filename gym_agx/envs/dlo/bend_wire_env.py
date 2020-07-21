@@ -46,11 +46,14 @@ class Reward(RewardConfig):
 class BendWireEnv(dlo_env.DloEnv):
     """Subclass which inherits from DLO environment."""
 
-    def __init__(self, n_substeps=2, reward_type=RewardConfig.RewardType.DENSE, **kwargs):
+    def __init__(self, n_substeps, observation_config=None, grippers=None, reward_type=None, reward_config=None,
+                 **kwargs):
         """Initializes BendWire environment
-        The length should be consistent with the model defined in 'SCENE_PATH'.
-        :param RewardConfig.RewardType reward_type: type of reward.
         :param int n_substeps: number of simulation steps between each action step.
+        :param ObservationConfig: types of observations to be used.
+        :param list grippers: EndEffector objects.
+        :param RewardConfig.RewardType reward_type: type of reward.
+        :param RewardConfig reward_config: adds possibility to completely override reward definition.
         """
         length = 0.1  # meters
         camera_distance = 0.5  # meters
@@ -62,50 +65,54 @@ class BendWireEnv(dlo_env.DloEnv):
             light_direction=agx.Vec3(0., 0., -1.)
         )
 
-        gripper_right = EndEffector(
-            name='gripper_right',
-            controllable=True,
-            observable=True,
-            max_velocity=14 / 1000,  # m/s
-            max_acceleration=10 / 1000,  # m/s^2
-            min_compliance=1,  # 1/Nm
-            max_compliance=1e12  # 1/Nm
-        )
-        gripper_right.add_constraint(name='prismatic_joint_right',
-                                     end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
-                                     compute_forces_enabled=True,
-                                     velocity_control=True,
-                                     compliance_control=False)
-        gripper_right.add_constraint(name='hinge_joint_right',
-                                     end_effector_dof=EndEffectorConstraint.Dof.Y_COMPLIANCE,
-                                     compute_forces_enabled=False,
-                                     velocity_control=False,
-                                     compliance_control=False)
+        if not grippers:
+            gripper_right = EndEffector(
+                name='gripper_right',
+                controllable=True,
+                observable=True,
+                max_velocity=14 / 1000,  # m/s
+                max_acceleration=10 / 1000,  # m/s^2
+            )
+            gripper_right.add_constraint(name='prismatic_joint_right',
+                                         end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
+                                         compute_forces_enabled=True,
+                                         velocity_control=True,
+                                         compliance_control=False)
+            gripper_right.add_constraint(name='hinge_joint_right',
+                                         end_effector_dof=EndEffectorConstraint.Dof.Y_COMPLIANCE,
+                                         compute_forces_enabled=False,
+                                         velocity_control=False,
+                                         compliance_control=False)
 
-        gripper_left = EndEffector(
-            name='gripper_left',
-            controllable=False,
-            observable=False,
-        )
-        gripper_left.add_constraint(name='prismatic_joint_left',
-                                    end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
-                                    compute_forces_enabled=False,
-                                    velocity_control=False)
-        gripper_left.add_constraint(name='hinge_joint_left',
-                                    end_effector_dof=EndEffectorConstraint.Dof.Y_ROTATION,
-                                    compute_forces_enabled=False,
-                                    velocity_control=False)
+            gripper_left = EndEffector(
+                name='gripper_left',
+                controllable=False,
+                observable=False,
+            )
+            gripper_left.add_constraint(name='prismatic_joint_left',
+                                        end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
+                                        compute_forces_enabled=False,
+                                        velocity_control=False)
+            gripper_left.add_constraint(name='hinge_joint_left',
+                                        end_effector_dof=EndEffectorConstraint.Dof.Y_ROTATION,
+                                        compute_forces_enabled=False,
+                                        velocity_control=False)
+            grippers = [gripper_right, gripper_left]
 
-        observation_config = ObservationConfig(goals=[ObservationConfig.ObservationType.DLO_CURVATURE,
-                                                      ObservationConfig.ObservationType.EE_VELOCITY])
-        observation_config.set_dlo_frenet_curvature()
+        if not observation_config:
+            observation_config = ObservationConfig(goals=[ObservationConfig.ObservationType.DLO_CURVATURE,
+                                                          ObservationConfig.ObservationType.EE_VELOCITY])
+            observation_config.set_dlo_frenet_curvature()
 
-        reward_config = Reward(reward_type=reward_type, reward_range=(-1.5, 1.5), set_done_on_success=False,
-                               dlo_curvature_threshold=0.05)
+        if not reward_type:
+            reward_type = RewardConfig.RewardType.DENSE
+        if not reward_config:
+            reward_config = Reward(reward_type=reward_type, reward_range=(-1.5, 1.5), set_done_on_success=False,
+                                   dlo_curvature_threshold=0.05)
 
         args = kwargs['agxViewer'] if 'agxViewer' in kwargs else sys.argv
         show_goal = kwargs['show_goal'] if 'show_goal' in kwargs else False
-        osg_window = kwargs['osg_window'] if 'osg_window' in kwargs else True
+        osg_window = kwargs['osg_window'] if 'osg_window' in kwargs else False
         agx_only = kwargs['agx_only'] if 'agx_only' in kwargs else False
 
         if not os.path.exists(SCENE_PATH):
@@ -115,7 +122,7 @@ class BendWireEnv(dlo_env.DloEnv):
         super(BendWireEnv, self).__init__(args=args,
                                           scene_path=SCENE_PATH,
                                           n_substeps=n_substeps,
-                                          end_effectors=[gripper_right, gripper_left],
+                                          end_effectors=grippers,
                                           observation_config=observation_config,
                                           camera_config=camera_config,
                                           reward_config=reward_config,
