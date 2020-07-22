@@ -33,7 +33,7 @@ class Reward(RewardConfig):
             velocity_scale = 100
             ee_velocity = np.linalg.norm(achieved_goal['ee_velocity']['gripper_right'])
             ee_velocity += np.linalg.norm(achieved_goal['ee_velocity']['gripper_left'])
-            reward = np.clip(self.reward_range[1] - velocity_scale*ee_velocity, 0, self.reward_range[1])
+            reward = np.clip(self.reward_range[1] - velocity_scale * ee_velocity, 0, self.reward_range[1])
         return reward, info
 
     def scale_reward(self, reward):
@@ -67,12 +67,10 @@ class BendWireObstacleEnv(dlo_env.DloEnv):
         :param RewardConfig reward_config: adds possibility to completely override reward definition.
         """
         length = 0.3  # meters
-        cylinder_length = 0.1
-        cylinder_radius = cylinder_length / 4  # meters
-        camera_distance = 0.3  # meters
+        camera_distance = 1  # meters
         camera_config = CameraConfig(
-            eye=agx.Vec3(0, -1, 0),
-            center=agx.Vec3(0, 0, -2 * cylinder_radius),
+            eye=agx.Vec3(0, -camera_distance, 0.01),
+            center=agx.Vec3(0, -length, -0.05),
             up=agx.Vec3(0., 0., 1.),
             light_position=agx.Vec4(length / 2, - camera_distance, camera_distance, 1.),
             light_direction=agx.Vec3(0., 0., -1.)

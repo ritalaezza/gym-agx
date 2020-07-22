@@ -63,7 +63,8 @@ class AgxEnv(gym.GoalEnv):
         self.args = args
         if not self.agx_only:
             self.app = agxOSG.ExampleApplication(self.sim)
-            self.args = self.args + ['--window', observation_config.image_size[1], observation_config.image_size[0]]
+            self.args = self.args + ['--window', 2 * observation_config.image_size[1],
+                                     2 * observation_config.image_size[0]]
             if self.osg_window:
                 print("WARNING: OSG window is enabled!")
                 if self.observation_config.depth_in_obs or self.observation_config.rgb_in_obs:
