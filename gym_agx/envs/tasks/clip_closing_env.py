@@ -7,7 +7,7 @@ import agx
 import agxCable
 import agxOSG
 import agxRender
-from gym_agx.utils.agx_utils import dlo_encompass_point, all_segment_below_z
+from gym_agx.utils.utils import point_inside_polygon, all_points_below_z
 
 from gym_agx.envs import agx_task_env
 from gym_agx.rl.observation import get_cable_segment_positions
@@ -40,6 +40,9 @@ class ClipClosingEnv(agx_task_env.AgxTaskEnv):
         :param reward_config: reward configuration object, defines success condition and reward function.
         """
 
+        self.reward_type = reward_type
+        self.segment_pos_old = None
+
         camera_distance = 0.1  # meters
         camera_config = CameraConfig(
             eye=agx.Vec3(0, 0.0, 0.65),
@@ -57,15 +60,15 @@ class ClipClosingEnv(agx_task_env.AgxTaskEnv):
             max_acceleration= 1 # m/s^2
         )
         gripper_0.add_constraint(name='gripper_0_joint_base_x',
-                              end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
-                              compute_forces_enabled=False,
-                              velocity_control=True,
-                              compliance_control=False)
+                                 end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
+                                 compute_forces_enabled=False,
+                                 velocity_control=True,
+                                 compliance_control=False)
         gripper_0.add_constraint(name='gripper_0_joint_base_y',
-                              end_effector_dof=EndEffectorConstraint.Dof.Y_TRANSLATION,
-                              compute_forces_enabled=False,
-                              velocity_control=True,
-                              compliance_control=False)
+                                 end_effector_dof=EndEffectorConstraint.Dof.Y_TRANSLATION,
+                                 compute_forces_enabled=False,
+                                 velocity_control=True,
+                                 compliance_control=False)
 
         gripper_1 = EndEffector(
             name='gripper_1',
@@ -119,10 +122,23 @@ class ClipClosingEnv(agx_task_env.AgxTaskEnv):
         info = self._set_action(action)
         self._step_callback()
 
-        obs = self._get_observation()
-        info['is_success'] = self._is_goal_reached()
+        # Get segments positions
+        segment_pos = self._compute_segments_pos()
+
+        # Compute rewards
+        if self.reward_type == "dense":
+            reward, goal_reached = self._compute_dense_reward_and_check_goal(segment_pos, self.segment_pos_old)
+        else:
+            goal_reached = self._is_goal_reached(segment_pos)
+            reward = float(goal_reached)
+
+        # Set old segment pos for next time step
+        self.segment_pos_old = segment_pos
+
+        info['is_success'] = goal_reached
         done = info['is_success']
-        reward = np.float(info["is_success"])
+
+        obs = self._get_observation()
 
         return obs, reward, done, info
 
@@ -145,10 +161,25 @@ class ClipClosingEnv(agx_task_env.AgxTaskEnv):
         for k in range(n_inital_wait):
             self.sim.stepForward()
 
+        self.segment_pos_old = self._compute_segments_pos()
+
         obs = self._get_observation()
         return obs
 
-    def _is_goal_reached(self):
+    def _compute_segments_pos(self):
+        segments_pos = []
+        dlo = agxCable.Cable.find(self.sim, "DLO")
+        segment_iterator = dlo.begin()
+        n_segments = dlo.getNumSegments()
+        for i in range(n_segments):
+            if not segment_iterator.isEnd():
+                pos = segment_iterator.getGeometry().getPosition()
+                segments_pos.append(to_numpy_array(pos))
+                segment_iterator.inc()
+
+        return segments_pos
+
+    def _is_goal_reached(self, segment_pos):
         """
         Goal is reached if the clip is closed around the center obstacle. This is the case if the segments
         are on the ground, the grippers are close to each other and the center pole is within the
@@ -156,23 +187,38 @@ class ClipClosingEnv(agx_task_env.AgxTaskEnv):
         :return:
         """
 
-        dlo = agxCable.Cable.find(self.sim, "DLO")
-        # Check if clip has correct height
-        is_correct_height = all_segment_below_z(dlo, max_z=GOAL_MAX_Z)
+        # Check if goal obstacle in enclosed by dlo
+        is_within_polygon = point_inside_polygon(np.array(segment_pos)[:,0:2], OBSTACLE_POSITIONS[0])
 
-        # Check if grippers are close
+        # Check if clip has correct height
+        is_correct_height = all_points_below_z(segment_pos, max_z=GOAL_MAX_Z)
+
+        # Check if grippers are close enough to each other
         position_g0 = to_numpy_array(self.sim.getRigidBody("gripper_0").getPosition())
         position_g1 = to_numpy_array(self.sim.getRigidBody("gripper_1").getPosition())
         is_grippers_close = np.linalg.norm(position_g1-position_g0) < 0.01
 
-        # Check if pole is within dlo polygon
-        is_within_polygon = False
-        if is_correct_height and is_grippers_close:
-            is_within_polygon = dlo_encompass_point(dlo, OBSTACLE_POSITIONS[0])
-
         if is_within_polygon and is_correct_height and is_grippers_close:
             return True
         return False
+
+    def _compute_dense_reward_and_check_goal(self, segments_pos_0, segments_pos_1):
+
+        pole_enclosed_0 = point_inside_polygon(np.array(segments_pos_0)[:,0:2], OBSTACLE_POSITIONS[0])
+        pole_enclosed_1 = point_inside_polygon(np.array(segments_pos_1)[:,0:2], OBSTACLE_POSITIONS[0])
+        poles_enclosed_diff = pole_enclosed_0 - pole_enclosed_1
+
+        # Check if final goal is reached
+        is_correct_height = all_points_below_z(segments_pos_0, max_z=GOAL_MAX_Z)
+
+        # Check if grippers are close enough to each other
+        position_g0 = to_numpy_array(self.sim.getRigidBody("gripper_0").getPosition())
+        position_g1 = to_numpy_array(self.sim.getRigidBody("gripper_1").getPosition())
+        is_grippers_close = np.linalg.norm(position_g1-position_g0) < 0.01
+
+        final_goal_reached = pole_enclosed_0 and is_correct_height and is_grippers_close
+
+        return poles_enclosed_diff + 5*float(final_goal_reached), final_goal_reached
 
     def _add_rendering(self, mode='osg'):
         # Set renderer

@@ -19,8 +19,8 @@ import logging
 import numpy as np
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, \
-    dlo_encompass_point, all_segment_below_z
+from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, to_numpy_array
+from gym_agx.utils.utils import point_inside_polygon, all_points_below_z
 from gym_agx.utils.agx_classes import KeyboardMotorHandler
 
 logger = logging.getLogger('gym_agx.sims')
@@ -49,7 +49,8 @@ ALUMINUM_POISSON_RATIO = 0.35  # no unit
 ALUMINUM_YOUNG_MODULUS = 69e9  # Pascals
 ALUMINUM_YIELD_POINT = 5e7  # Pascals
 
-POLE_POSITIONS = [[0.0, 0.01], [-0.01, -0.01],[0.01, -0.01]]
+POLE_POSITIONS = [[0.0, 0.012], [-0.012, -0.012],[0.012, -0.012]]
+POLE_RADIUS = 0.003
 
 # Ground Parameters
 EYE = agx.Vec3(0, -0.1, 0.1)
@@ -60,7 +61,6 @@ UP = agx.Vec3(0., 0., 0.0)
 MAX_MOTOR_FORCE = 1
 GOAL_MAX_Z = 0.0125
 
-
 def create_pole(sim, position, material):
 
     x = position[0]
@@ -69,7 +69,7 @@ def create_pole(sim, position, material):
     # Lower part
     rotation_cylinder = agx.OrthoMatrix3x3()
     rotation_cylinder.setRotate(agx.Vec3.Y_AXIS(), agx.Vec3.Z_AXIS())
-    cylinder = create_body(name="cylinder", shape=agxCollide.Cylinder(0.004, 0.005),
+    cylinder = create_body(name="cylinder", shape=agxCollide.Cylinder(POLE_RADIUS, 0.005),
                            position=agx.Vec3(x,y,0.0),
                            rotation=rotation_cylinder,
                            motion_control=agx.RigidBody.KINEMATICS,
@@ -79,7 +79,7 @@ def create_pole(sim, position, material):
     # Middle part
     rotation_cylinder = agx.OrthoMatrix3x3()
     rotation_cylinder.setRotate(agx.Vec3.Y_AXIS(), agx.Vec3.Z_AXIS())
-    cylinder = create_body(name="cylinder_inner", shape=agxCollide.Cylinder(0.0035, 0.005),
+    cylinder = create_body(name="cylinder_inner", shape=agxCollide.Cylinder(POLE_RADIUS-0.0007, 0.005),
                            position=agx.Vec3(x,y,0.005),
                            rotation=rotation_cylinder,
                            motion_control=agx.RigidBody.KINEMATICS,
@@ -89,7 +89,7 @@ def create_pole(sim, position, material):
     # Upper part
     rotation_cylinder = agx.OrthoMatrix3x3()
     rotation_cylinder.setRotate(agx.Vec3.Y_AXIS(), agx.Vec3.Z_AXIS())
-    cylinder = create_body(name="cylinder", shape=agxCollide.Cylinder(0.004, 0.005),
+    cylinder = create_body(name="cylinder", shape=agxCollide.Cylinder(POLE_RADIUS, 0.005),
                            position=agx.Vec3(x,y,0.01),
                            rotation=rotation_cylinder,
                            motion_control=agx.RigidBody.KINEMATICS,
@@ -176,10 +176,10 @@ def build_simulation():
 
     # Create gripper
     gripper = create_body(name="gripper",
-                         shape=agxCollide.Sphere(0.002),
-                         position=agx.Vec3(-(DIAMETER),0.0,0.02),
-                         motion_control=agx.RigidBody.DYNAMICS,
-                         material=material_hard)
+                          shape=agxCollide.Sphere(0.002),
+                          position=agx.Vec3(-(DIAMETER),0.0,0.02),
+                          motion_control=agx.RigidBody.DYNAMICS,
+                          material=material_hard)
     gripper.getRigidBody("gripper").getGeometry("gripper").setEnableCollisions(False)
 
     sim.add(gripper)
@@ -287,6 +287,50 @@ def build_simulation():
     return sim
 
 
+def get_poles_enclosed(segments_pos):
+    poles_enclosed = np.zeros(3)
+    segments_xy = np.array(segments_pos)[:,0:2]
+    for i in range(0,3):
+        is_within_polygon = point_inside_polygon(segments_xy, POLE_POSITIONS[i])
+        poles_enclosed[i] = int(is_within_polygon)
+
+    return poles_enclosed
+
+
+def compute_segments_pos(sim):
+    segments_pos = []
+    dlo = agxCable.Cable.find(sim, "DLO")
+    segment_iterator = dlo.begin()
+    n_segments = dlo.getNumSegments()
+    for i in range(n_segments):
+        if not segment_iterator.isEnd():
+            pos = segment_iterator.getGeometry().getPosition()
+            segments_pos.append(to_numpy_array(pos))
+            segment_iterator.inc()
+
+    return segments_pos
+
+
+def is_goal_reached(segment_pos):
+    n_enclosed = get_poles_enclosed(segment_pos)
+    if np.sum(n_enclosed) >= 3 and all_points_below_z(segment_pos, max_z=GOAL_MAX_Z):
+        return True
+    return False
+
+
+def compute_dense_reward_and_check_goal(segment_pos_0, segment_pos_1):
+    poles_enclosed_0 = get_poles_enclosed(segment_pos_0)
+    poles_enclosed_1 = get_poles_enclosed(segment_pos_1)
+    poles_enclosed_diff = poles_enclosed_0 - poles_enclosed_1
+
+    # Check if final goal is reached
+    is_correct_height = all_points_below_z(segment_pos_0, max_z=GOAL_MAX_Z)
+    n_enclosed_0 = np.sum(poles_enclosed_0)
+    final_goal_reached = n_enclosed_0 >= 3 and is_correct_height
+
+    return np.sum(poles_enclosed_diff) + 5*float(final_goal_reached), final_goal_reached
+
+
 def main(args):
     # Build simulation object
     sim = build_simulation()
@@ -305,32 +349,31 @@ def main(args):
     app.setCameraHome(EYE, CENTER, UP)
     app.initSimulation(sim, True)
 
-    dlo = agxCable.Cable.find(sim, "DLO")
-
-    def is_goal_reached():
-        points_encompassed = 0
-        for j in range(0,3):
-
-            is_correct_height = all_segment_below_z(dlo, max_z=GOAL_MAX_Z)
-            is_within_polygon = False
-
-            if is_correct_height:
-               is_within_polygon = dlo_encompass_point(dlo, POLE_POSITIONS[j])
-
-            if is_within_polygon and is_correct_height:
-                points_encompassed += 1
-
-        if points_encompassed >= 3:
-            return True
-        else:
-            return False
+    segment_pos_old = compute_segments_pos(sim)
+    reward_type = "dense"
 
     for _ in range(10000):
         sim.stepForward()
         app.executeOneStepWithGraphics()
 
-        if is_goal_reached():
+        # Get segments positions
+        segment_pos = compute_segments_pos(sim)
+
+        # Compute reward
+        if reward_type == "dense":
+            reward, goal_reached = compute_dense_reward_and_check_goal(segment_pos, segment_pos_old)
+        else:
+            goal_reached = is_goal_reached(segment_pos)
+            reward = float(goal_reached)
+
+        segment_pos_old = segment_pos
+
+        if reward !=0:
+            print("reward: ", reward)
+
+        if goal_reached:
             print("Success!")
+            break
 
 
 if __name__ == '__main__':

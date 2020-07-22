@@ -40,6 +40,10 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
         :param reward_config: reward configuration object, defines success condition and reward function.
         """
 
+        self.reward_type = reward_type
+        self.segment_pos_old = None
+        self.n_segments = None
+
         camera_distance = 0.1  # meters
         camera_config = CameraConfig(
             eye=agx.Vec3(0, -0.1, 0.05),
@@ -81,13 +85,25 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
         action[3] *= 1
         info = self._set_action(action)
 
-        for _ in range(2):
-            self._step_callback()
+        self._step_callback()
+
+        # Get segments positions
+        segment_pos = self._compute_segments_pos()
+
+        # Compute rewards
+        if self.reward_type == "dense":
+            reward, goal_reached = self._compute_dense_reward_and_check_goal(segment_pos, self.segment_pos_old)
+        else:
+            goal_reached = self._is_goal_reached(segment_pos)
+            reward = float(goal_reached)
+
+        # Set old segment pos for next time step
+        self.segment_pos_old = segment_pos
+
+        info['is_success'] = goal_reached
+        done = info['is_success']
 
         obs = self._get_observation()
-        info['is_success'] = self._is_goal_reached()
-        done = info['is_success']
-        reward = np.float(info["is_success"])
 
         return obs, reward, done, info
 
@@ -112,29 +128,60 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
             self.sim.getConstraint1DOF("gripper_joint_rot_y").getMotor1D().setSpeed(action[3]*50)
             self.sim.stepForward()
 
+        cable = agxCable.Cable.find(self.sim, "DLO")
+        self.n_segments = cable.getNumSegments()
+        self.segment_pos_old = self._compute_segments_pos()
+
         obs = self._get_observation()
         return obs
 
-    def _is_goal_reached(self):
+    def _compute_segments_pos(self):
+        segments_pos = []
+        dlo = agxCable.Cable.find(self.sim, "DLO")
+        segment_iterator = dlo.begin()
+        n_segments = dlo.getNumSegments()
+        for i in range(n_segments):
+            if not segment_iterator.isEnd():
+                pos = segment_iterator.getGeometry().getPosition()
+                segments_pos.append(to_numpy_array(pos))
+                segment_iterator.inc()
+
+        return segments_pos
+
+    def _is_goal_reached(self, segment_pos):
         """
         Checks if positions of cable segments on lower end are within goal region. Returns True if cable is partially
         inserted and False otherwise.
         """
-        cable = agxCable.Cable.find(self.sim, "DLO")
-        n_segments = cable.getNumSegments()
-        segment_iterator = cable.begin()
 
-        for i in range(0, n_segments):
-            if not segment_iterator.isEnd():
-                position = segment_iterator.getGeometry().getPosition()
-                segment_iterator.inc()
-
-                if i >= n_segments/2:
-                    # Return False if segment is ouside bounds
-                    if not (-0.003 <= position[0] <= 0.003 and -0.003 <= position[1] <= 0.003 and -0.01 <= position[2] <=0.006):
-                        return False
-
+        for p in segment_pos[int(self.n_segments/2):]:
+            # Return False if segment is ouside bounds
+            if not (-0.003 <= p[0] <= 0.003 and -0.003 <= p[1] <= 0.003 and -0.01 <= p[2] <=0.006):
+                return False
         return True
+
+    def _determine_n_segments_inserted(self, segment_pos):
+        """
+        Determine number of segments that are inserted into the hole.
+        :param segment_pos:
+        :return:
+        """
+        n_inserted = 0
+        for p in segment_pos:
+            # Return False if segment is ouside bounds
+            if -0.003 <= p[0] <= 0.003 and -0.003 <= p[1] <= 0.003 and -0.01 <= p[2] <=0.006:
+                n_inserted +=1
+        return n_inserted
+
+    def _compute_dense_reward_and_check_goal(self, segment_pos_0, segment_pos_1):
+        n_segs_inserted_0 = self._determine_n_segments_inserted(segment_pos_0)
+        n_segs_inserted_1 = self._determine_n_segments_inserted(segment_pos_1)
+        n_segs_inserted_diff = n_segs_inserted_0 - n_segs_inserted_1
+
+        # Check if final goal is reached
+        final_goal_reached = n_segs_inserted_0 >= self.n_segments/2
+
+        return np.sum(n_segs_inserted_diff) + 5*float(final_goal_reached), final_goal_reached
 
     def _add_rendering(self, mode='osg'):
         # Set renderer

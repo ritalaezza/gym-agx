@@ -22,7 +22,7 @@ import os
 import agxUtil
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, save_simulation
+from gym_agx.utils.agx_utils import create_body, save_simulation, to_numpy_array
 from gym_agx.utils.agx_classes import KeyboardMotorHandler
 
 logger = logging.getLogger('gym_agx.sims')
@@ -65,13 +65,13 @@ FORCE_RANGES = {"t_x": [-0.2,0.2], "t_y": [-0.2,0.2], "t_z": [-0.2,0.2], "r_y": 
 
 
 def create_gripper_peg_in_hole(sim=None,
-                             name="",
-                             material=None,
-                             position=agx.Vec3(0.0, 0.0, 0.0),
-                             geometry_transform=agx.AffineMatrix4x4(),
-                             geometry_scaling=agx.Matrix3x3(agx.Vec3(0.0045)),
-                             joint_ranges=None,
-                             force_ranges=None):
+                               name="",
+                               material=None,
+                               position=agx.Vec3(0.0, 0.0, 0.0),
+                               geometry_transform=agx.AffineMatrix4x4(),
+                               geometry_scaling=agx.Matrix3x3(agx.Vec3(0.0045)),
+                               joint_ranges=None,
+                               force_ranges=None):
 
     # Create gripper object
     gripper_mesh = agxUtil.createTrimeshFromWavefrontOBJ(MESH_GRIPPER_FILE, agxCollide.Trimesh.NO_WARNINGS, geometry_scaling)
@@ -269,13 +269,13 @@ def build_simulation():
 
     # Create gripper
     create_gripper_peg_in_hole(sim=sim,
-                             name="gripper",
-                             material=material_hard,
-                             position=agx.Vec3(0.0, 0.0, 0.04),
-                             geometry_transform=agx.AffineMatrix4x4(),
-                             joint_ranges=JOINT_RANGES,
-                             force_ranges=FORCE_RANGES
-                             )
+                               name="gripper",
+                               material=material_hard,
+                               position=agx.Vec3(0.0, 0.0, 0.04),
+                               geometry_transform=agx.AffineMatrix4x4(),
+                               joint_ranges=JOINT_RANGES,
+                               force_ranges=FORCE_RANGES
+                               )
 
     # Create hollow cylinde with hole
     scaling_cylinder = agx.Matrix3x3(agx.Vec3(0.004))
@@ -348,6 +348,70 @@ def build_simulation():
     return sim
 
 
+def compute_segments_pos(sim):
+    segments_pos = []
+    dlo = agxCable.Cable.find(sim, "DLO")
+    segment_iterator = dlo.begin()
+    n_segments = dlo.getNumSegments()
+    for i in range(n_segments):
+        if not segment_iterator.isEnd():
+            pos = segment_iterator.getGeometry().getPosition()
+            segments_pos.append(to_numpy_array(pos))
+            segment_iterator.inc()
+
+    return segments_pos
+
+
+def is_goal_reached(sim):
+    """
+    Checks if positions of cable segments on lower end are within goal region. Returns True if cable is partially
+    inserted and False otherwise.
+    """
+    cable = agxCable.Cable.find(sim, "DLO")
+    n_segments = cable.getNumSegments()
+    segment_iterator = cable.begin()
+
+    for i in range(0, n_segments):
+        if not segment_iterator.isEnd():
+            position = segment_iterator.getGeometry().getPosition()
+            segment_iterator.inc()
+
+            if i >= n_segments/2:
+                # Return False if segment is ouside bounds
+                if not (-0.003 <= position[0] <= 0.003 and -0.003 <= position[1] <= 0.003 and -0.01 <= position[2] <=0.006):
+                    return False
+
+    return True
+
+
+def determine_n_segments_inserted(segment_pos):
+    """
+    Determine number of segments that are inserted into the hole.
+    :param segment_pos:
+    :return:
+    """
+    n_inserted = 0
+    for p in segment_pos:
+        # Return False if segment is ouside bounds
+        if -0.003 <= p[0] <= 0.003 and -0.003 <= p[1] <= 0.003 and -0.01 <= p[2] <=0.006:
+            n_inserted +=1
+    return n_inserted
+
+
+def compute_dense_reward_and_check_goal(sim, segment_pos_0, segment_pos_1):
+    n_segs_inserted_0 = determine_n_segments_inserted(segment_pos_0)
+    n_segs_inserted_1 = determine_n_segments_inserted(segment_pos_1)
+    n_segs_inserted_diff = n_segs_inserted_0 - n_segs_inserted_1
+
+    cable = agxCable.Cable.find(sim, "DLO")
+    n_segments = cable.getNumSegments()
+
+    # Check if final goal is reached
+    final_goal_reached = n_segs_inserted_0 >= n_segments/2
+
+    return np.sum(n_segs_inserted_diff) + 5*float(final_goal_reached), final_goal_reached
+
+
 def main(args):
     # Build simulation object
     sim = build_simulation()
@@ -366,33 +430,31 @@ def main(args):
     app.setCameraHome(EYE, CENTER, UP)
     app.initSimulation(sim, True)
 
-    def is_goal_reached():
-        """
-        Checks if positions of cable segments on lower end are within goal region. Returns True if cable is partially
-        inserted and False otherwise.
-        """
-        cable = agxCable.Cable.find(sim, "DLO")
-        n_segments = cable.getNumSegments()
-        segment_iterator = cable.begin()
-
-        for i in range(0, n_segments):
-            if not segment_iterator.isEnd():
-                position = segment_iterator.getGeometry().getPosition()
-                segment_iterator.inc()
-
-                if i >= n_segments/2:
-                    # Return False if segment is ouside bounds
-                    if not (-0.003 <= position[0] <= 0.003 and -0.003 <= position[1] <= 0.003 and -0.01 <= position[2] <=0.006):
-                        return False
-
-        return True
+    segment_pos_old = compute_segments_pos(sim)
+    reward_type = "dense"
 
     for _ in range(10000):
         sim.stepForward()
         app.executeOneStepWithGraphics()
 
-        if is_goal_reached():
+        # Get segments positions
+        segment_pos = compute_segments_pos(sim)
+
+        # Compute reward
+        if reward_type == "dense":
+            reward, goal_reached = compute_dense_reward_and_check_goal(sim, segment_pos, segment_pos_old)
+        else:
+            goal_reached = is_goal_reached(sim)
+            reward = float(goal_reached)
+
+        segment_pos_old = segment_pos
+
+        if reward !=0:
+            print("reward: ", reward)
+
+        if goal_reached:
             print("Success!")
+            break
 
 
 if __name__ == '__main__':

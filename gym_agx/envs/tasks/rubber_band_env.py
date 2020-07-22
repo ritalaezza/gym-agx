@@ -10,7 +10,7 @@ import agxSDK
 import agxOSG
 import agxRender
 from agxPythonModules.utils.numpy_utils import create_numpy_array
-from gym_agx.utils.agx_utils import dlo_encompass_point, all_segment_below_z
+from gym_agx.utils.utils import point_inside_polygon, all_points_below_z
 
 from gym_agx.envs import agx_task_env
 from gym_agx.rl.observation import get_cable_segment_positions
@@ -43,6 +43,9 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
         :param reward_config: reward configuration object, defines success condition and reward function.
         """
 
+        self.reward_type = reward_type
+        self.segments_pos_old = None
+
         camera_distance = 0.1  # meters
         camera_config = CameraConfig(
             eye=agx.Vec3(0, -0.1, 0.1),
@@ -60,20 +63,20 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
             max_acceleration= 0.2 # m/s^2
         )
         gripper.add_constraint(name='gripper_joint_base_x',
-                              end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
-                              compute_forces_enabled=False,
-                              velocity_control=True,
-                              compliance_control=False)
+                               end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
+                               compute_forces_enabled=False,
+                               velocity_control=True,
+                               compliance_control=False)
         gripper.add_constraint(name='gripper_joint_base_y',
-                              end_effector_dof=EndEffectorConstraint.Dof.Y_TRANSLATION,
-                              compute_forces_enabled=False,
-                              velocity_control=True,
-                              compliance_control=False)
+                               end_effector_dof=EndEffectorConstraint.Dof.Y_TRANSLATION,
+                               compute_forces_enabled=False,
+                               velocity_control=True,
+                               compliance_control=False)
         gripper.add_constraint(name='gripper_joint_base_z',
-                              end_effector_dof=EndEffectorConstraint.Dof.Z_TRANSLATION,
-                              compute_forces_enabled=False,
-                              velocity_control=True,
-                              compliance_control=False)
+                               end_effector_dof=EndEffectorConstraint.Dof.Z_TRANSLATION,
+                               compute_forces_enabled=False,
+                               velocity_control=True,
+                               compliance_control=False)
 
         self.end_effectors = [gripper]
 
@@ -85,7 +88,7 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
         # Change window size
         args.extend(["--window", "600", "600"])
 
-        # TODO does -agxOnly made a difference?
+        # TODO does -agxOnly make a difference?
         # # Disable rendering in headless mode
         # if headless:
         #     args.extend(["--osgWindow", False])
@@ -94,11 +97,11 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
         #     args.extend(["-agxOnly", "--osgWindow", False])
 
         super(RubberBandEnv, self).__init__(scene_path=SCENE_PATH,
-                                           n_substeps=n_substeps,
-                                           observation_config=None,
-                                           n_actions=3,
-                                           camera_pose=camera_config.camera_pose,
-                                           args=args)
+                                            n_substeps=n_substeps,
+                                            observation_config=None,
+                                            n_actions=3,
+                                            camera_pose=camera_config.camera_pose,
+                                            args=args)
 
     def render(self, mode="human"):
         return super(RubberBandEnv, self).render(mode)
@@ -109,10 +112,23 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
         info = self._set_action(action)
         self._step_callback()
 
-        obs = self._get_observation()
-        info['is_success'] = self._is_goal_reached()
+        # Get segments positions
+        segment_pos = self._compute_segments_pos()
+
+        # Compute rewards
+        if self.reward_type == "dense":
+            reward, goal_reached = self._compute_dense_reward_and_check_goal(segment_pos, self.segments_pos_old)
+        else:
+            goal_reached = self._is_goal_reached(segment_pos)
+            reward = float(goal_reached)
+
+        # Set old segment pos for next time step
+        self.segment_pos_old = segment_pos
+
+        info['is_success'] = goal_reached
         done = info['is_success']
-        reward = np.float(info["is_success"])
+
+        obs = self._get_observation()
 
         return obs, reward, done, info
 
@@ -132,32 +148,65 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
             self._set_action(self.action_space.sample())
             self.sim.stepForward()
 
+        self.segments_pos_old = self._compute_segments_pos()
+
         obs = self._get_observation()
+
         return obs
 
-    def _is_goal_reached(self):
+    def _compute_segments_pos(self):
+        segments_pos = []
+        dlo = agxCable.Cable.find(self.sim, "DLO")
+        segment_iterator = dlo.begin()
+        n_segments = dlo.getNumSegments()
+        for i in range(n_segments):
+            if not segment_iterator.isEnd():
+                pos = segment_iterator.getGeometry().getPosition()
+                segments_pos.append(to_numpy_array(pos))
+                segment_iterator.inc()
+
+        return segments_pos
+
+    def _get_poles_enclosed(self, segments_pos):
         """
-        Goal is reached if the centers of all three poles are contained in the dlo polygon and the segments
-        are beolow a certain height.
+        Check how many poles the rubber band encloses
+        :param segments_pos:
         :return:
         """
-        dlo = agxCable.Cable.find(self.sim, "DLO")
-        points_encompassed = 0
-        for j in range(0,3):
+        poles_enclosed = np.zeros(3)
+        for i in range(0,3):
+            segments_xy = np.array(segments_pos)[:,0:2]
+            is_within_polygon = point_inside_polygon(segments_xy, POLE_POSITIONS[i])
+            poles_enclosed[i] = int(is_within_polygon)
 
-            is_correct_height = all_segment_below_z(dlo, max_z=GOAL_MAX_Z)
-            is_within_polygon = False
+        return poles_enclosed
 
-            if is_correct_height:
-                is_within_polygon = dlo_encompass_point(dlo, POLE_POSITIONS[j])
+    def _compute_dense_reward_and_check_goal(self, segments_pos_0, segments_pos_1):
+        """
+        Compute reward for transition between two timesteps and check goal condition
+        :return:
+        """
+        poles_enclosed_0 = self._get_poles_enclosed(segments_pos_0)
+        poles_enclosed_1 = self._get_poles_enclosed(segments_pos_1)
+        poles_enclosed_diff = poles_enclosed_0 - poles_enclosed_1
 
-            if is_within_polygon and is_correct_height:
-                points_encompassed += 1
+        # Check if final goal is reached
+        is_correct_height = all_points_below_z(segments_pos_0, max_z=GOAL_MAX_Z)
+        n_enclosed_0 = np.sum(poles_enclosed_0)
+        final_goal_reached = n_enclosed_0 >= 3 and is_correct_height
 
-        if points_encompassed >= 3:
+        return np.sum(poles_enclosed_diff) + 5*float(final_goal_reached), final_goal_reached
+
+    def _is_goal_reached(self, segments_pos):
+        """
+        Goal is reached if the centers of all three poles are contained in the dlo polygon and the segments
+        are below a certain height.
+        :return:
+        """
+        n_enclosed = self._get_poles_enclosed(segments_pos)
+        if np.sum(n_enclosed) >= 3 and all_points_below_z(segments_pos, max_z=GOAL_MAX_Z):
             return True
-        else:
-            return False
+        return False
 
     def _add_rendering(self, mode='osg'):
         # Set renderer

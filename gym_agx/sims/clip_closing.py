@@ -19,8 +19,8 @@ import logging
 import numpy as np
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, \
-    dlo_encompass_point, all_segment_below_z, to_numpy_array
+from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, to_numpy_array
+from gym_agx.utils.utils import all_points_below_z, point_inside_polygon
 from gym_agx.utils.agx_classes import KeyboardMotorHandler
 
 logger = logging.getLogger('gym_agx.sims')
@@ -62,7 +62,6 @@ GOAL_MAX_Z = 0.0125
 OBSTACLE_POSITIONS = [ [0.0,0.-0.075], [0.0,0.0], [0.075,0.0], [0.0,0.075], [-0.075,0.0], [0.075,0.075],[-0.075,0.075], [0.075,-0.075], [-0.075,-0.075]]
 R_OBSTACLE = 0.008
 OFFSET_Y = 0.0375
-
 
 
 def add_rendering(sim):
@@ -290,6 +289,57 @@ def build_simulation():
     return sim
 
 
+def compute_segments_pos(sim):
+    segments_pos = []
+    dlo = agxCable.Cable.find(sim, "DLO")
+    segment_iterator = dlo.begin()
+    n_segments = dlo.getNumSegments()
+    for i in range(n_segments):
+        if not segment_iterator.isEnd():
+            pos = segment_iterator.getGeometry().getPosition()
+            segments_pos.append(to_numpy_array(pos))
+            segment_iterator.inc()
+
+    return segments_pos
+
+
+def is_goal_reached(sim, segments_pos):
+
+    # Check if goal obstacle in enclosed by dlo
+    is_within_polygon = point_inside_polygon(np.array(segments_pos)[:,0:2], OBSTACLE_POSITIONS[0])
+
+    # Check if clip has correct height
+    is_correct_height = all_points_below_z(segments_pos, max_z=GOAL_MAX_Z)
+
+    # Check if grippers are close enough to each other
+    position_g0 = to_numpy_array(sim.getRigidBody("gripper_0").getPosition())
+    position_g1 = to_numpy_array(sim.getRigidBody("gripper_1").getPosition())
+    is_grippers_close = np.linalg.norm(position_g1-position_g0) < 0.01
+
+    if is_within_polygon and is_correct_height and is_grippers_close:
+        return True
+    return False
+
+
+def compute_dense_reward_and_check_goal(sim, segments_pos_0, segments_pos_1):
+
+    pole_enclosed_0 = point_inside_polygon(np.array(segments_pos_0)[:,0:2], OBSTACLE_POSITIONS[0])
+    pole_enclosed_1 = point_inside_polygon(np.array(segments_pos_1)[:,0:2], OBSTACLE_POSITIONS[0])
+    poles_enclosed_diff = pole_enclosed_0 - pole_enclosed_1
+
+    # Check if final goal is reached
+    is_correct_height = all_points_below_z(segments_pos_0, max_z=GOAL_MAX_Z)
+
+    # Check if grippers are close enough to each other
+    position_g0 = to_numpy_array(sim.getRigidBody("gripper_0").getPosition())
+    position_g1 = to_numpy_array(sim.getRigidBody("gripper_1").getPosition())
+    is_grippers_close = np.linalg.norm(position_g1-position_g0) < 0.01
+
+    final_goal_reached = pole_enclosed_0 and is_correct_height and is_grippers_close
+
+    return poles_enclosed_diff + 5*float(final_goal_reached), final_goal_reached
+
+
 def main(args):
     # Build simulation object
     sim = build_simulation()
@@ -310,32 +360,30 @@ def main(args):
 
     dlo = agxCable.Cable.find(sim, "DLO")
 
-    def is_goal_reached():
+    reward_type = "dense"
 
-        # Check if clip has correct height
-        is_correct_height = all_segment_below_z(dlo, max_z=GOAL_MAX_Z)
-
-        # Check if grippers are close
-        position_g0 = to_numpy_array(sim.getRigidBody("gripper_0").getPosition())
-        position_g1 = to_numpy_array(sim.getRigidBody("gripper_1").getPosition())
-        is_grippers_close = np.linalg.norm(position_g1-position_g0) < 0.01
-
-        # Check if pole is within dlo polygon
-        is_within_polygon = False
-        if is_correct_height and is_grippers_close:
-            is_within_polygon = dlo_encompass_point(dlo, OBSTACLE_POSITIONS[0])
-
-        if is_within_polygon and is_correct_height and is_grippers_close:
-            return True
-        return False
-
+    segment_pos_old = compute_segments_pos(sim)
     for _ in range(10000):
         sim.stepForward()
         app.executeOneStepWithGraphics()
 
-        if is_goal_reached():
-            print("Success!")
+        # Compute reward
+        segment_pos = compute_segments_pos(sim)
 
+        # Compute reward
+        if reward_type == "dense":
+            reward, goal_reached = compute_dense_reward_and_check_goal(sim, segment_pos, segment_pos_old)
+        else:
+            goal_reached = is_goal_reached(sim, segment_pos)
+            reward = float(goal_reached)
+
+        segment_pos_old = segment_pos
+
+        if reward !=0:
+            print("reward: ", reward)
+
+        if goal_reached:
+            print("Success!")
 
 
 if __name__ == '__main__':
