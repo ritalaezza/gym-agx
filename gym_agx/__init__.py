@@ -5,27 +5,28 @@ from gym.envs.registration import register
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))  # Project Root
 LOG_DIR = os.path.join(ROOT_DIR, 'logging.conf')
-if os.path.exists(LOG_DIR):
-    try:
-        # Quick directory fix: change working directory to Project root before setting log configuration
-        current_dir = os.getcwd()
-        os.chdir(ROOT_DIR)
-        logging.config.fileConfig(LOG_DIR)
-    except Exception as e:
-        print("Problem setting log directory: {}".format(e))
-    finally:
-        os.chdir(current_dir)
-else:
-    logging.basicConfig(level=logging.DEBUG)
-    print('Failed to load logging configuration file. Using default configs.')
-
 HEBBE_LOG_DIR = os.path.join(ROOT_DIR, 'logging_hebbe.conf')
 TMP_DIR = os.getenv('TMPDIR', default=None)
 if TMP_DIR is not None:
+    # Logging in the server.
     try:
         logging.config.fileConfig(HEBBE_LOG_DIR)
     except Exception as e:
         print("Problem setting hebbe log directory: {}".format(e))
+else:
+    if os.path.exists(LOG_DIR):
+        try:
+            # Quick directory fix: change working directory to Project root before setting log configuration
+            current_dir = os.getcwd()
+            os.chdir(ROOT_DIR)
+            logging.config.fileConfig(LOG_DIR)
+        except Exception as e:
+            print("Problem setting log directory: {}".format(e))
+        finally:
+            os.chdir(current_dir)
+    else:
+        logging.basicConfig(level=logging.DEBUG)
+        print('Failed to load logging configuration file. Using default configs.')
 
 
 def _merge(a, b):
