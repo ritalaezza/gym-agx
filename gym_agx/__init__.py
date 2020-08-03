@@ -74,13 +74,13 @@ register(
 register(
     id='RubberBand-v0',
     entry_point='gym_agx.envs:RubberBandEnv',
-    kwargs={'n_substeps': 5},
-    max_episode_steps=int(1000),
+    kwargs={'n_substeps': 10},
+    max_episode_steps=int(500),
 )
 
 register(
-    id='ClipClosing-v0',
-    entry_point='gym_agx.envs:ClipClosingEnv',
+    id='CableClosing-v0',
+    entry_point='gym_agx.envs:CableClosingEnv',
     kwargs={'n_substeps': 5},
     max_episode_steps=int(250),
 )

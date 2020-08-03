@@ -32,7 +32,8 @@ POLE_POSITIONS = [[0.0, 0.01], [-0.01, -0.01],[0.01, -0.01]]
 class RubberBandEnv(agx_task_env.AgxTaskEnv):
     """Superclass for all DLO environments."""
 
-    def __init__(self, n_substeps=1, reward_type="dense", observation_type="state", headless=False, **kwargs):
+    def __init__(self, n_substeps=1, reward_type="dense", observation_type="state", headless=False,
+                 image_size=[64,64], **kwargs):
         """Initializes a DloEnv object
         :param args: arguments for agxViewer.
         :param scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/ folder
@@ -44,11 +45,13 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
         """
 
         self.reward_type = reward_type
+        self.observation_type= observation_type
         self.segments_pos_old = None
+        self.headless = headless
 
         camera_distance = 0.1  # meters
         camera_config = CameraConfig(
-            eye=agx.Vec3(0, -0.1, 0.1),
+            eye=agx.Vec3(0, -0.05, 0.1),
             center=agx.Vec3(0, 0, 0.0),
             up=agx.Vec3(0., 0., 0.0),
             light_position=agx.Vec4(0, - camera_distance, camera_distance, 1.),
@@ -88,19 +91,25 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
         # Change window size
         args.extend(["--window", "600", "600"])
 
+        no_graphics = headless and observation_type not in ("rgb", "depth", "rgb_and_depth")
+
         # TODO does -agxOnly make a difference?
-        # # Disable rendering in headless mode
-        # if headless:
-        #     args.extend(["--osgWindow", False])
-        #
-        # if headless and observation_type == "state":
-        #     args.extend(["-agxOnly", "--osgWindow", False])
+        # Disable rendering in headless mode
+        if headless:
+            args.extend(["--osgWindow", "0"])
+
+        if headless and observation_type == "gt":
+            # args.extend(["--osgWindow", "0"])
+            args.extend(["--agxOnly", "1", "--osgWindow", "0"])
+
 
         super(RubberBandEnv, self).__init__(scene_path=SCENE_PATH,
                                             n_substeps=n_substeps,
-                                            observation_config=None,
+                                            observation_type=observation_type,
                                             n_actions=3,
+                                            image_size=image_size,
                                             camera_pose=camera_config.camera_pose,
+                                            no_graphics = no_graphics,
                                             args=args)
 
     def render(self, mode="human"):
@@ -112,6 +121,9 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
         info = self._set_action(action)
         self._step_callback()
 
+        if not self.headless or self.observation_type in ("rgb", "depth", "rgb_and_depth") :
+            self._render_callback()
+
         # Get segments positions
         segment_pos = self._compute_segments_pos()
 
@@ -122,8 +134,9 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
             goal_reached = self._is_goal_reached(segment_pos)
             reward = float(goal_reached)
 
+
         # Set old segment pos for next time step
-        self.segment_pos_old = segment_pos
+        self.segments_pos_old = segment_pos
 
         info['is_success'] = goal_reached
         done = info['is_success']
@@ -240,11 +253,41 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
 
     def _get_observation(self):
         # TODO use modular strucutre for observations and allow different type of observations
-        seg_pos = get_cable_segment_positions(cable=agxCable.Cable.find(self.sim, "DLO")).flatten()
-        gripper = self.sim.getRigidBody("gripper")
-        gripper_pos = to_numpy_array(gripper.getPosition())[0:3]
 
-        obs = np.concatenate([gripper_pos, seg_pos])
+        rgb_buffer = None
+        depth_buffer = None
+        for buffer in self.render_to_image:
+            name = buffer.getName()
+            if name == 'rgb_buffer':
+                rgb_buffer = buffer
+            elif name == 'depth_buffer':
+                depth_buffer = buffer
+
+        if self.observation_type == "rgb":
+            image_ptr = rgb_buffer.getImageData()
+            image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1], 3), np.uint8)
+            obs = np.flipud(image_data)
+        elif self.observation_type == "depth":
+            image_ptr = depth_buffer.getImageData()
+            image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1]), np.float32)
+            obs = np.flipud(image_data)
+        elif self.observation_type == "rgb_and_depth":
+
+            obs = np.zeros((self.image_size[0], self.image_size[1], 4), dtype=np.float32)
+
+            image_ptr = rgb_buffer.getImageData()
+            image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1], 3), np.uint8)
+            obs[:,:,0:3]  = np.flipud(image_data.astype(np.float32)) / 255
+
+            image_ptr = depth_buffer.getImageData()
+            image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1]), np.float32)
+            obs[:,:,3] = np.flipud(image_data)
+        else:
+            seg_pos = get_cable_segment_positions(cable=agxCable.Cable.find(self.sim, "DLO")).flatten()
+            gripper = self.sim.getRigidBody("gripper")
+            gripper_pos = to_numpy_array(gripper.getPosition())[0:3]
+
+            obs = np.concatenate([gripper_pos, seg_pos])
 
         return obs
 

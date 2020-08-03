@@ -26,7 +26,7 @@ class AgxTaskEnv(gym.Env):
     """Superclass for all AGX Dynamics environments. Initializes AGX, loads scene from file and builds it."""
     metadata = {'render.modes': ['osg', 'debug']}
 
-    def __init__(self, scene_path, n_substeps, n_actions, observation_config, camera_pose, args):
+    def __init__(self, scene_path, n_substeps, n_actions, observation_type, image_size, camera_pose, no_graphics, args):
         """Initializes a AgxEnv object
         :param scene_path: path to binary file containing serialized simulation defined in sim/ folder
         :param n_substeps: number os simulation steps per call to step()
@@ -36,6 +36,8 @@ class AgxTaskEnv(gym.Env):
         """
         self.scene_path = scene_path
         self.n_substeps = n_substeps
+        self.render_to_image = []
+        self.image_size = image_size
 
         # Initialize AGX simulation
         self.gravity = None
@@ -49,7 +51,8 @@ class AgxTaskEnv(gym.Env):
         self.args = args
         self.root = None
         self.camera_pose = camera_pose
-        self._add_rendering(mode='osg')
+        if not no_graphics:
+            self._add_rendering(mode='osg')
 
         # TODO: Is this needed?
         self.fps = int(np.round(1.0 / self.dt))
@@ -58,10 +61,12 @@ class AgxTaskEnv(gym.Env):
         self.seed()
 
         self.n_actions = n_actions
-        self.observation_config = observation_config
+        self.observation_type = observation_type
+        if not no_graphics:
+            self._render_callback()
 
         obs = self._get_observation()
-        self.observation_space = spaces.Box(low=-1, high=1, shape=(obs.shape[0],), dtype=np.float32)
+        self.observation_space = spaces.Box(low=-1, high=1, shape=(obs.shape), dtype=np.float32)
         self.action_space = spaces.Box(-1., 1., shape=(self.n_actions,), dtype='float32')
 
     @property
@@ -108,14 +113,44 @@ class AgxTaskEnv(gym.Env):
         logger.debug("Timestep after readFile is: {}".format(self.time_step))
         logger.debug("Gravity after readFile is: {}".format(self.gravity))
 
-    def _init_app(self, start_rendering):
+    def _add_background_rendering(self, depth=False):
+        """Add rendering buffer to application. Needed for image observations
+        :param bool depth: Boolean to define if type of rendering is RGB or depth.
+        """
+
+        if depth:
+            rti = agxOSG.RenderToImage(self.image_size[0], self.image_size[1], agxOSG.RenderTarget.DEPTH_BUFFER,
+                                       8, agxOSG.RenderTarget.DEPTH_COMPONENT)
+            rti.setName("depth_buffer")
+        else:
+            rti = agxOSG.RenderToImage(self.image_size[0], self.image_size[1], agxOSG.RenderTarget.COLOR_BUFFER,
+                                       8, agxOSG.RenderTarget.RGB)
+            rti.setName("rgb_buffer")
+
+        camera = self.app.getCamera()
+        rti.setReferenceCamera(camera)
+
+        self.root = self.app.getRoot()
+        self.app.addRenderTarget(rti, self.root)
+        self.render_to_image.append(rti)
+
+    def _init_app(self):
+        """Initialize OSG Example Application. Needed for rendering graphics.
+        :param bool add_background_rgb: flag to determine if type of background rendering is RGB.
+        :param bool add_background_depth: flag to determine if type of background rendering is depth.
+        """
         logger.info("init app")
-        if start_rendering:
-            self._add_rendering()
         self.app.init(agxIO.ArgumentParser([sys.executable] + self.args))
-        self.app.setCameraHome(self.camera_pose['eye'], self.camera_pose['center'],
+        self.app.setCameraHome(self.camera_pose['eye'],
+                               self.camera_pose['center'],
                                self.camera_pose['up'])  # only after app.init
-        self.app.initSimulation(self.sim, start_rendering)
+        self.app.initSimulation(self.sim, True)  # initialize graphics
+
+        if self.observation_type == "rgb" or self.observation_type == "rgb_and_depth":
+            self._add_background_rendering()
+        if self.observation_type == "depth" or self.observation_type == "rgb_and_depth":
+            self._add_background_rendering(depth=True)
+
         self.sim.setUniformGravity(self.gravity)
         self.sim.setTimeStep(self.time_step)
         logger.debug("Timestep after initSimulation is: {}".format(self.sim.getTimeStep()))
@@ -127,11 +162,6 @@ class AgxTaskEnv(gym.Env):
         """
         raise NotImplementedError()
 
-    def _reset_sim(self):
-        """Resets the simulation.
-        Implement this in each subclass.
-        """
-        raise NotImplementedError()
 
     # Extension methods
     # ----------------------------
@@ -145,19 +175,6 @@ class AgxTaskEnv(gym.Env):
         """Applies the given action to the simulation.
         """
         raise NotImplementedError()
-
-
-    def _step_callback(self):
-        """A custom callback that is called after stepping the simulation. Can be used
-        to enforce additional constraints on the simulation state.
-        """
-        pass
-
-    def _render_callback(self):
-        """A custom callback that is called before rendering. Can be used
-        to implement custom visualizations.
-        """
-        pass
 
     def _reset_sim(self):
         self.sim.cleanup(agxSDK.Simulation.CLEANUP_ALL, True)
@@ -180,8 +197,11 @@ class AgxTaskEnv(gym.Env):
                 logger.error("Unexpected error:", sys.exc_info()[0])
 
     def _render_callback(self):
-        if not self.app.breakRequested():
-            self.app.executeOneStepWithGraphics()
-        else:
-            self._init_app(True)
-            self.app.executeOneStepWithGraphics()
+        """Executes one step with graphics rendering.
+        :param bool add_background_rgb: flag to determine if type of background rendering is RGB.
+        :param bool add_background_depth: flag to determine if type of background rendering is depth.
+        """
+        # assert not self.agx_only, "Rendering is disabled when agx_only is True. No image observations are possible."
+        if self.app.breakRequested():
+            self._init_app()
+        self.app.executeOneStepWithGraphics()

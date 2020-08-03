@@ -29,7 +29,7 @@ MESH_HOLLOW_CYLINDER_FILE = os.path.join(PACKAGE_DIR, "assets/meshes/mesh_hollow
 class PegInHoleEnv(agx_task_env.AgxTaskEnv):
     """Superclass for all DLO environments."""
 
-    def __init__(self, n_substeps=1, reward_type="dense", observation_type="state", headless=False, **kwargs):
+    def __init__(self, n_substeps=1, reward_type="dense", observation_type="state", headless=False, image_size=[64,64], **kwargs):
         """Initializes a DloEnv object
         :param args: arguments for agxViewer.
         :param scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/ folder
@@ -43,6 +43,7 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
         self.reward_type = reward_type
         self.segment_pos_old = None
         self.n_segments = None
+        self.headless = headless
 
         camera_distance = 0.1  # meters
         camera_config = CameraConfig(
@@ -60,19 +61,24 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
         # Change window size
         args.extend(["--window", "400", "600"])
 
-        # TODO does -agxOnly made a difference?
-        # # Disable rendering in headless mode
-        # if headless:
-        #     args.extend(["--osgWindow", False])
-        #
-        # if headless and observation_type == "state":
-        #     args.extend(["-agxOnly", "--osgWindow", False])
+        no_graphics = headless and observation_type not in ("rgb", "depth", "rgb_and_depth")
+
+        # TODO does -agxOnly make a difference?
+        # Disable rendering in headless mode
+        if headless:
+            args.extend(["--osgWindow", "0"])
+
+        if headless and observation_type == "gt":
+            # args.extend(["--osgWindow", "0"])
+            args.extend(["--agxOnly", "1", "--osgWindow", "0"])
 
         super(PegInHoleEnv, self).__init__(scene_path=SCENE_PATH,
                                            n_substeps=n_substeps,
-                                           observation_config=None,
+                                           observation_type=observation_type,
                                            n_actions=4,
                                            camera_pose=camera_config.camera_pose,
+                                           no_graphics = no_graphics,
+                                           image_size=image_size,
                                            args=args)
 
     def render(self, mode="human"):
@@ -86,6 +92,9 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
         info = self._set_action(action)
 
         self._step_callback()
+
+        if not self.headless or self.observation_type in ("rgb", "depth", "rgb_and_depth") :
+            self._render_callback()
 
         # Get segments positions
         segment_pos = self._compute_segments_pos()

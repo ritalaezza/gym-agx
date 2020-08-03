@@ -25,7 +25,7 @@ from gym_agx.utils.agx_classes import KeyboardMotorHandler
 
 logger = logging.getLogger('gym_agx.sims')
 
-FILE_NAME = "clip_closing"
+FILE_NAME = "cable_closing"
 # Simulation parameters
 TIMESTEP = 1 / 1000
 N_SUBSTEPS = 20
@@ -308,7 +308,7 @@ def is_goal_reached(sim, segments_pos):
     # Check if goal obstacle in enclosed by dlo
     is_within_polygon = point_inside_polygon(np.array(segments_pos)[:,0:2], OBSTACLE_POSITIONS[0])
 
-    # Check if clip has correct height
+    # Check if cable has correct height
     is_correct_height = all_points_below_z(segments_pos, max_z=GOAL_MAX_Z)
 
     # Check if grippers are close enough to each other

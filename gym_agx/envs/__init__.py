@@ -7,4 +7,4 @@ from gym_agx.envs.dlo.push_rope_env import PushRopeEnv
 # Implicit Shape Control ("task" environments)
 from gym_agx.envs.tasks.peg_in_hole_env import PegInHoleEnv
 from gym_agx.envs.tasks.rubber_band_env import RubberBandEnv
-from gym_agx.envs.tasks.clip_closing_env import ClipClosingEnv
+from gym_agx.envs.tasks.cable_closing_env import CableClosingEnv

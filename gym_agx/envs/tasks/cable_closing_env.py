@@ -20,13 +20,13 @@ logger = logging.getLogger('gym_agx.envs')
 # Set paths
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 PACKAGE_DIR = os.path.split(FILE_DIR)[0]
-SCENE_PATH = os.path.join(PACKAGE_DIR, "assets/clip_closing.agx")
+SCENE_PATH = os.path.join(PACKAGE_DIR, "assets/cable_closing.agx")
 
 GOAL_MAX_Z = 0.0125
 OBSTACLE_POSITIONS = [ [0.0,0.0], [0.075,0.075],[-0.075,0.075], [0.075,-0.075], [-0.075,-0.075]]
 
 
-class ClipClosingEnv(agx_task_env.AgxTaskEnv):
+class CableClosingEnv(agx_task_env.AgxTaskEnv):
     """Superclass for all DLO environments."""
 
     def __init__(self, n_substeps=1, reward_type="dense", observation_type="state", headless=False, **kwargs):
@@ -42,6 +42,7 @@ class ClipClosingEnv(agx_task_env.AgxTaskEnv):
 
         self.reward_type = reward_type
         self.segment_pos_old = None
+        self.headless = headless
 
         camera_distance = 0.1  # meters
         camera_config = CameraConfig(
@@ -98,29 +99,38 @@ class ClipClosingEnv(agx_task_env.AgxTaskEnv):
         # Change window size
         args.extend(["--window", "600", "600"])
 
-        # TODO does -agxOnly made a difference?
-        # # Disable rendering in headless mode
-        # if headless:
-        #     args.extend(["--osgWindow", False])
-        #
-        # if headless and observation_type == "state":
-        #     args.extend(["-agxOnly", "--osgWindow", False])
+        no_graphics = headless and observation_type not in ("rgb", "depth", "rgb_and_depth")
 
-        super(ClipClosingEnv, self).__init__(scene_path=SCENE_PATH,
+        # TODO does -agxOnly make a difference?
+        # Disable rendering in headless mode
+        if headless:
+            args.extend(["--osgWindow", "0"])
+
+        if headless and observation_type == "gt":
+            # args.extend(["--osgWindow", "0"])
+            args.extend(["--agxOnly", "1", "--osgWindow", "0"])
+
+
+        super(CableClosingEnv, self).__init__(scene_path=SCENE_PATH,
                                              n_substeps=n_substeps,
-                                             observation_config=None,
+                                             observation_type=observation_type,
                                              n_actions=4,
                                              camera_pose=camera_config.camera_pose,
+                                             image_size=(64,64),
+                                             no_graphics=no_graphics,
                                              args=args)
 
     def render(self, mode="human"):
-        return super(ClipClosingEnv, self).render(mode)
+        return super(CableClosingEnv, self).render(mode)
 
     def step(self, action):
         logger.info("step")
         action = np.clip(action, self.action_space.low, self.action_space.high)
         info = self._set_action(action)
         self._step_callback()
+
+        if not self.headless or self.observation_type in ("rgb", "depth", "rgb_and_depth") :
+            self._render_callback()
 
         # Get segments positions
         segment_pos = self._compute_segments_pos()
@@ -181,7 +191,7 @@ class ClipClosingEnv(agx_task_env.AgxTaskEnv):
 
     def _is_goal_reached(self, segment_pos):
         """
-        Goal is reached if the clip is closed around the center obstacle. This is the case if the segments
+        Goal is reached if the cable is closed around the center obstacle. This is the case if the segments
         are on the ground, the grippers are close to each other and the center pole is within the
         dlo polygon.
         :return:
@@ -190,7 +200,7 @@ class ClipClosingEnv(agx_task_env.AgxTaskEnv):
         # Check if goal obstacle in enclosed by dlo
         is_within_polygon = point_inside_polygon(np.array(segment_pos)[:,0:2], OBSTACLE_POSITIONS[0])
 
-        # Check if clip has correct height
+        # Check if cable has correct height
         is_correct_height = all_points_below_z(segment_pos, max_z=GOAL_MAX_Z)
 
         # Check if grippers are close enough to each other
