@@ -5,17 +5,17 @@ import agxSDK
 import agxOSG
 import agxRender
 
-from gym_agx.envs import agx_env
+from gym_agx.envs import agx_goal_env
 
 logger = logging.getLogger('gym_agx.envs')
 
 
-class DloEnv(agx_env.AgxEnv):
-    """Superclass for all DLO environments."""
+class DloEnv(agx_goal_env.AgxGoalEnv):
+    """Superclass for all explicit shape control environments with DLOs."""
 
     def __init__(self, args, scene_path, n_substeps, end_effectors, observation_config, camera_config, reward_config,
                  randomized_goal, goal_scene_path, show_goal, osg_window=True, agx_only=False):
-        """Initializes a DloEnv object
+        """Initializes a Dlo object
         :param list args: arguments for agxViewer.
         :param str scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/
         folder

@@ -9,7 +9,7 @@ import agxOSG
 import agxRender
 from gym_agx.utils.utils import point_inside_polygon, all_points_below_z
 
-from gym_agx.envs import agx_task_env
+from gym_agx.envs import agx_env
 from gym_agx.rl.observation import get_cable_segment_positions
 from gym_agx.rl.end_effector import EndEffector, EndEffectorConstraint
 from gym_agx.utils.agx_classes import CameraConfig
@@ -23,14 +23,14 @@ PACKAGE_DIR = os.path.split(FILE_DIR)[0]
 SCENE_PATH = os.path.join(PACKAGE_DIR, "assets/cable_closing.agx")
 
 GOAL_MAX_Z = 0.0125
-OBSTACLE_POSITIONS = [ [0.0,0.0], [0.075,0.075],[-0.075,0.075], [0.075,-0.075], [-0.075,-0.075]]
+OBSTACLE_POSITIONS = [[0.0, 0.0], [0.075, 0.075], [-0.075, 0.075], [0.075, -0.075], [-0.075, -0.075]]
 
 
-class CableClosingEnv(agx_task_env.AgxTaskEnv):
-    """Superclass for all DLO environments."""
+class CableClosingEnv(agx_env.AgxEnv):
+    """Cable closing environment."""
 
     def __init__(self, n_substeps=1, reward_type="dense", observation_type="state", headless=False, **kwargs):
-        """Initializes a DloEnv object
+        """Initializes a CableClosingEnv object
         :param args: arguments for agxViewer.
         :param scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/ folder
         :param n_substeps: number os simulation steps per call to step().
@@ -52,13 +52,12 @@ class CableClosingEnv(agx_task_env.AgxTaskEnv):
             light_position=agx.Vec4(0, - camera_distance, camera_distance, 1.),
             light_direction=agx.Vec3(0., 0., -1.))
 
-
         gripper_0 = EndEffector(
             name='gripper_0',
             controllable=True,
             observable=True,
-            max_velocity= 3,  # m/s
-            max_acceleration= 1 # m/s^2
+            max_velocity=3,  # m/s
+            max_acceleration=1  # m/s^2
         )
         gripper_0.add_constraint(name='gripper_0_joint_base_x',
                                  end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
@@ -75,8 +74,8 @@ class CableClosingEnv(agx_task_env.AgxTaskEnv):
             name='gripper_1',
             controllable=True,
             observable=True,
-            max_velocity= 3,  # m/s
-            max_acceleration= 1 # m/s^2
+            max_velocity=3,  # m/s
+            max_acceleration=1  # m/s^2
         )
         gripper_1.add_constraint(name='gripper_1_joint_base_x',
                                  end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
@@ -110,15 +109,14 @@ class CableClosingEnv(agx_task_env.AgxTaskEnv):
             # args.extend(["--osgWindow", "0"])
             args.extend(["--agxOnly", "1", "--osgWindow", "0"])
 
-
         super(CableClosingEnv, self).__init__(scene_path=SCENE_PATH,
-                                             n_substeps=n_substeps,
-                                             observation_type=observation_type,
-                                             n_actions=4,
-                                             camera_pose=camera_config.camera_pose,
-                                             image_size=(64,64),
-                                             no_graphics=no_graphics,
-                                             args=args)
+                                              n_substeps=n_substeps,
+                                              observation_type=observation_type,
+                                              n_actions=4,
+                                              camera_pose=camera_config.camera_pose,
+                                              image_size=(64, 64),
+                                              no_graphics=no_graphics,
+                                              args=args)
 
     def render(self, mode="human"):
         return super(CableClosingEnv, self).render(mode)
@@ -129,7 +127,7 @@ class CableClosingEnv(agx_task_env.AgxTaskEnv):
         info = self._set_action(action)
         self._step_callback()
 
-        if not self.headless or self.observation_type in ("rgb", "depth", "rgb_and_depth") :
+        if not self.headless or self.observation_type in ("rgb", "depth", "rgb_and_depth"):
             self._render_callback()
 
         # Get segments positions
@@ -161,7 +159,7 @@ class CableClosingEnv(agx_task_env.AgxTaskEnv):
         # TODO Find good initialization strategy for this task which covers a larger area of the state space
         n_inital_random = 100
         for k in range(n_inital_random):
-            if k==0 or not k%25:
+            if k == 0 or not k % 25:
                 action = self.action_space.sample()
             self._set_action(action)
             self.sim.stepForward()
@@ -198,7 +196,7 @@ class CableClosingEnv(agx_task_env.AgxTaskEnv):
         """
 
         # Check if goal obstacle in enclosed by dlo
-        is_within_polygon = point_inside_polygon(np.array(segment_pos)[:,0:2], OBSTACLE_POSITIONS[0])
+        is_within_polygon = point_inside_polygon(np.array(segment_pos)[:, 0:2], OBSTACLE_POSITIONS[0])
 
         # Check if cable has correct height
         is_correct_height = all_points_below_z(segment_pos, max_z=GOAL_MAX_Z)
@@ -206,7 +204,7 @@ class CableClosingEnv(agx_task_env.AgxTaskEnv):
         # Check if grippers are close enough to each other
         position_g0 = to_numpy_array(self.sim.getRigidBody("gripper_0").getPosition())
         position_g1 = to_numpy_array(self.sim.getRigidBody("gripper_1").getPosition())
-        is_grippers_close = np.linalg.norm(position_g1-position_g0) < 0.01
+        is_grippers_close = np.linalg.norm(position_g1 - position_g0) < 0.01
 
         if is_within_polygon and is_correct_height and is_grippers_close:
             return True
@@ -214,8 +212,8 @@ class CableClosingEnv(agx_task_env.AgxTaskEnv):
 
     def _compute_dense_reward_and_check_goal(self, segments_pos_0, segments_pos_1):
 
-        pole_enclosed_0 = point_inside_polygon(np.array(segments_pos_0)[:,0:2], OBSTACLE_POSITIONS[0])
-        pole_enclosed_1 = point_inside_polygon(np.array(segments_pos_1)[:,0:2], OBSTACLE_POSITIONS[0])
+        pole_enclosed_0 = point_inside_polygon(np.array(segments_pos_0)[:, 0:2], OBSTACLE_POSITIONS[0])
+        pole_enclosed_1 = point_inside_polygon(np.array(segments_pos_1)[:, 0:2], OBSTACLE_POSITIONS[0])
         poles_enclosed_diff = pole_enclosed_0 - pole_enclosed_1
 
         # Check if final goal is reached
@@ -224,11 +222,11 @@ class CableClosingEnv(agx_task_env.AgxTaskEnv):
         # Check if grippers are close enough to each other
         position_g0 = to_numpy_array(self.sim.getRigidBody("gripper_0").getPosition())
         position_g1 = to_numpy_array(self.sim.getRigidBody("gripper_1").getPosition())
-        is_grippers_close = np.linalg.norm(position_g1-position_g0) < 0.01
+        is_grippers_close = np.linalg.norm(position_g1 - position_g0) < 0.01
 
         final_goal_reached = pole_enclosed_0 and is_correct_height and is_grippers_close
 
-        return poles_enclosed_diff + 5*float(final_goal_reached), final_goal_reached
+        return poles_enclosed_diff + 5 * float(final_goal_reached), final_goal_reached
 
     def _add_rendering(self, mode='osg'):
         # Set renderer
@@ -251,7 +249,7 @@ class CableClosingEnv(agx_task_env.AgxTaskEnv):
                 agxOSG.setDiffuseColor(node, agxRender.Color.LightSteelBlue())
             elif rb.getName() == "gripper_0" or rb.getName() == "gripper_1":
                 agxOSG.setDiffuseColor(node, agxRender.Color(0.1, 0.1, 0.1, 1.0))
-            elif "dlo" in  rb.getName():  # Cable segments
+            elif "dlo" in rb.getName():  # Cable segments
                 agxOSG.setDiffuseColor(node, agxRender.Color(0.1, 0.5, 0.0, 1.0))
                 agxOSG.setAmbientColor(node, agxRender.Color(0.2, 0.5, 0.0, 1.0))
             elif rb.getName() == "obstacle":
@@ -265,7 +263,7 @@ class CableClosingEnv(agx_task_env.AgxTaskEnv):
         # Set rendering options
         scene_decorator = self.app.getSceneDecorator()
         scene_decorator.setEnableLogo(False)
-        scene_decorator.setBackgroundColor(agxRender.Color(1.0, 1.0,1.0, 1.0))
+        scene_decorator.setBackgroundColor(agxRender.Color(1.0, 1.0, 1.0, 1.0))
 
     def _get_observation(self):
         # TODO use modular strucutre for observations and allow different type of observations

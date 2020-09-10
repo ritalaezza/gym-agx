@@ -5,14 +5,12 @@ import numpy as np
 
 import agx
 import agxCable
-import agxIO
-import agxSDK
 import agxOSG
 import agxRender
 from agxPythonModules.utils.numpy_utils import create_numpy_array
 from gym_agx.utils.utils import point_inside_polygon, all_points_below_z
 
-from gym_agx.envs import agx_task_env
+from gym_agx.envs import agx_env
 from gym_agx.rl.observation import get_cable_segment_positions
 from gym_agx.rl.end_effector import EndEffector, EndEffectorConstraint
 from gym_agx.utils.agx_classes import CameraConfig
@@ -26,15 +24,15 @@ PACKAGE_DIR = os.path.split(FILE_DIR)[0]
 SCENE_PATH = os.path.join(PACKAGE_DIR, "assets/rubber_band.agx")
 
 GOAL_MAX_Z = 0.0125
-POLE_POSITIONS = [[0.0, 0.01], [-0.01, -0.01],[0.01, -0.01]]
+POLE_POSITIONS = [[0.0, 0.01], [-0.01, -0.01], [0.01, -0.01]]
 
 
-class RubberBandEnv(agx_task_env.AgxTaskEnv):
-    """Superclass for all DLO environments."""
+class RubberBandEnv(agx_env.AgxEnv):
+    """Rubber band environment."""
 
     def __init__(self, n_substeps=1, reward_type="dense", observation_type="state", headless=False,
-                 image_size=[64,64], **kwargs):
-        """Initializes a DloEnv object
+                 image_size=[64, 64], **kwargs):
+        """Initializes a RubberBandEnv object
         :param args: arguments for agxViewer.
         :param scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/ folder
         :param n_substeps: number os simulation steps per call to step().
@@ -45,7 +43,7 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
         """
 
         self.reward_type = reward_type
-        self.observation_type= observation_type
+        self.observation_type = observation_type
         self.segments_pos_old = None
         self.headless = headless
 
@@ -57,13 +55,12 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
             light_position=agx.Vec4(0, - camera_distance, camera_distance, 1.),
             light_direction=agx.Vec3(0., 0., -1.))
 
-
         gripper = EndEffector(
             name='gripper',
             controllable=True,
             observable=True,
-            max_velocity= 0.4,  # m/s
-            max_acceleration= 0.2 # m/s^2
+            max_velocity=0.4,  # m/s
+            max_acceleration=0.2  # m/s^2
         )
         gripper.add_constraint(name='gripper_joint_base_x',
                                end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
@@ -102,14 +99,13 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
             # args.extend(["--osgWindow", "0"])
             args.extend(["--agxOnly", "1", "--osgWindow", "0"])
 
-
         super(RubberBandEnv, self).__init__(scene_path=SCENE_PATH,
                                             n_substeps=n_substeps,
                                             observation_type=observation_type,
                                             n_actions=3,
                                             image_size=image_size,
                                             camera_pose=camera_config.camera_pose,
-                                            no_graphics = no_graphics,
+                                            no_graphics=no_graphics,
                                             args=args)
 
     def render(self, mode="human"):
@@ -121,7 +117,7 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
         info = self._set_action(action)
         self._step_callback()
 
-        if not self.headless or self.observation_type in ("rgb", "depth", "rgb_and_depth") :
+        if not self.headless or self.observation_type in ("rgb", "depth", "rgb_and_depth"):
             self._render_callback()
 
         # Get segments positions
@@ -133,7 +129,6 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
         else:
             goal_reached = self._is_goal_reached(segment_pos)
             reward = float(goal_reached)
-
 
         # Set old segment pos for next time step
         self.segments_pos_old = segment_pos
@@ -187,8 +182,8 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
         :return:
         """
         poles_enclosed = np.zeros(3)
-        for i in range(0,3):
-            segments_xy = np.array(segments_pos)[:,0:2]
+        for i in range(0, 3):
+            segments_xy = np.array(segments_pos)[:, 0:2]
             is_within_polygon = point_inside_polygon(segments_xy, POLE_POSITIONS[i])
             poles_enclosed[i] = int(is_within_polygon)
 
@@ -208,7 +203,7 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
         n_enclosed_0 = np.sum(poles_enclosed_0)
         final_goal_reached = n_enclosed_0 >= 3 and is_correct_height
 
-        return np.sum(poles_enclosed_diff) + 5*float(final_goal_reached), final_goal_reached
+        return np.sum(poles_enclosed_diff) + 5 * float(final_goal_reached), final_goal_reached
 
     def _is_goal_reached(self, segments_pos):
         """
@@ -240,7 +235,7 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
                 agxOSG.setDiffuseColor(node, agxRender.Color.LightSteelBlue())
             elif rb.getName() == "gripper":
                 agxOSG.setDiffuseColor(node, agxRender.Color.DarkBlue())
-            elif "dlo" in  rb.getName():  # Cable segments
+            elif "dlo" in rb.getName():  # Cable segments
                 agxOSG.setDiffuseColor(node, agxRender.Color(0.8, 0.2, 0.2, 1.0))
             else:
                 agxOSG.setDiffuseColor(node, agxRender.Color.Beige())
@@ -249,10 +244,10 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
         # Set rendering options
         scene_decorator = self.app.getSceneDecorator()
         scene_decorator.setEnableLogo(False)
-        scene_decorator.setBackgroundColor(agxRender.Color(1.0, 1.0,1.0, 1.0))
+        scene_decorator.setBackgroundColor(agxRender.Color(1.0, 1.0, 1.0, 1.0))
 
     def _get_observation(self):
-        # TODO use modular strucutre for observations and allow different type of observations
+        # TODO use modular structure for observations and allow different type of observations
 
         rgb_buffer = None
         depth_buffer = None
@@ -277,11 +272,11 @@ class RubberBandEnv(agx_task_env.AgxTaskEnv):
 
             image_ptr = rgb_buffer.getImageData()
             image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1], 3), np.uint8)
-            obs[:,:,0:3]  = np.flipud(image_data.astype(np.float32)) / 255
+            obs[:, :, 0:3] = np.flipud(image_data.astype(np.float32)) / 255
 
             image_ptr = depth_buffer.getImageData()
             image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1]), np.float32)
-            obs[:,:,3] = np.flipud(image_data)
+            obs[:, :, 3] = np.flipud(image_data)
         else:
             seg_pos = get_cable_segment_positions(cable=agxCable.Cable.find(self.sim, "DLO")).flatten()
             gripper = self.sim.getRigidBody("gripper")

@@ -8,7 +8,7 @@ import agxCable
 import agxOSG
 import agxRender
 
-from gym_agx.envs import agx_task_env
+from gym_agx.envs import agx_env
 from gym_agx.rl.observation import get_cable_segment_positions
 from gym_agx.utils.agx_classes import CameraConfig
 from gym_agx.utils.agx_utils import to_numpy_array
@@ -26,11 +26,12 @@ MESH_GRIPPER_FILE = os.path.join(PACKAGE_DIR, "assets/meshes/mesh_gripper.obj")
 MESH_HOLLOW_CYLINDER_FILE = os.path.join(PACKAGE_DIR, "assets/meshes/mesh_hollow_cylinder.obj")
 
 
-class PegInHoleEnv(agx_task_env.AgxTaskEnv):
-    """Superclass for all DLO environments."""
+class PegInHoleEnv(agx_env.AgxEnv):
+    """Peg-in-hole environment."""
 
-    def __init__(self, n_substeps=1, reward_type="dense", observation_type="state", headless=False, image_size=[64,64], **kwargs):
-        """Initializes a DloEnv object
+    def __init__(self, n_substeps=1, reward_type="dense", observation_type="state", headless=False, image_size=[64, 64],
+                 **kwargs):
+        """Initializes a PegInHoleEnv object
         :param args: arguments for agxViewer.
         :param scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/ folder
         :param n_substeps: number os simulation steps per call to step().
@@ -77,7 +78,7 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
                                            observation_type=observation_type,
                                            n_actions=4,
                                            camera_pose=camera_config.camera_pose,
-                                           no_graphics = no_graphics,
+                                           no_graphics=no_graphics,
                                            image_size=image_size,
                                            args=args)
 
@@ -93,7 +94,7 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
 
         self._step_callback()
 
-        if not self.headless or self.observation_type in ("rgb", "depth", "rgb_and_depth") :
+        if not self.headless or self.observation_type in ("rgb", "depth", "rgb_and_depth"):
             self._render_callback()
 
         # Get segments positions
@@ -129,12 +130,12 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
 
         # Randomize starting configuration
         n_steps_rand = 50
-        action = np.random.uniform(-0.05,0.05,4)
+        action = np.random.uniform(-0.05, 0.05, 4)
         for k in range(n_steps_rand):
             self.sim.getConstraint1DOF("gripper_joint_base_x").getMotor1D().setSpeed(action[0])
             self.sim.getConstraint1DOF("gripper_joint_base_y").getMotor1D().setSpeed(action[1])
             self.sim.getConstraint1DOF("gripper_joint_base_z").getMotor1D().setSpeed(action[2])
-            self.sim.getConstraint1DOF("gripper_joint_rot_y").getMotor1D().setSpeed(action[3]*50)
+            self.sim.getConstraint1DOF("gripper_joint_rot_y").getMotor1D().setSpeed(action[3] * 50)
             self.sim.stepForward()
 
         cable = agxCable.Cable.find(self.sim, "DLO")
@@ -163,9 +164,9 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
         inserted and False otherwise.
         """
 
-        for p in segment_pos[int(self.n_segments/2):]:
+        for p in segment_pos[int(self.n_segments / 2):]:
             # Return False if segment is ouside bounds
-            if not (-0.003 <= p[0] <= 0.003 and -0.003 <= p[1] <= 0.003 and -0.01 <= p[2] <=0.006):
+            if not (-0.003 <= p[0] <= 0.003 and -0.003 <= p[1] <= 0.003 and -0.01 <= p[2] <= 0.006):
                 return False
         return True
 
@@ -178,8 +179,8 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
         n_inserted = 0
         for p in segment_pos:
             # Return False if segment is ouside bounds
-            if -0.003 <= p[0] <= 0.003 and -0.003 <= p[1] <= 0.003 and -0.01 <= p[2] <=0.006:
-                n_inserted +=1
+            if -0.003 <= p[0] <= 0.003 and -0.003 <= p[1] <= 0.003 and -0.01 <= p[2] <= 0.006:
+                n_inserted += 1
         return n_inserted
 
     def _compute_dense_reward_and_check_goal(self, segment_pos_0, segment_pos_1):
@@ -188,9 +189,9 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
         n_segs_inserted_diff = n_segs_inserted_0 - n_segs_inserted_1
 
         # Check if final goal is reached
-        final_goal_reached = n_segs_inserted_0 >= self.n_segments/2
+        final_goal_reached = n_segs_inserted_0 >= self.n_segments / 2
 
-        return np.sum(n_segs_inserted_diff) + 5*float(final_goal_reached), final_goal_reached
+        return np.sum(n_segs_inserted_diff) + 5 * float(final_goal_reached), final_goal_reached
 
     def _add_rendering(self, mode='osg'):
         # Set renderer
@@ -208,13 +209,13 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
         for rb in rbs:
             node = agxOSG.createVisual(rb, root)
             if rb.getName() == "hollow_cylinder":
-                agxOSG.setDiffuseColor(node,agxRender.Color_SteelBlue())
+                agxOSG.setDiffuseColor(node, agxRender.Color_SteelBlue())
                 agxOSG.setShininess(node, 15)
             elif rb.getName() == "gripper_body":
                 agxOSG.setDiffuseColor(node, agxRender.Color(1.0, 1.0, 1.0, 1.0))
                 agxOSG.setTexture(node, gripper_texture, False, agxOSG.DIFFUSE_TEXTURE)
-                agxOSG.setShininess(node,2)
-            elif "dlo" in  rb.getName():  # Cable segments
+                agxOSG.setShininess(node, 2)
+            elif "dlo" in rb.getName():  # Cable segments
                 agxOSG.setDiffuseColor(node, agxRender.Color(0.0, 1.0, 0.0, 1.0))
             else:
                 agxOSG.setDiffuseColor(node, agxRender.Color.Beige())
@@ -223,7 +224,7 @@ class PegInHoleEnv(agx_task_env.AgxTaskEnv):
         # Set rendering options
         scene_decorator = self.app.getSceneDecorator()
         scene_decorator.setEnableLogo(False)
-        scene_decorator.setBackgroundColor(agxRender.Color(1.0, 1.0,1.0, 1.0))
+        scene_decorator.setBackgroundColor(agxRender.Color(1.0, 1.0, 1.0, 1.0))
 
     def _get_observation(self):
         # TODO use modular strucutre for observations and allow different type of observations
