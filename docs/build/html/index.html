@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="gym_agx package" href="gym_agx.html" /> 
+    <link rel="next" title="Environments" href="gym_agx.envs.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -79,9 +79,11 @@
               
             
             
-              <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="gym_agx.html">gym_agx package</a></li>
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.envs.html">Environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.sims.html">Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.tests.html">Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.utils.html">Utilities</a></li>
 </ul>
 
             
@@ -146,26 +148,41 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-gym_agx">
-<span id="welcome-to-gym-agx-s-documentation"></span><h1>Welcome to gym-agx's documentation!<a class="headerlink" href="#module-gym_agx" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="welcome-to-gym-agx-s-documentation">
+<h1>Welcome to gym-agx's documentation!<a class="headerlink" href="#welcome-to-gym-agx-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p>This is a Python library for deformable object manipulation research. This libraly depends on <a class="reference external" href="https://www.algoryx.se/agx-dynamics/">AGX Dynamics</a>, a real-time physics simulation engine. Currently, the package is focused on deformable linear object manipulation tasks e.g. ropes and cables. It includes both implicit and explicit shape control environments.</p>
+<p><strong>Explicit Shape Control</strong>: Tasks where the goal is to achieve a desired shape of the object, without necessarily caring about object's pose.</p>
+<p><strong>Implicit Shape Control</strong>: Tasks where the goal is to achieve a desired configuration of the object (relative to itself or other objects), without necessarily caring about object's exact shape.</p>
+<p>Most of the documentation is auto-generated using <a class="reference external" href="https://www.sphinx-doc.org/en/master/">Sphinx</a>. Below you can find the main modules which make up this library.</p>
 <div class="toctree-wrapper compound">
-<p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="gym_agx.html">gym_agx package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="gym_agx.html#subpackages">Subpackages</a></li>
-<li class="toctree-l2"><a class="reference internal" href="gym_agx.html#module-gym_agx">Module contents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.envs.html">Environments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.envs.html#main-classes">Main Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.envs.html#shape-control-tasks">Shape Control Tasks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="gym_agx.envs.explicit.html">Explicit Shape Control Environments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gym_agx.envs.implicit.html">Implicit Shape Control Environments</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.sims.html">Simulations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.sims.html#module-gym_agx.sims.bend_wire">Bend Wire</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.sims.html#module-gym_agx.sims.bend_wire_obstacle">Bend Wire with Obstacle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.sims.html#module-gym_agx.sims.push_rope">Push Rope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.sims.html#module-gym_agx.sims.insert_o_ring">Insert O-Ring</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.tests.html">Tests</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.tests.html#module-gym_agx.tests.frenet_test">Frenet Test</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.utils.html">Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.utils.html#module-gym_agx.utils.agx_utils">AGX Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gym_agx.utils.html#module-gym_agx.utils.utils">General Utilities</a></li>
 </ul>
 </li>
 </ul>
 </div>
-</div>
-<div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
-<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
-<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
-</ul>
 </div>
 
 
@@ -176,7 +193,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="gym_agx.html" class="btn btn-neutral float-right" title="gym_agx package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="gym_agx.envs.html" class="btn btn-neutral float-right" title="Environments" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
     </div>

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>gym_agx.sims package &mdash; gym-agx  documentation</title>
+  <title>Simulations &mdash; gym-agx  documentation</title>
   
 
   
@@ -35,8 +35,8 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="gym_agx.tests package" href="gym_agx.tests.html" />
-    <link rel="prev" title="gym_agx.envs.dlo package" href="gym_agx.envs.dlo.html" /> 
+    <link rel="next" title="Tests" href="gym_agx.tests.html" />
+    <link rel="prev" title="Implicit Shape Control Environments" href="gym_agx.envs.implicit.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -80,27 +80,17 @@
               
             
             
-              <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="gym_agx.html">gym_agx package</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="gym_agx.html#subpackages">Subpackages</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="gym_agx.envs.html">gym_agx.envs package</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">gym_agx.sims package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.sims.bend_wire">gym_agx.sims.bend_wire module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.sims.bend_wire_obstacle">gym_agx.sims.bend_wire_obstacle module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.sims.push_rope">gym_agx.sims.push_rope module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.sims.insert_o_ring">gym_agx.sims.insert_o_ring module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-gym_agx.sims">Module contents</a></li>
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.envs.html">Environments</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Simulations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-gym_agx.sims.bend_wire">Bend Wire</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gym_agx.sims.bend_wire_obstacle">Bend Wire with Obstacle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gym_agx.sims.push_rope">Push Rope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gym_agx.sims.insert_o_ring">Insert O-Ring</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="gym_agx.tests.html">gym_agx.tests package</a></li>
-<li class="toctree-l3"><a class="reference internal" href="gym_agx.utils.html">gym_agx.utils package</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="gym_agx.html#module-gym_agx">Module contents</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.tests.html">Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.utils.html">Utilities</a></li>
 </ul>
 
             
@@ -146,9 +136,7 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-          <li><a href="gym_agx.html">gym_agx package</a> &raquo;</li>
-        
-      <li>gym_agx.sims package</li>
+      <li>Simulations</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -167,13 +155,10 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="gym-agx-sims-package">
-<h1>gym_agx.sims package<a class="headerlink" href="#gym-agx-sims-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
-</div>
+  <div class="section" id="simulations">
+<h1>Simulations<a class="headerlink" href="#simulations" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="module-gym_agx.sims.bend_wire">
-<span id="gym-agx-sims-bend-wire-module"></span><h2>gym_agx.sims.bend_wire module<a class="headerlink" href="#module-gym_agx.sims.bend_wire" title="Permalink to this headline">¶</a></h2>
+<span id="bend-wire"></span><h2>Bend Wire<a class="headerlink" href="#module-gym_agx.sims.bend_wire" title="Permalink to this headline">¶</a></h2>
 <p>Simulation for BendWire environment</p>
 <p>This module creates the simulation files which will be used in BendWire environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).</p>
@@ -194,7 +179,7 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
 
 </div>
 <div class="section" id="module-gym_agx.sims.bend_wire_obstacle">
-<span id="gym-agx-sims-bend-wire-obstacle-module"></span><h2>gym_agx.sims.bend_wire_obstacle module<a class="headerlink" href="#module-gym_agx.sims.bend_wire_obstacle" title="Permalink to this headline">¶</a></h2>
+<span id="bend-wire-with-obstacle"></span><h2>Bend Wire with Obstacle<a class="headerlink" href="#module-gym_agx.sims.bend_wire_obstacle" title="Permalink to this headline">¶</a></h2>
 <p>Simulation for bend_wire with obstacle environment</p>
 <p>This module creates the simulation files which will be used in bend_wire with obstacle environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).</p>
@@ -215,9 +200,9 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
 
 </div>
 <div class="section" id="module-gym_agx.sims.push_rope">
-<span id="gym-agx-sims-push-rope-module"></span><h2>gym_agx.sims.push_rope module<a class="headerlink" href="#module-gym_agx.sims.push_rope" title="Permalink to this headline">¶</a></h2>
-<p>Simulation of cable pushing</p>
-<p>This module creates the simulation files which will be used in cable_pushing environments.
+<span id="push-rope"></span><h2>Push Rope<a class="headerlink" href="#module-gym_agx.sims.push_rope" title="Permalink to this headline">¶</a></h2>
+<p>Simulation of rope pushing</p>
+<p>This module creates the simulation files which will be used in PushRope environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).</p>
 <dl class="py function">
 <dt id="gym_agx.sims.push_rope.add_rendering">
@@ -236,7 +221,7 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
 
 </div>
 <div class="section" id="module-gym_agx.sims.insert_o_ring">
-<span id="gym-agx-sims-insert-o-ring-module"></span><h2>gym_agx.sims.insert_o_ring module<a class="headerlink" href="#module-gym_agx.sims.insert_o_ring" title="Permalink to this headline">¶</a></h2>
+<span id="insert-o-ring"></span><h2>Insert O-Ring<a class="headerlink" href="#module-gym_agx.sims.insert_o_ring" title="Permalink to this headline">¶</a></h2>
 <p>Simulation for ORing environment</p>
 <p>This module creates the simulation files which will be used in ORing environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).</p>
@@ -256,9 +241,6 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
 <dd></dd></dl>
 
 </div>
-<div class="section" id="module-gym_agx.sims">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-gym_agx.sims" title="Permalink to this headline">¶</a></h2>
-</div>
 </div>
 
 
@@ -269,10 +251,10 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="gym_agx.tests.html" class="btn btn-neutral float-right" title="gym_agx.tests package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="gym_agx.tests.html" class="btn btn-neutral float-right" title="Tests" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="gym_agx.envs.dlo.html" class="btn btn-neutral float-left" title="gym_agx.envs.dlo package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="gym_agx.envs.implicit.html" class="btn btn-neutral float-left" title="Implicit Shape Control Environments" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

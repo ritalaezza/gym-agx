@@ -1,30 +1,19 @@
-gym\_agx.utils package
-======================
+Utilities
+=========
 
-Submodules
-----------
-
-gym\_agx.utils.agx\_utils module
---------------------------------
+AGX Utilities
+-------------
 
 .. automodule:: gym_agx.utils.agx_utils
    :members:
    :undoc-members:
    :show-inheritance:
 
-gym\_agx.utils.utils module
----------------------------
+General Utilities
+-----------------
 
 .. automodule:: gym_agx.utils.utils
    :members:
    :undoc-members:
    :show-inheritance:
 
-
-Module contents
----------------
-
-.. automodule:: gym_agx.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:

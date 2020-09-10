@@ -1,47 +1,35 @@
-gym\_agx.sims package
-=====================
+Simulations
+===========
 
-Submodules
-----------
-
-gym\_agx.sims.bend\_wire module
--------------------------------
+Bend Wire
+---------
 
 .. automodule:: gym_agx.sims.bend_wire
    :members:
    :undoc-members:
    :show-inheritance:
 
-gym\_agx.sims.bend\_wire\_obstacle module
------------------------------------------
+Bend Wire with Obstacle
+-----------------------
 
 .. automodule:: gym_agx.sims.bend_wire_obstacle
    :members:
    :undoc-members:
    :show-inheritance:
 
-gym\_agx.sims.push\_rope module
--------------------------------
+Push Rope
+---------
 
 .. automodule:: gym_agx.sims.push_rope
    :members:
    :undoc-members:
    :show-inheritance:
 
-gym\_agx.sims.insert\_o\_ring module
-------------------------------------
+Insert O-Ring
+-------------
 
 .. automodule:: gym_agx.sims.insert_o_ring
    :members:
    :undoc-members:
    :show-inheritance:
 
-
-
-Module contents
----------------
-
-.. automodule:: gym_agx.sims
-   :members:
-   :undoc-members:
-   :show-inheritance:

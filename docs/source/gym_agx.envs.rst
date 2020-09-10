@@ -1,38 +1,28 @@
-gym\_agx.envs package
-=====================
+Environments
+============
 
-Subpackages
------------
+Main Classes
+------------
+This library contains two main classes, one inheriting from `Gym <https://gym.openai.com/>`_'s **Env** class, and another from the **GoalEnv** class.
+
+.. autoclass:: gym_agx.envs.agx_env.AgxEnv
+   :members:
+
+.. autoclass:: gym_agx.envs.agx_goal_env.AgxGoalEnv
+   :members:
+
+**DloEnv Class**
+
+Intermediate class which inherits from AgxGoalEnv. Abstracts away several methods which are the same for explicit shape control problems of deformable linear objects (DLOs).
+
+.. autoclass:: gym_agx.envs.dlo_env::DloEnv
+   :members:
+
+Shape Control Tasks
+-------------------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 3
 
-   gym_agx.envs.dlo
-
-Submodules
-----------
-
-gym\_agx.envs.agx\_env module
------------------------------
-
-.. automodule:: gym_agx.envs.agx_env
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-gym\_agx.envs.dlo\_env module
-------------------------------
-
-.. automodule:: gym_agx.envs.dlo_env
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: gym_agx.envs
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   gym_agx.envs.explicit
+   gym_agx.envs.implicit
