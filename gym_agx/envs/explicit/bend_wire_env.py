@@ -15,7 +15,6 @@ FILE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 PACKAGE_DIRECTORY = os.path.split(FILE_DIRECTORY)[0]
 SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_hinge.agx')
 GOAL_SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_hinge_goal.agx')
-# TODO: Make scene_path and goal_scene_path be passed in kwargs. Maybe just keep one as default.
 
 logger = logging.getLogger('gym_agx.envs')
 
@@ -47,13 +46,15 @@ class BendWireEnv(dlo_env.DloEnv):
     """Subclass which inherits from DLO environment."""
 
     def __init__(self, n_substeps, observation_config=None, grippers=None, reward_type=None, reward_config=None,
-                 **kwargs):
+                 scene_path=None, goal_scene_path=None, **kwargs):
         """Initializes BendWire environment
         :param int n_substeps: number of simulation steps between each action step.
         :param ObservationConfig: types of observations to be used.
         :param list grippers: EndEffector objects.
         :param RewardConfig.RewardType reward_type: type of reward.
         :param RewardConfig reward_config: adds possibility to completely override reward definition.
+        :param str scene_path: possibility to overwrite default scene file.
+        :param str goal_scene_path: possibility to overwrite default goal scene file.
         """
         length = 0.1  # meters
         camera_distance = 0.5  # meters
@@ -70,16 +71,26 @@ class BendWireEnv(dlo_env.DloEnv):
                 name='gripper_right',
                 controllable=True,
                 observable=True,
-                max_velocity=14 / 1000,  # m/s
+                max_velocity=10 / 1000,  # m/s
                 max_acceleration=10 / 1000,  # m/s^2
             )
-            gripper_right.add_constraint(name='prismatic_joint_right',
+            gripper_right.add_constraint(name='gripper_right_joint_base_x',
                                          end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
-                                         compute_forces_enabled=True,
+                                         compute_forces_enabled=False,
+                                         velocity_control=True,
+                                         compliance_control=False)
+            gripper_right.add_constraint(name='gripper_right_joint_base_y',
+                                         end_effector_dof=EndEffectorConstraint.Dof.Y_TRANSLATION,
+                                         compute_forces_enabled=False,
+                                         velocity_control=True,
+                                         compliance_control=False)
+            gripper_right.add_constraint(name='gripper_right_joint_base_z',
+                                         end_effector_dof=EndEffectorConstraint.Dof.Z_TRANSLATION,
+                                         compute_forces_enabled=False,
                                          velocity_control=True,
                                          compliance_control=False)
             gripper_right.add_constraint(name='hinge_joint_right',
-                                         end_effector_dof=EndEffectorConstraint.Dof.Y_COMPLIANCE,
+                                         end_effector_dof=EndEffectorConstraint.Dof.Y_ROTATION,
                                          compute_forces_enabled=False,
                                          velocity_control=False,
                                          compliance_control=False)
@@ -104,11 +115,15 @@ class BendWireEnv(dlo_env.DloEnv):
                                                           ObservationConfig.ObservationType.EE_VELOCITY])
             observation_config.set_dlo_frenet_curvature()
 
-        if not reward_type:
-            reward_type = RewardConfig.RewardType.DENSE
         if not reward_config:
+            if not reward_type:
+                reward_type = RewardConfig.RewardType.DENSE
             reward_config = Reward(reward_type=reward_type, reward_range=(-1.5, 1.5), set_done_on_success=False,
                                    dlo_curvature_threshold=0.05)
+        if not scene_path:
+            scene_path = SCENE_PATH
+        if not goal_scene_path:
+            goal_scene_path = GOAL_SCENE_PATH
 
         args = kwargs['agxViewer'] if 'agxViewer' in kwargs else sys.argv
         show_goal = kwargs['show_goal'] if 'show_goal' in kwargs else False
@@ -120,14 +135,14 @@ class BendWireEnv(dlo_env.DloEnv):
         logger.info("Fetching environment from {}".format(SCENE_PATH))
 
         super(BendWireEnv, self).__init__(args=args,
-                                          scene_path=SCENE_PATH,
+                                          scene_path=scene_path,
                                           n_substeps=n_substeps,
                                           end_effectors=grippers,
                                           observation_config=observation_config,
                                           camera_config=camera_config,
                                           reward_config=reward_config,
                                           randomized_goal=False,
-                                          goal_scene_path=GOAL_SCENE_PATH,
+                                          goal_scene_path=goal_scene_path,
                                           show_goal=show_goal,
                                           osg_window=osg_window,
                                           agx_only=agx_only)

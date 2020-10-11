@@ -1,5 +1,6 @@
 import sys
 import logging
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from agxPythonModules.utils.numpy_utils import create_numpy_array
@@ -66,22 +67,26 @@ class AgxGoalEnv(gym.GoalEnv):
             self.args = self.args + ['--window', 2 * observation_config.image_size[1],
                                      2 * observation_config.image_size[0]]
             if self.osg_window:
-                print("WARNING: OSG window is enabled!")
                 if self.observation_config.depth_in_obs or self.observation_config.rgb_in_obs:
-                    print("=======> Observations contain image data (OSG rendering cannot be disabled).")
-                    print("=======> Rendering is done inside step(). No need to call render().")
+                    warnings.warn(("OSG window is enabled! \n"
+                                   "=======> Observations contain image data (OSG rendering cannot be disabled). \n"
+                                   "=======> Rendering is done inside step(). No need to call render()."))
                 else:
-                    print("=======> Observations do not contain image data.")
-                    print("=======> Rendering is done inside render(), do not use 'human' or 'depth' mode.")
+                    warnings.warn(("OSG window is enabled! \n"
+                                   "=======> Observations do not contain image data. \n"
+                                   "=======> Rendering is done inside render(), do not use 'human' or 'depth' mode."))
             else:
-                print("WARNING: OSG window is disabled!")
                 self.args = self.args + ['--osgWindow', '0']
                 if self.observation_config.depth_in_obs or self.observation_config.rgb_in_obs:
-                    print("=======> Observations contain image data (OSG rendering cannot be enabled).")
-                    print("=======> Rendering is done inside step(), only 'human' or 'depth' modes available.")
+                    warnings.warn(("OSG window is disabled! \n"
+                                   "=======> Observations contain image data (OSG rendering cannot be enabled). \n"
+                                   "=======> Rendering is done inside step(), "
+                                   "only 'human' or 'depth' modes available."))
                 else:
-                    print("=======> Observations do not contain image data.")
-                    print("=======> Rendering is done inside render(), only 'human' or 'depth' modes available.")
+                    warnings.warn(("OSG window is disabled! \n"
+                                   "=======> Observations do not contain image data. \n"
+                                   "=======> Rendering is done inside render(), "
+                                   "only 'human' or 'depth' modes available."))
 
         self.render_to_image = []
         self.img_object = None
@@ -107,6 +112,10 @@ class AgxGoalEnv(gym.GoalEnv):
     @property
     def dt(self):
         return self.sim.getTimeStep() * self.n_substeps
+
+    @property
+    def timestamp(self):
+        return self.sim.getTimeStamp()
 
     # GoalEnv methods
     # ----------------------------
@@ -215,6 +224,7 @@ class AgxGoalEnv(gym.GoalEnv):
 
         self.sim.setUniformGravity(self.gravity)
         self.sim.setTimeStep(self.time_step)
+        self.sim.setTimeStamp(0.0)
         logger.debug("Timestep after initSimulation is: {}".format(self.sim.getTimeStep()))
         logger.debug("Gravity after initSimulation is: {}".format(self.sim.getUniformGravity()))
 
@@ -225,6 +235,7 @@ class AgxGoalEnv(gym.GoalEnv):
         if not self.sim.restore(self.scene_path, agxSDK.Simulation.READ_ALL):
             logger.error("Unable to restore simulation!")
             return False
+        self.sim.setTimeStamp(0.0)
 
         if not self.agx_only:
             self._add_rendering()

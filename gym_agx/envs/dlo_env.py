@@ -101,6 +101,7 @@ class DloEnv(agx_goal_env.AgxGoalEnv):
         light_source_0.setPosition(self.light_pose['light_position'])
         light_source_0.setDirection(self.light_pose['light_direction'])
         scene_decorator.setEnableLogo(False)
+        scene_decorator.setBackgroundColor(agxRender.Color(1.0, 1.0, 1.0, 1.0))
 
     # Extension methods
     # ----------------------------

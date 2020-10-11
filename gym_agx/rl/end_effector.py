@@ -17,6 +17,7 @@ class EndEffectorConstraint:
         X_COMPLIANCE = 6,
         Y_COMPLIANCE = 7,
         Z_COMPLIANCE = 8,
+        LOCK = 9
 
     def __init__(self, end_effector_dof, compute_forces_enabled, velocity_control, compliance_control, velocity_index,
                  compliance_index):
@@ -79,6 +80,8 @@ class EndEffector:
         """
         velocity_index = None
         compliance_index = None
+        if end_effector_dof == EndEffectorConstraint.Dof.LOCK:
+            assert velocity_control is False and compliance_control is False
         if velocity_control:
             velocity_constraint_name = name + '_velocity'
             if velocity_constraint_name not in self.action_indices:
@@ -105,7 +108,8 @@ class EndEffector:
         if self.controllable:
             for key, constraint in self.constraints.items():
                 joint = sim.getConstraint1DOF(key)
-                motor = joint.getMotor1D()
+                if constraint.end_effector_dof != EndEffectorConstraint.Dof.LOCK:
+                    motor = joint.getMotor1D()
                 if constraint.velocity_control:
                     current_velocity, linear = self.get_velocity(sim, constraint.end_effector_dof)
                     velocity = self.rescale_velocity(action[constraint.velocity_index], current_velocity, dt, linear)

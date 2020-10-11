@@ -35,16 +35,18 @@ class RewardConfig(ABC):
         needed for reward computations.
         :return: reward, info
         """
-        if self.reward_type == 'sparse':
+        if self.reward_type == self.RewardType.SPARSE:
             success = self.is_success(achieved_goal, desired_goal)
             if success:
                 reward = self.reward_range[1]
             else:
                 reward = self.reward_range[0]
-        else:
+        elif self.reward_type == self.RewardType.DENSE:
             reward, info = self.reward_function(achieved_goal, desired_goal, info)
             reward = self.scale_reward(reward)
             assert self.reward_range[0] <= reward <= self.reward_range[1], "Reward must be within defined range."
+        else:
+            raise Exception("Reward type must be either SPARSE or DENSE!")
 
         return reward, info
 

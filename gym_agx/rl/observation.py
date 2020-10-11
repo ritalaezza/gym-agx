@@ -6,7 +6,7 @@ from enum import Enum
 
 from agxPythonModules.utils.numpy_utils import create_numpy_array
 from gym_agx.utils.agx_utils import to_numpy_array, get_cable_segment_edges
-from gym_agx.utils.utils import get_cable_torsion, get_cable_curvature
+from gym_agx.utils.utils import get_cable_torsion, get_cable_curvature, get_cable_angles
 
 logger = logging.getLogger('gym_agx.rl')
 
@@ -15,6 +15,7 @@ class ObservationConfig:
     class ObservationType(Enum):
         DLO_POSITIONS = "dlo_positions"
         DLO_ROTATIONS = "dlo_rotations"
+        DLO_ANGLES = "dlo_angles"
         DLO_CURVATURE = "dlo_curvature"
         DLO_TORSION = "dlo_torsion"
         IMG_RGB = "img_rgb"
@@ -86,6 +87,8 @@ class ObservationConfig:
                 goal_obs[gobs.value] = get_cable_segment_positions(cable_object)
             elif gobs == self.ObservationType.DLO_ROTATIONS:
                 goal_obs[gobs.value] = get_cable_segment_rotations(cable_object)
+            elif gobs == self.ObservationType.DLO_ANGLES:
+                goal_obs[gobs.value] = get_cable_angles(cable_segment_edges)
             elif gobs == self.ObservationType.DLO_CURVATURE:
                 goal_obs[gobs.value] = get_cable_curvature(cable_segment_edges)
             elif gobs == self.ObservationType.DLO_TORSION:
@@ -111,7 +114,8 @@ class ObservationConfig:
                         force_torque = dict()
                         for key, constraint in ee.constraints.items():
                             if constraint.compute_forces_enabled:
-                                force_torque[key] = get_constraint_force_torque(sim, key + goal_string)
+                                force_torque[key] = get_constraint_force_torque(sim, ee.name + goal_string,
+                                                                                key + goal_string)
                         assert force_torque, "At least one constraint must have compute_forces_enabled set to True."
                         ee_force_torque[ee.name] = force_torque
                 assert ee_force_torque, "At least one of the end-effectors must be observable to obtain force-torque."
@@ -171,6 +175,10 @@ class ObservationConfig:
         """3D coordinates and quaternions of DLO segments"""
         self.observations.add(self.ObservationType.DLO_POSITIONS)
         self.observations.add(self.ObservationType.DLO_ROTATIONS)
+
+    def set_dlo_angles(self):
+        """Inner angles of DLO segments"""
+        self.observations.add(self.ObservationType.DLO_ANGLES)
 
     def set_img_rgb(self, image_size=None):
         """RGB image of scene containing DLO and end-effector(s)
@@ -350,13 +358,14 @@ def get_rigid_body_angular_velocity(sim, name):
     return angular_velocity
 
 
-def get_constraint_force_torque(sim, constraint_name):
+def get_constraint_force_torque(sim, name, constraint_name):
     """Gets force an torque on rigid object, computed by a constraint defined by 'constraint_name'.
     :param sim: AGX Simulation object
+    :param name: name of rigid body
     :param constraint_name: Name indicating which constraint contains force torque information for this object
     :return: force an torque
     """
-    rigid_body = sim.getRigidBody(constraint_name)
+    rigid_body = sim.getRigidBody(name)
     constraint = sim.getConstraint(constraint_name)
 
     force = agx.Vec3()

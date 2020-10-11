@@ -295,7 +295,7 @@ def create_locked_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, 
     :param list lock_status: a list containing boolean values for whether to activate the constraint locks (x,y,z)
     :param boolean compute_forces: set whether forces are computed for this base.
     :param float radius: radius of the cylinders making up the base. For visualization purposes only.
-    :param float length: radius of the cylinders making up the base. For visualization purposes only.
+    :param float length: length of the cylinders making up the base. For visualization purposes only.
     :return assembly
     """
     if position_ranges is None:
@@ -350,7 +350,7 @@ def create_hinge_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, p
     :param agx.Vec3 axis: vector determining axis of rotation of rigid body
     :param boolean compute_forces: set whether forces are computed for this base.
     :param float radius: radius of the cylinders making up the base. For visualization purposes only.
-    :param float length: radius of the cylinders making up the base. For visualization purposes only.
+    :param float length: length of the cylinders making up the base. For visualization purposes only.
     :return assembly
     """
     if locked_at_zero_speed is None:
@@ -417,7 +417,7 @@ def create_universal_prismatic_base(name, rigid_body, compliance=0, damping=1 / 
     :param list lock_status: a list containing boolean values for whether to activate the constraint locks (x,y,z)
     :param boolean compute_forces: set whether forces are computed for this base.
     :param float radius: radius of the cylinders making up the base. For visualization purposes only.
-    :param float length: radius of the cylinders making up the base. For visualization purposes only.
+    :param float length: length of the cylinders making up the base. For visualization purposes only.
     :return assembly
     """
     if locked_at_zero_speed is None:
