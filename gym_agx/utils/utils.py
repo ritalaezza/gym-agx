@@ -141,6 +141,7 @@ def compute_angle(v0, v1):
     length_v0 = np.linalg.norm(v0)
     length_v1 = np.linalg.norm(v1)
     cos_angle = np.dot(v0 / length_v0, v1 / length_v1)
+    cos_angle = np.clip(cos_angle, -1, 1)
     angle = math.acos(cos_angle)
     return angle
 
