@@ -31,7 +31,7 @@ TIMESTEP = 1 / 1000
 N_SUBSTEPS = 20
 GRAVITY = True
 # Rubber band parameters
-DIAMETER = 0.0125
+DIAMETER = 0.025
 DLO_CIRCLE_STEPS = 20
 RADIUS = 0.001  # meters
 RESOLUTION = 800  # segments per meter
@@ -49,19 +49,24 @@ ALUMINUM_POISSON_RATIO = 0.35  # no unit
 ALUMINUM_YOUNG_MODULUS = 69e9  # Pascals
 ALUMINUM_YIELD_POINT = 5e7  # Pascals
 
-POLE_POSITIONS = [[0.0, 0.012], [-0.012, -0.012],[0.012, -0.012]]
+POLE_POSITION_OFFSETS = [[0.0, 0.012], [-0.012, -0.012],[0.012, -0.012]]
 POLE_RADIUS = 0.003
 
 # Ground Parameters
-EYE = agx.Vec3(0, -0.1, 0.1)
-CENTER = agx.Vec3(0, 0, 0)
+EYE = agx.Vec3(0, -0.1, 0.15)
+CENTER = agx.Vec3(0, 0, 0.01)
 UP = agx.Vec3(0., 0., 0.0)
 
 # Control parameters
 MAX_MOTOR_FORCE = 1
 GOAL_MAX_Z = 0.0125
 
-def create_pole(sim, position, material):
+GRIPPER_HEIGHT = 0.025
+MAX_X = 0.01
+MAX_Y = 0.01
+
+
+def create_pole(id, sim, position, material):
 
     x = position[0]
     y = position[1]
@@ -69,7 +74,7 @@ def create_pole(sim, position, material):
     # Lower part
     rotation_cylinder = agx.OrthoMatrix3x3()
     rotation_cylinder.setRotate(agx.Vec3.Y_AXIS(), agx.Vec3.Z_AXIS())
-    cylinder = create_body(name="cylinder", shape=agxCollide.Cylinder(POLE_RADIUS, 0.005),
+    cylinder = create_body(name="cylinder_low_" + str(id), shape=agxCollide.Cylinder(POLE_RADIUS, 0.005),
                            position=agx.Vec3(x,y,0.0),
                            rotation=rotation_cylinder,
                            motion_control=agx.RigidBody.KINEMATICS,
@@ -79,7 +84,7 @@ def create_pole(sim, position, material):
     # Middle part
     rotation_cylinder = agx.OrthoMatrix3x3()
     rotation_cylinder.setRotate(agx.Vec3.Y_AXIS(), agx.Vec3.Z_AXIS())
-    cylinder = create_body(name="cylinder_inner", shape=agxCollide.Cylinder(POLE_RADIUS-0.0007, 0.005),
+    cylinder = create_body(name="cylinder_inner_" + str(id), shape=agxCollide.Cylinder(POLE_RADIUS-0.0007, 0.005),
                            position=agx.Vec3(x,y,0.005),
                            rotation=rotation_cylinder,
                            motion_control=agx.RigidBody.KINEMATICS,
@@ -89,7 +94,7 @@ def create_pole(sim, position, material):
     # Upper part
     rotation_cylinder = agx.OrthoMatrix3x3()
     rotation_cylinder.setRotate(agx.Vec3.Y_AXIS(), agx.Vec3.Z_AXIS())
-    cylinder = create_body(name="cylinder", shape=agxCollide.Cylinder(POLE_RADIUS, 0.005),
+    cylinder = create_body(name="cylinder_top_" + str(id), shape=agxCollide.Cylinder(POLE_RADIUS, 0.005),
                            position=agx.Vec3(x,y,0.01),
                            rotation=rotation_cylinder,
                            motion_control=agx.RigidBody.KINEMATICS,
@@ -112,10 +117,12 @@ def add_rendering(sim):
         node = agxOSG.createVisual(rb, root)
         if rb.getName() == "ground":
             agxOSG.setDiffuseColor(node, agxRender.Color.SlateGray())
-        elif rb.getName() == "cylinder":
+        elif rb.getName() == "cylinder_top_0" or rb.getName() == "cylinder_top_1" or rb.getName() == "cylinder_top_2":
             agxOSG.setDiffuseColor(node, agxRender.Color.DarkGray())
-        elif rb.getName() == "cylinder_inner":
+        elif rb.getName() == "cylinder_inner_0" or rb.getName() == "cylinder_inner_1" or rb.getName() == "cylinder_inner_2":
             agxOSG.setDiffuseColor(node, agxRender.Color.LightSteelBlue())
+        elif rb.getName() == "cylinder_low_0" or rb.getName() == "cylinder_low_1" or rb.getName() == "cylinder_low_2":
+            agxOSG.setDiffuseColor(node, agxRender.Color.DarkGray())
         elif rb.getName() == "gripper":
             agxOSG.setDiffuseColor(node, agxRender.Color.DarkBlue())
         elif "dlo" in  rb.getName():  # Cable segments
@@ -171,13 +178,13 @@ def build_simulation():
     sim.add(ground)
 
     # Creates poles
-    for position in POLE_POSITIONS:
-        create_pole(sim=sim, position=position, material=material_hard)
+    for i, position in enumerate(POLE_POSITION_OFFSETS):
+        create_pole(id=i, sim=sim, position=position, material=material_hard)
 
     # Create gripper
     gripper = create_body(name="gripper",
                           shape=agxCollide.Sphere(0.002),
-                          position=agx.Vec3(-(DIAMETER),0.0,0.02),
+                          position=agx.Vec3(0.0,0.0, GRIPPER_HEIGHT+DIAMETER/2.0),
                           motion_control=agx.RigidBody.DYNAMICS,
                           material=material_hard)
     gripper.getRigidBody("gripper").getGeometry("gripper").setEnableCollisions(False)
@@ -186,9 +193,9 @@ def build_simulation():
 
     #Create base for pusher motors
     prismatic_base = create_locked_prismatic_base("gripper", gripper.getRigidBody("gripper"),
-                                                  position_ranges=[(-GROUND_LENGTH_X+DIAMETER, GROUND_LENGTH_X+DIAMETER),
-                                                                   (-GROUND_LENGTH_Y, GROUND_LENGTH_Y),
-                                                                   (-0.1, 0.01)],
+                                                  position_ranges=[(-MAX_X-GROUND_LENGTH_X/2.0, MAX_X+GROUND_LENGTH_X/2.0),
+                                                                   (-MAX_Y-GROUND_LENGTH_Y/2.0, MAX_Y+GROUND_LENGTH_Y/2.0),
+                                                                   (-0.035, 0.01)],
                                                   motor_ranges=[(-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE),
                                                                 (-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE),
                                                                 (-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE)])
@@ -208,10 +215,10 @@ def build_simulation():
 
     # Initialize dlo on circle
     steps = DLO_CIRCLE_STEPS
-    for a in np.linspace(0.0, 2*np.pi - 2*np.pi/steps, steps):
-        x = np.cos(a)*DIAMETER
-        y = np.sin(a) *DIAMETER
-        rubber_band.add(agxCable.FreeNode(x,y,0.02))
+    for a in np.linspace(-np.pi/2, (3.0/2.0)*np.pi - 2*np.pi/steps, steps):
+        x = np.cos(a)*DIAMETER/2.0
+        z = np.sin(a) *DIAMETER/2.0
+        rubber_band.add(agxCable.FreeNode(x,0,GRIPPER_HEIGHT+z))
 
     sim.add(rubber_band)
 
@@ -223,8 +230,10 @@ def build_simulation():
         if not segment_iterator.isEnd():
             seg = segment_iterator.getRigidBody()
 
+            seg.setAngularVelocityDamping(1e4)
+
             mass_props = seg.getMassProperties()
-            mass_props.setMass(mass_props.getMass())
+            mass_props.setMass(1.25*mass_props.getMass())
 
             segments_cable.append(seg)
             segment_iterator.inc()
@@ -242,7 +251,7 @@ def build_simulation():
 
     # Connect ends of rubber band
     f0 = agx.Frame()
-    f0.setLocalTranslate(0.0, 0.0, -2*np.pi*DIAMETER/cable.getNumSegments())
+    f0.setLocalTranslate(0.0, 0.0, -1*np.pi*DIAMETER/cable.getNumSegments())
     f1 = agx.Frame()
     lock = agx.LockJoint(s0, f0, s2, f1)
     lock.setCompliance(1.0e-4)
@@ -287,11 +296,30 @@ def build_simulation():
     return sim
 
 
-def get_poles_enclosed(segments_pos):
+def set_center_obstacle(sim, center_pos):
+
+    ground = sim.getRigidBody("ground")
+    ground.setPosition(agx.Vec3(center_pos[0], center_pos[1], -0.005))
+
+    for i in range(3):
+        sim.getRigidBody("cylinder_low_" + str(i)).setPosition(agx.Vec3(center_pos[0]+ POLE_POSITION_OFFSETS[i][0],
+                                                                        center_pos[1]+ POLE_POSITION_OFFSETS[i][1],
+                                                                        0.0))
+
+        sim.getRigidBody("cylinder_inner_" + str(i)).setPosition(agx.Vec3(center_pos[0]+ POLE_POSITION_OFFSETS[i][0],
+                                                                        center_pos[1]+ POLE_POSITION_OFFSETS[i][1],
+                                                                        0.005))
+
+        sim.getRigidBody("cylinder_top_" + str(i)).setPosition(agx.Vec3(center_pos[0]+ POLE_POSITION_OFFSETS[i][0],
+                                                                        center_pos[1]+ POLE_POSITION_OFFSETS[i][1],
+                                                                        0.01))
+
+
+def get_poles_enclosed(segments_pos, pole_pos):
     poles_enclosed = np.zeros(3)
     segments_xy = np.array(segments_pos)[:,0:2]
     for i in range(0,3):
-        is_within_polygon = point_inside_polygon(segments_xy, POLE_POSITIONS[i])
+        is_within_polygon = point_inside_polygon(segments_xy, pole_pos[i])
         poles_enclosed[i] = int(is_within_polygon)
 
     return poles_enclosed
@@ -311,16 +339,20 @@ def compute_segments_pos(sim):
     return segments_pos
 
 
-def is_goal_reached(segment_pos):
-    n_enclosed = get_poles_enclosed(segment_pos)
+def is_goal_reached(center_pos, segment_pos):
+    pole_pos = center_pos + POLE_POSITION_OFFSETS
+    n_enclosed = get_poles_enclosed(segment_pos, pole_pos)
     if np.sum(n_enclosed) >= 3 and all_points_below_z(segment_pos, max_z=GOAL_MAX_Z):
         return True
     return False
 
 
-def compute_dense_reward_and_check_goal(segment_pos_0, segment_pos_1):
-    poles_enclosed_0 = get_poles_enclosed(segment_pos_0)
-    poles_enclosed_1 = get_poles_enclosed(segment_pos_1)
+def compute_dense_reward_and_check_goal(center_pos, segment_pos_0, segment_pos_1):
+
+    pole_pos = center_pos + POLE_POSITION_OFFSETS
+
+    poles_enclosed_0 = get_poles_enclosed(segment_pos_0, pole_pos)
+    poles_enclosed_1 = get_poles_enclosed(segment_pos_1, pole_pos)
     poles_enclosed_diff = poles_enclosed_0 - poles_enclosed_1
 
     # Check if final goal is reached
@@ -352,6 +384,10 @@ def main(args):
     segment_pos_old = compute_segments_pos(sim)
     reward_type = "dense"
 
+    # Set random obstacle position
+    center_pos = np.random.uniform([-MAX_X, -MAX_Y], [MAX_X, MAX_Y])
+    set_center_obstacle(sim, center_pos)
+
     for _ in range(10000):
         sim.stepForward()
         app.executeOneStepWithGraphics()
@@ -361,9 +397,9 @@ def main(args):
 
         # Compute reward
         if reward_type == "dense":
-            reward, goal_reached = compute_dense_reward_and_check_goal(segment_pos, segment_pos_old)
+            reward, goal_reached = compute_dense_reward_and_check_goal(center_pos, segment_pos, segment_pos_old)
         else:
-            goal_reached = is_goal_reached(segment_pos)
+            goal_reached = is_goal_reached(center_pos, segment_pos)
             reward = float(goal_reached)
 
         segment_pos_old = segment_pos

@@ -33,16 +33,12 @@ GRAVITY = True
 # Rubber band parameters
 LENGTH = 0.15
 DLO_CIRCLE_STEPS = 20
-RADIUS = 0.004  # meters
+RADIUS = 0.003  # meters
 RESOLUTION = 100  # segments per meter
 PEG_POISSON_RATIO = 0.1  # no unit
-YOUNG_MODULUS_BEND = 1e6
+YOUNG_MODULUS_BEND = 5e5
 YOUNG_MODULUS_TWIST = 1e6
 YOUNG_MODULUS_STRETCH = 5e6
-
-GROUND_LENGTH = 0.1
-
-GROUND_HEIGHT = 0.0025
 
 # Aluminum Parameters
 ALUMINUM_POISSON_RATIO = 0.35  # no unit
@@ -56,12 +52,12 @@ UP = agx.Vec3(0., 1., 0.0)
 
 
 # Control parameters
-MAX_MOTOR_FORCE = 1
-GOAL_MAX_Z = 0.0125
-# OBSTACLE_POSITIONS = [ [0.0,0.0], [0.075,0.075],[-0.075,0.075], [0.075,-0.075], [-0.075,-0.075]]
-OBSTACLE_POSITIONS = [ [0.0,0.-0.075], [0.0,0.0], [0.075,0.0], [0.0,0.075], [-0.075,0.0], [0.075,0.075],[-0.075,0.075], [0.075,-0.075], [-0.075,-0.075]]
-R_OBSTACLE = 0.008
-OFFSET_Y = 0.0375
+MAX_MOTOR_FORCE = 2
+GOAL_MAX_Z = 0.05
+OBSTACLE_POSITIONS = [[0.0,0.05], [-0.075,0.05], [0.075, 0.05]]
+# OBSTACLE_POSITIONS = [ [0.0,0.05], [0.06,0.05], [-0.06,0.05],  [0.12,0.05], [-0.12,0.05]]
+R_GOAL_OBSTACLE = 0.005
+OFFSET_Y = 0.1
 
 
 def add_rendering(sim):
@@ -91,8 +87,8 @@ def add_rendering(sim):
             agxOSG.setDiffuseColor(node, agxRender.Color(0.1, 0.5, 0.0, 1.0))
             agxOSG.setAmbientColor(node, agxRender.Color(0.2, 0.5, 0.0, 1.0))
         elif rb.getName() == "obstacle":
-            agxOSG.setDiffuseColor(node, agxRender.Color(1.0, 0.0, 0.0, 1.0))
-        elif rb.getName() == "obstacle_center":
+            agxOSG.setDiffuseColor(node, agxRender.Color(0.5, 0.5, 0.5, 1.0))
+        elif rb.getName() == "obstacle_goal":
             agxOSG.setDiffuseColor(node, agxRender.Color(0.0, 0.0, 1.0, 1.0))
         else:
             agxOSG.setDiffuseColor(node, agxRender.Color.Beige())
@@ -211,25 +207,27 @@ def build_simulation():
                                                                   (-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE)],
                                                     lock_status=[False, False, False])
     sim.add(prismatic_base_0)
+    
+    # Create goal obstacle
+    goal_obstacle = create_body(name="obstacle_goal",
+                           shape=agxCollide.Cylinder(2 * R_GOAL_OBSTACLE, 0.1),
+                           position=agx.Vec3(0.0,0.-0.075, 0.005),
+                           motion_control=agx.RigidBody.STATIC,
+                           material=material_hard)
+    sim.add(goal_obstacle)
+    rotation_cylinder = agx.OrthoMatrix3x3()
+    rotation_cylinder.setRotate(agx.Vec3.Y_AXIS(), agx.Vec3.Z_AXIS())
+    goal_obstacle.setRotation(rotation_cylinder)
 
     # Create obstacles
     obs_pos = OBSTACLE_POSITIONS
     for i in range(0, len(obs_pos)):
-        name="obstacle"
-        if i==0:
-            name="obstacle_center"
-
-        obstacle = create_body(name=name,
-                               shape=agxCollide.Cylinder(2 * R_OBSTACLE, 0.04),
+        obstacle = create_body(name="obstacle",
+                               shape=agxCollide.Box(0.01, 0.015, 0.05),
                                position=agx.Vec3(obs_pos[i][0], obs_pos[i][1], 0.005),
                                motion_control=agx.RigidBody.STATIC,
                                material=material_hard)
-
         sim.add(obstacle)
-
-        rotation_cylinder = agx.OrthoMatrix3x3()
-        rotation_cylinder.setRotate(agx.Vec3.Y_AXIS(), agx.Vec3.Z_AXIS())
-        obstacle.setRotation(rotation_cylinder)
 
     # Create rope and set name + properties
     dlo = agxCable.Cable(RADIUS, RESOLUTION)
@@ -245,7 +243,17 @@ def build_simulation():
     dlo.add(agxCable.BodyFixedNode(gripper_0.getRigidBody("gripper_0"), agx.Vec3()))
     dlo.add(agxCable.BodyFixedNode(gripper_1.getRigidBody("gripper_1"),  agx.Vec3()))
 
+    # Set angular damping for segments
     sim.add(dlo)
+    segment_iterator = dlo.begin()
+    n_segments = dlo.getNumSegments()
+    for i in range(n_segments):
+        if not segment_iterator.isEnd():
+            seg = segment_iterator.getRigidBody()
+            seg.setAngularVelocityDamping(2e4)
+            segment_iterator.inc()
+            mass_props = seg.getMassProperties()
+            mass_props.setMass(1.25*mass_props.getMass())
 
     # Try to initialize dlo
     report = dlo.tryInitialize()
@@ -305,8 +313,11 @@ def compute_segments_pos(sim):
 
 def is_goal_reached(sim, segments_pos):
 
+    # Get position of goal
+    goal_pos = sim.getRigidBody("obstacle_goal").getPosition()
+
     # Check if goal obstacle in enclosed by dlo
-    is_within_polygon = point_inside_polygon(np.array(segments_pos)[:,0:2], OBSTACLE_POSITIONS[0])
+    is_within_polygon = point_inside_polygon(np.array(segments_pos)[:,0:2], goal_pos)
 
     # Check if cable has correct height
     is_correct_height = all_points_below_z(segments_pos, max_z=GOAL_MAX_Z)
@@ -323,8 +334,10 @@ def is_goal_reached(sim, segments_pos):
 
 def compute_dense_reward_and_check_goal(sim, segments_pos_0, segments_pos_1):
 
-    pole_enclosed_0 = point_inside_polygon(np.array(segments_pos_0)[:,0:2], OBSTACLE_POSITIONS[0])
-    pole_enclosed_1 = point_inside_polygon(np.array(segments_pos_1)[:,0:2], OBSTACLE_POSITIONS[0])
+    goal_pos = sim.getRigidBody("obstacle_goal").getPosition()
+
+    pole_enclosed_0 = point_inside_polygon(np.array(segments_pos_0)[:,0:2], goal_pos)
+    pole_enclosed_1 = point_inside_polygon(np.array(segments_pos_1)[:,0:2], goal_pos)
     poles_enclosed_diff = pole_enclosed_0 - pole_enclosed_1
 
     # Check if final goal is reached
@@ -358,10 +371,11 @@ def main(args):
     app.setCameraHome(EYE, CENTER, UP)
     app.initSimulation(sim, True)
 
-    dlo = agxCable.Cable.find(sim, "DLO")
+    # Randomize goal position
+    goal_pos_new = np.random.uniform([-0.1, -0.1], [0.1, -0.025])
+    sim.getRigidBody("obstacle_goal").setPosition(agx.Vec3(goal_pos_new[0], goal_pos_new[1] ,0.005))
 
-    reward_type = "dense"
-
+    reward_type = "sparse"
     segment_pos_old = compute_segments_pos(sim)
     for _ in range(10000):
         sim.stepForward()
@@ -384,6 +398,7 @@ def main(args):
 
         if goal_reached:
             print("Success!")
+            break
 
 
 if __name__ == '__main__':

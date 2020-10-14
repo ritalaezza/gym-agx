@@ -38,6 +38,7 @@ class AgxEnv(gym.Env):
         self.n_substeps = n_substeps
         self.render_to_image = []
         self.image_size = image_size
+        self.no_graphics = no_graphics
 
         # Initialize AGX simulation
         self.gravity = None
@@ -96,11 +97,11 @@ class AgxEnv(gym.Env):
     def render(self, mode='human'):
         logger.info("render")
         # while this rendering mode is not used, it has to be defined for compatibility
-        self._render_callback()
+        if not self.no_graphics:
+            self._render_callback()
 
     # AGX Dynamics methods
     # ----------------------------
-
     def _build_simulation(self):
         scene = agxSDK.Assembly()  # Create a new empty Assembly
 

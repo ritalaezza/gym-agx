@@ -12,6 +12,7 @@ from gym_agx.envs import agx_env
 from gym_agx.rl.observation import get_cable_segment_positions
 from gym_agx.utils.agx_classes import CameraConfig
 from gym_agx.utils.agx_utils import to_numpy_array
+from agxPythonModules.utils.numpy_utils import create_numpy_array
 
 logger = logging.getLogger('gym_agx.envs')
 
@@ -64,7 +65,6 @@ class PegInHoleEnv(agx_env.AgxEnv):
 
         no_graphics = headless and observation_type not in ("rgb", "depth", "rgb_and_depth")
 
-        # TODO does -agxOnly make a difference?
         # Disable rendering in headless mode
         if headless:
             args.extend(["--osgWindow", "0"])
@@ -88,8 +88,8 @@ class PegInHoleEnv(agx_env.AgxEnv):
     def step(self, action):
         logger.info("step")
         action = np.clip(action, self.action_space.low, self.action_space.high)
-        action[0:3] *= 0.2
-        action[3] *= 1
+        action_mutliplier = np.array([0.25, 0.25, 0.5, 5.0])
+        action *= action_mutliplier
         info = self._set_action(action)
 
         self._step_callback()
@@ -128,15 +128,9 @@ class PegInHoleEnv(agx_env.AgxEnv):
         for k in range(n_inital_wait):
             self.sim.stepForward()
 
-        # Randomize starting configuration
-        n_steps_rand = 50
-        action = np.random.uniform(-0.05, 0.05, 4)
-        for k in range(n_steps_rand):
-            self.sim.getConstraint1DOF("gripper_joint_base_x").getMotor1D().setSpeed(action[0])
-            self.sim.getConstraint1DOF("gripper_joint_base_y").getMotor1D().setSpeed(action[1])
-            self.sim.getConstraint1DOF("gripper_joint_base_z").getMotor1D().setSpeed(action[2])
-            self.sim.getConstraint1DOF("gripper_joint_rot_y").getMotor1D().setSpeed(action[3] * 50)
-            self.sim.stepForward()
+        # Randomly initialize cylinder position
+        cylinder_pos_new = np.random.uniform([-0.01, -0.005], [0.01, 0.005])
+        self.sim.getRigidBody("hollow_cylinder").setPosition(agx.Vec3(cylinder_pos_new[0], cylinder_pos_new[1] ,0.0))
 
         cable = agxCable.Cable.find(self.sim, "DLO")
         self.n_segments = cable.getNumSegments()
@@ -164,13 +158,17 @@ class PegInHoleEnv(agx_env.AgxEnv):
         inserted and False otherwise.
         """
 
+        cylinder_pos = self.sim.getRigidBody("hollow_cylinder").getPosition()
         for p in segment_pos[int(self.n_segments / 2):]:
-            # Return False if segment is ouside bounds
-            if not (-0.003 <= p[0] <= 0.003 and -0.003 <= p[1] <= 0.003 and -0.01 <= p[2] <= 0.006):
-                return False
+                # Return False if a segment is ouside bounds
+                if not (cylinder_pos[0]-0.003 <= p[0] <= cylinder_pos[0]+0.003 and
+                        cylinder_pos[1]-0.003 <= p[1] <= cylinder_pos[1]+0.003 and
+                        -0.01 <= p[2] <=0.006):
+                    return False
+
         return True
 
-    def _determine_n_segments_inserted(self, segment_pos):
+    def _determine_n_segments_inserted(self, segment_pos, cylinder_pos):
         """
         Determine number of segments that are inserted into the hole.
         :param segment_pos:
@@ -179,13 +177,16 @@ class PegInHoleEnv(agx_env.AgxEnv):
         n_inserted = 0
         for p in segment_pos:
             # Return False if segment is ouside bounds
-            if -0.003 <= p[0] <= 0.003 and -0.003 <= p[1] <= 0.003 and -0.01 <= p[2] <= 0.006:
+            if cylinder_pos[0] - 0.003 <= p[0] <= cylinder_pos[0] + 0.003 and \
+                    cylinder_pos[1] - 0.003 <= p[1] <= cylinder_pos[0] + 0.003 and \
+                    -0.01 <= p[2] <= 0.006:
                 n_inserted += 1
         return n_inserted
 
     def _compute_dense_reward_and_check_goal(self, segment_pos_0, segment_pos_1):
-        n_segs_inserted_0 = self._determine_n_segments_inserted(segment_pos_0)
-        n_segs_inserted_1 = self._determine_n_segments_inserted(segment_pos_1)
+        cylinder_pos = self.sim.getRigidBody("hollow_cylinder").getPosition()
+        n_segs_inserted_0 = self._determine_n_segments_inserted(segment_pos_0, cylinder_pos)
+        n_segs_inserted_1 = self._determine_n_segments_inserted(segment_pos_1, cylinder_pos)
         n_segs_inserted_diff = n_segs_inserted_0 - n_segs_inserted_1
 
         # Check if final goal is reached
@@ -227,14 +228,42 @@ class PegInHoleEnv(agx_env.AgxEnv):
         scene_decorator.setBackgroundColor(agxRender.Color(1.0, 1.0, 1.0, 1.0))
 
     def _get_observation(self):
-        # TODO use modular strucutre for observations and allow different type of observations
-        seg_pos = get_cable_segment_positions(cable=agxCable.Cable.find(self.sim, "DLO")).flatten()
-        gripper = self.sim.getRigidBody("gripper_body")
-        gripper_pos = to_numpy_array(gripper.getPosition())[0:3]
-        ea = agx.EulerAngles().set(gripper.getRotation())
-        gripper_rot = ea.y()
+        rgb_buffer = None
+        depth_buffer = None
+        for buffer in self.render_to_image:
+            name = buffer.getName()
+            if name == 'rgb_buffer':
+                rgb_buffer = buffer
+            elif name == 'depth_buffer':
+                depth_buffer = buffer
 
-        obs = np.concatenate([gripper_pos, [gripper_rot], seg_pos])
+        if self.observation_type == "rgb":
+            image_ptr = rgb_buffer.getImageData()
+            image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1], 3), np.uint8)
+            obs = np.flipud(image_data)
+        elif self.observation_type == "depth":
+            image_ptr = depth_buffer.getImageData()
+            image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1]), np.float32)
+            obs = np.flipud(image_data)
+        elif self.observation_type == "rgb_and_depth":
+
+            obs = np.zeros((self.image_size[0], self.image_size[1], 4), dtype=np.float32)
+
+            image_ptr = rgb_buffer.getImageData()
+            image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1], 3), np.uint8)
+            obs[:, :, 0:3] = np.flipud(image_data.astype(np.float32)) / 255
+
+            image_ptr = depth_buffer.getImageData()
+            image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1]), np.float32)
+            obs[:, :, 3] = np.flipud(image_data)
+        else:
+            seg_pos = get_cable_segment_positions(cable=agxCable.Cable.find(self.sim, "DLO")).flatten()
+            gripper = self.sim.getRigidBody("gripper_body")
+            gripper_pos = to_numpy_array(gripper.getPosition())[0:3]
+            ea = agx.EulerAngles().set(gripper.getRotation())
+            gripper_rot = ea.y()
+
+            obs = np.concatenate([gripper_pos, [gripper_rot], seg_pos])
 
         return obs
 

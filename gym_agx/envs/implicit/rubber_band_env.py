@@ -24,7 +24,9 @@ PACKAGE_DIR = os.path.split(FILE_DIR)[0]
 SCENE_PATH = os.path.join(PACKAGE_DIR, "assets/rubber_band.agx")
 
 GOAL_MAX_Z = 0.0125
-POLE_POSITIONS = [[0.0, 0.01], [-0.01, -0.01], [0.01, -0.01]]
+POLE_OFFSET = [[0.0, 0.01], [-0.01, -0.01], [0.01, -0.01]]
+MAX_X = 0.01
+MAX_Y = 0.01
 
 
 class RubberBandEnv(agx_env.AgxEnv):
@@ -47,9 +49,9 @@ class RubberBandEnv(agx_env.AgxEnv):
         self.segments_pos_old = None
         self.headless = headless
 
-        camera_distance = 0.1  # meters
+        camera_distance = 0.15  # meters
         camera_config = CameraConfig(
-            eye=agx.Vec3(0, -0.05, 0.1),
+            eye=agx.Vec3(0, -0.1, camera_distance),
             center=agx.Vec3(0, 0, 0.0),
             up=agx.Vec3(0., 0., 0.0),
             light_position=agx.Vec4(0, - camera_distance, camera_distance, 1.),
@@ -90,7 +92,6 @@ class RubberBandEnv(agx_env.AgxEnv):
 
         no_graphics = headless and observation_type not in ("rgb", "depth", "rgb_and_depth")
 
-        # TODO does -agxOnly make a difference?
         # Disable rendering in headless mode
         if headless:
             args.extend(["--osgWindow", "0"])
@@ -156,11 +157,33 @@ class RubberBandEnv(agx_env.AgxEnv):
             self._set_action(self.action_space.sample())
             self.sim.stepForward()
 
+        # Set random obstacle position
+        center_pos = np.random.uniform([-MAX_X, -MAX_Y], [MAX_X, MAX_Y])
+        self._set_obstacle_center(center_pos)
+
         self.segments_pos_old = self._compute_segments_pos()
 
         obs = self._get_observation()
 
         return obs
+
+    def _set_obstacle_center(self, center_pos):
+
+        ground = self.sim.getRigidBody("ground")
+        ground.setPosition(agx.Vec3(center_pos[0], center_pos[1], -0.005))
+
+        for i in range(3):
+            self.sim.getRigidBody("cylinder_low_" + str(i)).setPosition(agx.Vec3(center_pos[0] + POLE_OFFSET[i][0],
+                                                                                 center_pos[1] + POLE_OFFSET[i][1],
+                                                                                 0.0))
+
+            self.sim.getRigidBody("cylinder_inner_" + str(i)).setPosition(agx.Vec3(center_pos[0] + POLE_OFFSET[i][0],
+                                                                                   center_pos[1] + POLE_OFFSET[i][1],
+                                                                                   0.005))
+
+            self.sim.getRigidBody("cylinder_top_" + str(i)).setPosition(agx.Vec3(center_pos[0] + POLE_OFFSET[i][0],
+                                                                                 center_pos[1] + POLE_OFFSET[i][1],
+                                                                                 0.01))
 
     def _compute_segments_pos(self):
         segments_pos = []
@@ -182,9 +205,11 @@ class RubberBandEnv(agx_env.AgxEnv):
         :return:
         """
         poles_enclosed = np.zeros(3)
+        ground_pos = self.sim.getRigidBody("ground").getPosition()
+        pole_pos = np.array( [ground_pos[0], ground_pos[1]]) + POLE_OFFSET
         for i in range(0, 3):
             segments_xy = np.array(segments_pos)[:, 0:2]
-            is_within_polygon = point_inside_polygon(segments_xy, POLE_POSITIONS[i])
+            is_within_polygon = point_inside_polygon(segments_xy, pole_pos[i])
             poles_enclosed[i] = int(is_within_polygon)
 
         return poles_enclosed
@@ -229,10 +254,12 @@ class RubberBandEnv(agx_env.AgxEnv):
             node = agxOSG.createVisual(rb, root)
             if rb.getName() == "ground":
                 agxOSG.setDiffuseColor(node, agxRender.Color.SlateGray())
-            elif rb.getName() == "cylinder":
+            elif rb.getName() == "cylinder_top_0" or rb.getName() == "cylinder_top_1" or rb.getName() == "cylinder_top_2":
                 agxOSG.setDiffuseColor(node, agxRender.Color.DarkGray())
-            elif rb.getName() == "cylinder_inner":
+            elif rb.getName() == "cylinder_inner_0" or rb.getName() == "cylinder_inner_1" or rb.getName() == "cylinder_inner_2":
                 agxOSG.setDiffuseColor(node, agxRender.Color.LightSteelBlue())
+            elif rb.getName() == "cylinder_low_0" or rb.getName() == "cylinder_low_1" or rb.getName() == "cylinder_low_2":
+                agxOSG.setDiffuseColor(node, agxRender.Color.DarkGray())
             elif rb.getName() == "gripper":
                 agxOSG.setDiffuseColor(node, agxRender.Color.DarkBlue())
             elif "dlo" in rb.getName():  # Cable segments

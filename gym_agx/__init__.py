@@ -81,6 +81,6 @@ register(
 register(
     id='CableClosing-v0',
     entry_point='gym_agx.envs:CableClosingEnv',
-    kwargs={'n_substeps': 5},
+    kwargs={'n_substeps': 10},
     max_episode_steps=int(250),
 )

@@ -14,6 +14,7 @@ from gym_agx.rl.observation import get_cable_segment_positions
 from gym_agx.rl.end_effector import EndEffector, EndEffectorConstraint
 from gym_agx.utils.agx_classes import CameraConfig
 from gym_agx.utils.agx_utils import to_numpy_array
+from agxPythonModules.utils.numpy_utils import create_numpy_array
 
 logger = logging.getLogger('gym_agx.envs')
 
@@ -57,7 +58,7 @@ class CableClosingEnv(agx_env.AgxEnv):
             controllable=True,
             observable=True,
             max_velocity=3,  # m/s
-            max_acceleration=1  # m/s^2
+            max_acceleration=3  # m/s^2
         )
         gripper_0.add_constraint(name='gripper_0_joint_base_x',
                                  end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
@@ -75,7 +76,7 @@ class CableClosingEnv(agx_env.AgxEnv):
             controllable=True,
             observable=True,
             max_velocity=3,  # m/s
-            max_acceleration=1  # m/s^2
+            max_acceleration=3 # m/s^2
         )
         gripper_1.add_constraint(name='gripper_1_joint_base_x',
                                  end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
@@ -100,7 +101,6 @@ class CableClosingEnv(agx_env.AgxEnv):
 
         no_graphics = headless and observation_type not in ("rgb", "depth", "rgb_and_depth")
 
-        # TODO does -agxOnly make a difference?
         # Disable rendering in headless mode
         if headless:
             args.extend(["--osgWindow", "0"])
@@ -156,8 +156,12 @@ class CableClosingEnv(agx_env.AgxEnv):
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
 
+        # Randomly initialize cylinder position
+        goal_pos_new = np.random.uniform([-0.1, -0.1], [0.1, -0.025])
+        self.sim.getRigidBody("obstacle_goal").setPosition(agx.Vec3(goal_pos_new[0], goal_pos_new[1] ,0.005))
+
         # TODO Find good initialization strategy for this task which covers a larger area of the state space
-        n_inital_random = 100
+        n_inital_random = 50
         for k in range(n_inital_random):
             if k == 0 or not k % 25:
                 action = self.action_space.sample()
@@ -195,8 +199,11 @@ class CableClosingEnv(agx_env.AgxEnv):
         :return:
         """
 
+        # Get position of goal
+        goal_pos = self.sim.getRigidBody("obstacle_goal").getPosition()
+
         # Check if goal obstacle in enclosed by dlo
-        is_within_polygon = point_inside_polygon(np.array(segment_pos)[:, 0:2], OBSTACLE_POSITIONS[0])
+        is_within_polygon = point_inside_polygon(np.array(segment_pos)[:, 0:2], goal_pos)
 
         # Check if cable has correct height
         is_correct_height = all_points_below_z(segment_pos, max_z=GOAL_MAX_Z)
@@ -212,8 +219,11 @@ class CableClosingEnv(agx_env.AgxEnv):
 
     def _compute_dense_reward_and_check_goal(self, segments_pos_0, segments_pos_1):
 
-        pole_enclosed_0 = point_inside_polygon(np.array(segments_pos_0)[:, 0:2], OBSTACLE_POSITIONS[0])
-        pole_enclosed_1 = point_inside_polygon(np.array(segments_pos_1)[:, 0:2], OBSTACLE_POSITIONS[0])
+        # Get position of goal
+        goal_pos = self.sim.getRigidBody("obstacle_goal").getPosition()
+
+        pole_enclosed_0 = point_inside_polygon(np.array(segments_pos_0)[:, 0:2], goal_pos)
+        pole_enclosed_1 = point_inside_polygon(np.array(segments_pos_1)[:, 0:2], goal_pos)
         poles_enclosed_diff = pole_enclosed_0 - pole_enclosed_1
 
         # Check if final goal is reached
@@ -253,8 +263,8 @@ class CableClosingEnv(agx_env.AgxEnv):
                 agxOSG.setDiffuseColor(node, agxRender.Color(0.1, 0.5, 0.0, 1.0))
                 agxOSG.setAmbientColor(node, agxRender.Color(0.2, 0.5, 0.0, 1.0))
             elif rb.getName() == "obstacle":
-                agxOSG.setDiffuseColor(node, agxRender.Color(1.0, 0.0, 0.0, 1.0))
-            elif rb.getName() == "obstacle_center":
+                agxOSG.setDiffuseColor(node, agxRender.Color(0.5, 0.5, 0.5, 1.0))
+            elif rb.getName() == "obstacle_goal":
                 agxOSG.setDiffuseColor(node, agxRender.Color(0.0, 0.0, 1.0, 1.0))
             else:
                 agxOSG.setDiffuseColor(node, agxRender.Color.Beige())
@@ -266,14 +276,44 @@ class CableClosingEnv(agx_env.AgxEnv):
         scene_decorator.setBackgroundColor(agxRender.Color(1.0, 1.0, 1.0, 1.0))
 
     def _get_observation(self):
-        # TODO use modular strucutre for observations and allow different type of observations
-        seg_pos = get_cable_segment_positions(cable=agxCable.Cable.find(self.sim, "DLO")).flatten()
-        gripper_0 = self.sim.getRigidBody("gripper_0")
-        gripper_1 = self.sim.getRigidBody("gripper_1")
-        gripper_0_pos = to_numpy_array(gripper_0.getPosition())[0:2]
-        gripper_1_pos = to_numpy_array(gripper_1.getPosition())[0:2]
+        rgb_buffer = None
+        depth_buffer = None
+        for buffer in self.render_to_image:
+            name = buffer.getName()
+            if name == 'rgb_buffer':
+                rgb_buffer = buffer
+            elif name == 'depth_buffer':
+                depth_buffer = buffer
 
-        obs = np.concatenate([gripper_0_pos, gripper_1_pos, seg_pos])
+        if self.observation_type == "rgb":
+            image_ptr = rgb_buffer.getImageData()
+            image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1], 3), np.uint8)
+            obs = np.flipud(image_data)
+        elif self.observation_type == "depth":
+            image_ptr = depth_buffer.getImageData()
+            image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1]), np.float32)
+            obs = np.flipud(image_data)
+        elif self.observation_type == "rgb_and_depth":
+
+            obs = np.zeros((self.image_size[0], self.image_size[1], 4), dtype=np.float32)
+
+            image_ptr = rgb_buffer.getImageData()
+            image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1], 3), np.uint8)
+            obs[:, :, 0:3] = np.flipud(image_data.astype(np.float32)) / 255
+
+            image_ptr = depth_buffer.getImageData()
+            image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1]), np.float32)
+            obs[:, :, 3] = np.flipud(image_data)
+        else:
+            seg_pos = get_cable_segment_positions(cable=agxCable.Cable.find(self.sim, "DLO")).flatten()
+            gripper_0 = self.sim.getRigidBody("gripper_0")
+            gripper_1 = self.sim.getRigidBody("gripper_1")
+            obstacle_goal = self.sim.getRigidBody("obstacle_goal")
+            gripper_0_pos = to_numpy_array(gripper_0.getPosition())[0:2]
+            gripper_1_pos = to_numpy_array(gripper_1.getPosition())[0:2]
+            goal_pos = to_numpy_array(obstacle_goal.getPosition())[0:2]
+
+            obs = np.concatenate([gripper_0_pos, gripper_1_pos, seg_pos, goal_pos])
 
         return obs
 

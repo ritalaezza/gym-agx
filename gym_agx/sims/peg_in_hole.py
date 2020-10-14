@@ -57,8 +57,8 @@ CENTER = agx.Vec3(0, 0, 0.02)
 UP = agx.Vec3(0., 0., 1.0)
 
 # Control parameters
-JOINT_RANGES = {"t_x": [-0.005,0.005],
-                "t_y": [-0.0025,0.0025],
+JOINT_RANGES = {"t_x": [-0.01,0.01],
+                "t_y": [-0.005,0.005],
                 "t_z": [-0.025,0.0025],
                 "r_y": [(-1/4)*np.pi,(1/4)*np.pi]}
 FORCE_RANGES = {"t_x": [-0.2,0.2], "t_y": [-0.2,0.2], "t_z": [-0.2,0.2], "r_y": [-0.1,0.1]}
@@ -306,6 +306,15 @@ def build_simulation():
 
     sim.add(peg)
 
+    segment_iterator = peg.begin()
+    n_segments = peg.getNumSegments()
+    for i in range(n_segments):
+        if not segment_iterator.isEnd():
+            seg = segment_iterator.getRigidBody()
+            seg.setAngularVelocityDamping(5e3)
+            segment_iterator.inc()
+
+
     # Try to initialize rope
     report = peg.tryInitialize()
     if report.successful():
@@ -370,37 +379,44 @@ def is_goal_reached(sim):
     cable = agxCable.Cable.find(sim, "DLO")
     n_segments = cable.getNumSegments()
     segment_iterator = cable.begin()
+    cylinder_pos = sim.getRigidBody("hollow_cylinder").getPosition()
 
     for i in range(0, n_segments):
         if not segment_iterator.isEnd():
-            position = segment_iterator.getGeometry().getPosition()
+            p = segment_iterator.getGeometry().getPosition()
             segment_iterator.inc()
 
             if i >= n_segments/2:
                 # Return False if segment is ouside bounds
-                if not (-0.003 <= position[0] <= 0.003 and -0.003 <= position[1] <= 0.003 and -0.01 <= position[2] <=0.006):
+                if not (cylinder_pos[0]-0.003 <= p[0] <= cylinder_pos[0]+0.003 and
+                        cylinder_pos[1]-0.003 <= p[1] <= cylinder_pos[1]+0.003 and
+                        -0.01 <= p[2] <=0.006):
                     return False
 
     return True
 
 
-def determine_n_segments_inserted(segment_pos):
+def determine_n_segments_inserted(segment_pos, cylinder_pos):
     """
     Determine number of segments that are inserted into the hole.
     :param segment_pos:
     :return:
     """
+
     n_inserted = 0
     for p in segment_pos:
         # Return False if segment is ouside bounds
-        if -0.003 <= p[0] <= 0.003 and -0.003 <= p[1] <= 0.003 and -0.01 <= p[2] <=0.006:
+        if cylinder_pos[0]-0.003 <= p[0] <= cylinder_pos[0]+0.003 and \
+            cylinder_pos[1]-0.003 <= p[1] <= cylinder_pos[1]+ 0.003 and \
+                -0.01 <= p[2] <=0.006:
             n_inserted +=1
     return n_inserted
 
 
 def compute_dense_reward_and_check_goal(sim, segment_pos_0, segment_pos_1):
-    n_segs_inserted_0 = determine_n_segments_inserted(segment_pos_0)
-    n_segs_inserted_1 = determine_n_segments_inserted(segment_pos_1)
+    cylinder_pos = sim.getRigidBody("hollow_cylinder").getPosition()
+    n_segs_inserted_0 = determine_n_segments_inserted(segment_pos_0, cylinder_pos)
+    n_segs_inserted_1 = determine_n_segments_inserted(segment_pos_1, cylinder_pos)
     n_segs_inserted_diff = n_segs_inserted_0 - n_segs_inserted_1
 
     cable = agxCable.Cable.find(sim, "DLO")
@@ -430,8 +446,13 @@ def main(args):
     app.setCameraHome(EYE, CENTER, UP)
     app.initSimulation(sim, True)
 
+    cylinder_pos_x = np.random.uniform(-0.01, 0.01)
+    cylinder_pos_y = np.random.uniform(0.005, 0.005)
+    cylinder = sim.getRigidBody("hollow_cylinder")
+    cylinder.setPosition(agx.Vec3(cylinder_pos_x, cylinder_pos_y, 0.0))
+
     segment_pos_old = compute_segments_pos(sim)
-    reward_type = "dense"
+    reward_type = "sparse"
 
     for _ in range(10000):
         sim.stepForward()
