@@ -7,9 +7,6 @@ This project contains a set of deformable object manipulation environments, usin
 
 ## Explicit shape control
 
-https://drive.google.com/file/d/<FILE_ID>/view?usp=sharing
-https://drive.google.com/uc?export=view&id=<FILE_ID>
-
 ![BendWire](https://drive.google.com/uc?export=view&id=1oa98fspwVYnNulq5SEgSYkrrTLXTz-_Y)
 ![BendWireObstacle](https://drive.google.com/uc?export=view&id=16qEuWRvFr9B5u46lRJM77_tCy22VEoNz)
 ![PushRope](https://drive.google.com/uc?export=view&id=1IuuDTLa-7hNP373yuFJfEfU3hZt9dG5Q)
