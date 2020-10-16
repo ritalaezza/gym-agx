@@ -7,15 +7,18 @@ This project contains a set of deformable object manipulation environments, usin
 
 ## Explicit shape control
 
-![BendWire](https://drive.google.com/file/d/1oa98fspwVYnNulq5SEgSYkrrTLXTz-_Y/view?usp=sharing)
-![BendWireObstacle](https://drive.google.com/file/d/16qEuWRvFr9B5u46lRJM77_tCy22VEoNz/view?usp=sharing)
-![PushRope](https://drive.google.com/file/d/1IuuDTLa-7hNP373yuFJfEfU3hZt9dG5Q/view?usp=sharing)
+https://drive.google.com/file/d/<FILE_ID>/view?usp=sharing
+https://drive.google.com/uc?export=view&id=<FILE_ID>
+
+![BendWire](https://drive.google.com/uc?export=view&id=1oa98fspwVYnNulq5SEgSYkrrTLXTz-_Y)
+![BendWireObstacle](https://drive.google.com/uc?export=view&id=16qEuWRvFr9B5u46lRJM77_tCy22VEoNz)
+![PushRope](https://drive.google.com/uc?export=view&id=1IuuDTLa-7hNP373yuFJfEfU3hZt9dG5Q)
 
 ## Implicit shape control
 
-![PegInHole](https://drive.google.com/file/d/1OT4GVt3xCTo2mkpzOVuaASToH36y2Jde/view?usp=sharing)
-![CableClosing](https://drive.google.com/file/d/12pEKXavw5ox01l7-NK6JoqVKPVU8ArHz/view?usp=sharing)
-![RubberBand](https://drive.google.com/file/d/1halbLByFBRG6yQ0wG-icG46lCcOL3Pw4/view?usp=sharing)
+![PegInHole](https://drive.google.com/uc?export=view&id=1OT4GVt3xCTo2mkpzOVuaASToH36y2Jde)
+![CableClosing](https://drive.google.com/uc?export=view&id=12pEKXavw5ox01l7-NK6JoqVKPVU8ArHz)
+![RubberBand](https://drive.google.com/uc?export=view&id=1halbLByFBRG6yQ0wG-icG46lCcOL3Pw4)
 
 ## Getting Started
 
