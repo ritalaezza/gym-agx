@@ -8,13 +8,17 @@ This project contains a set of deformable object manipulation environments, usin
 ## Explicit shape control
 
 ![BendWire](https://drive.google.com/uc?export=view&id=1oa98fspwVYnNulq5SEgSYkrrTLXTz-_Y)
+
 ![BendWireObstacle](https://drive.google.com/uc?export=view&id=16qEuWRvFr9B5u46lRJM77_tCy22VEoNz)
+
 ![PushRope](https://drive.google.com/uc?export=view&id=1IuuDTLa-7hNP373yuFJfEfU3hZt9dG5Q)
 
 ## Implicit shape control
 
 ![PegInHole](https://drive.google.com/uc?export=view&id=1OT4GVt3xCTo2mkpzOVuaASToH36y2Jde)
+
 ![CableClosing](https://drive.google.com/uc?export=view&id=12pEKXavw5ox01l7-NK6JoqVKPVU8ArHz)
+
 ![RubberBand](https://drive.google.com/uc?export=view&id=1halbLByFBRG6yQ0wG-icG46lCcOL3Pw4)
 
 ## Getting Started
