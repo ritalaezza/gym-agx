@@ -206,7 +206,9 @@ def compute_torsion(v0, v1, v2, segment_length=1):
     # Torsion angle
     angle = np.arccos(np.dot(b01 / length_b01, b12 / length_b12))
     ref_angle, sign = find_reference_angle(angle)
-    return 2 * sign * np.tan(ref_angle / 2) / segment_length
+    torsion = 2 * sign * np.tan(ref_angle / 2) / segment_length
+    torsion = torsion if not math.isnan(torsion) else 0
+    return torsion
 
 
 def get_cable_torsion(cable_state, segment_length=1):

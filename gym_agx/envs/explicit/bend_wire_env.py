@@ -82,12 +82,12 @@ class BendWireEnv(dlo_env.DloEnv):
             gripper_right.add_constraint(name='gripper_right_joint_base_y',
                                          end_effector_dof=EndEffectorConstraint.Dof.Y_TRANSLATION,
                                          compute_forces_enabled=False,
-                                         velocity_control=True,
+                                         velocity_control=False,
                                          compliance_control=False)
             gripper_right.add_constraint(name='gripper_right_joint_base_z',
                                          end_effector_dof=EndEffectorConstraint.Dof.Z_TRANSLATION,
                                          compute_forces_enabled=False,
-                                         velocity_control=True,
+                                         velocity_control=False,
                                          compliance_control=False)
             gripper_right.add_constraint(name='hinge_joint_right',
                                          end_effector_dof=EndEffectorConstraint.Dof.Y_ROTATION,

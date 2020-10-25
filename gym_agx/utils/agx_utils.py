@@ -49,6 +49,12 @@ def save_goal_simulation(sim, file_name, remove_assemblies=[]):
         rb.setMotionControl(agx.RigidBody.STATIC)
         rb_geometries = rb.getGeometries()
         rb_geometries[0].setEnableCollisions(False)
+    # Add goal to all constraint names which are not empty
+    constraints = sim.getConstraints()
+    for constraint in constraints:
+        name = constraint.getName()
+        if name != '':
+            constraint.setName(name + '_goal')
     file_directory = os.path.dirname(os.path.abspath(__file__))
     package_directory = os.path.split(file_directory)[0]
     markup_file = os.path.join(package_directory, 'envs/assets', file_name + "_goal.aagx")
