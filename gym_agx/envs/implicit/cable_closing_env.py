@@ -10,7 +10,7 @@ import agxRender
 from gym_agx.utils.utils import point_inside_polygon, all_points_below_z
 
 from gym_agx.envs import agx_env
-from gym_agx.rl.observation import get_cable_segment_positions
+from gym_agx.rl.observation import get_cable_segment_positions, get_cable_segment_positions_and_velocities
 from gym_agx.rl.end_effector import EndEffector, EndEffectorConstraint
 from gym_agx.utils.agx_classes import CameraConfig
 from gym_agx.utils.agx_utils import to_numpy_array
@@ -30,7 +30,7 @@ OBSTACLE_POSITIONS = [[0.0, 0.0], [0.075, 0.075], [-0.075, 0.075], [0.075, -0.07
 class CableClosingEnv(agx_env.AgxEnv):
     """Cable closing environment."""
 
-    def __init__(self, n_substeps=1, reward_type="dense", observation_type="state", headless=False, **kwargs):
+    def __init__(self, n_substeps=1, reward_type="dense", observation_type="gt", headless=False, **kwargs):
         """Initializes a CableClosingEnv object
         :param args: arguments for agxViewer.
         :param scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/ folder
@@ -123,7 +123,9 @@ class CableClosingEnv(agx_env.AgxEnv):
 
     def step(self, action):
         logger.info("step")
+
         action = np.clip(action, self.action_space.low, self.action_space.high)
+        action *= 0.5
         info = self._set_action(action)
         self._step_callback()
 
@@ -160,10 +162,9 @@ class CableClosingEnv(agx_env.AgxEnv):
         goal_pos_new = np.random.uniform([-0.1, -0.1], [0.1, -0.025])
         self.sim.getRigidBody("obstacle_goal").setPosition(agx.Vec3(goal_pos_new[0], goal_pos_new[1] ,0.005))
 
-        # TODO Find good initialization strategy for this task which covers a larger area of the state space
-        n_inital_random = 50
+        n_inital_random = 20
         for k in range(n_inital_random):
-            if k == 0 or not k % 25:
+            if k == 0 or not k % 5:
                 action = self.action_space.sample()
             self._set_action(action)
             self.sim.stepForward()
@@ -232,7 +233,7 @@ class CableClosingEnv(agx_env.AgxEnv):
         # Check if grippers are close enough to each other
         position_g0 = to_numpy_array(self.sim.getRigidBody("gripper_0").getPosition())
         position_g1 = to_numpy_array(self.sim.getRigidBody("gripper_1").getPosition())
-        is_grippers_close = np.linalg.norm(position_g1 - position_g0) < 0.01
+        is_grippers_close = np.linalg.norm(position_g1 - position_g0) < 0.02
 
         final_goal_reached = pole_enclosed_0 and is_correct_height and is_grippers_close
 
@@ -285,6 +286,8 @@ class CableClosingEnv(agx_env.AgxEnv):
             elif name == 'depth_buffer':
                 depth_buffer = buffer
 
+        assert self.observation_type in ("rgb", "depth", "rgb_and_depth", "pos", "pos_and_vel")
+
         if self.observation_type == "rgb":
             image_ptr = rgb_buffer.getImageData()
             image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1], 3), np.uint8)
@@ -304,7 +307,7 @@ class CableClosingEnv(agx_env.AgxEnv):
             image_ptr = depth_buffer.getImageData()
             image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1]), np.float32)
             obs[:, :, 3] = np.flipud(image_data)
-        else:
+        elif self.observation_type == "pos":
             seg_pos = get_cable_segment_positions(cable=agxCable.Cable.find(self.sim, "DLO")).flatten()
             gripper_0 = self.sim.getRigidBody("gripper_0")
             gripper_1 = self.sim.getRigidBody("gripper_1")
@@ -314,6 +317,21 @@ class CableClosingEnv(agx_env.AgxEnv):
             goal_pos = to_numpy_array(obstacle_goal.getPosition())[0:2]
 
             obs = np.concatenate([gripper_0_pos, gripper_1_pos, seg_pos, goal_pos])
+
+        elif self.observation_type == "pos_and_vel":
+            seg_pos,seg_vel = get_cable_segment_positions_and_velocities(cable=agxCable.Cable.find(self.sim, "DLO"))
+            seg_pos = seg_pos.flatten()
+            seg_vel = seg_vel.flatten()
+            gripper_0 = self.sim.getRigidBody("gripper_0")
+            gripper_1 = self.sim.getRigidBody("gripper_1")
+            obstacle_goal = self.sim.getRigidBody("obstacle_goal")
+            gripper_0_pos = to_numpy_array(gripper_0.getPosition())[0:2]
+            gripper_1_pos = to_numpy_array(gripper_1.getPosition())[0:2]
+            gripper_0_vel= to_numpy_array(gripper_0.getVelocity())[0:2]
+            gripper_1_vel = to_numpy_array(gripper_1.getVelocity())[0:2]
+            goal_pos = to_numpy_array(obstacle_goal.getPosition())[0:2]
+
+            obs = np.concatenate([gripper_0_pos, gripper_1_pos, gripper_0_vel, gripper_1_vel, seg_pos, seg_vel, goal_pos])
 
         return obs
 

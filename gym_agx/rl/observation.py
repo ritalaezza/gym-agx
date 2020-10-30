@@ -274,13 +274,34 @@ def get_cable_segment_positions(cable):
     segment_iterator = cable.begin()
     for i in range(num_segments):
         if not segment_iterator.isEnd():
-            position = segment_iterator.getGeometry().getPosition()
+            position = segment_iterator.getRigidBody().getPosition()
             cable_positions[:, i] = to_numpy_array(position)
             segment_iterator.inc()
         else:
             logger.error('AGX segment iteration finished early. Number or cable segments may be wrong.')
 
     return cable_positions
+
+def get_cable_segment_positions_and_velocities(cable):
+    """Get AGX Cable segments' center of mass positions.
+    :param cable: AGX Cable object
+    :return: NumPy array with segments' positions
+    """
+    num_segments = cable.getNumSegments()
+    cable_positions = np.zeros(shape=(3, num_segments))
+    cable_velocities = np.zeros(shape=(3, num_segments))
+    segment_iterator = cable.begin()
+    for i in range(num_segments):
+        if not segment_iterator.isEnd():
+            position = segment_iterator.getRigidBody().getPosition()
+            velocity = segment_iterator.getRigidBody().getVelocity()
+            cable_positions[:, i] = to_numpy_array(position)
+            cable_velocities[:, i] = to_numpy_array(velocity)
+            segment_iterator.inc()
+        else:
+            logger.error('AGX segment iteration finished early. Number or cable segments may be wrong.')
+
+    return cable_positions, cable_velocities
 
 
 def get_ring_segment_positions(sim, ring_name, num_segments=None):

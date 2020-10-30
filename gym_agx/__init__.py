@@ -67,7 +67,7 @@ register(
 register(
     id='PegInHole-v0',
     entry_point='gym_agx.envs:PegInHoleEnv',
-    kwargs={'n_substeps': 2},
+    kwargs={'n_substeps': 5},
     max_episode_steps=int(200),
 )
 
@@ -75,12 +75,12 @@ register(
     id='RubberBand-v0',
     entry_point='gym_agx.envs:RubberBandEnv',
     kwargs={'n_substeps': 10},
-    max_episode_steps=int(500),
+    max_episode_steps=int(250),
 )
 
 register(
     id='CableClosing-v0',
     entry_point='gym_agx.envs:CableClosingEnv',
-    kwargs={'n_substeps': 10},
-    max_episode_steps=int(250),
+    kwargs={'n_substeps': 1},
+    max_episode_steps=int(150),
 )

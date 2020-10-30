@@ -27,16 +27,16 @@ logger = logging.getLogger('gym_agx.sims')
 
 FILE_NAME = "cable_closing"
 # Simulation parameters
-TIMESTEP = 1 / 1000
+TIMESTEP = 1 / 100
 N_SUBSTEPS = 20
 GRAVITY = True
 # Rubber band parameters
 LENGTH = 0.15
 DLO_CIRCLE_STEPS = 20
-RADIUS = 0.003  # meters
+RADIUS = 0.004  # meters
 RESOLUTION = 100  # segments per meter
 PEG_POISSON_RATIO = 0.1  # no unit
-YOUNG_MODULUS_BEND = 5e5
+YOUNG_MODULUS_BEND = 2.5e5
 YOUNG_MODULUS_TWIST = 1e6
 YOUNG_MODULUS_STRETCH = 5e6
 
@@ -240,20 +240,55 @@ def build_simulation():
     properties.setYoungsModulus(YOUNG_MODULUS_TWIST, agxCable.TWIST)
     properties.setYoungsModulus(YOUNG_MODULUS_STRETCH, agxCable.STRETCH)
 
-    dlo.add(agxCable.BodyFixedNode(gripper_0.getRigidBody("gripper_0"), agx.Vec3()))
-    dlo.add(agxCable.BodyFixedNode(gripper_1.getRigidBody("gripper_1"),  agx.Vec3()))
+    dlo.add(agxCable.FreeNode(gripper_0.getRigidBody("gripper_0").getPosition()))
+    dlo.add(agxCable.FreeNode(gripper_1.getRigidBody("gripper_1").getPosition()))
+    #
+    # hf = agx.HingeFrame()
+    # hf.setCenter(gripper_0.getRigidBody("gripper_0").getPosition())
+    # hf.setAxis(agx.Vec3(0,1,0))
+    # hinge_0 = agx.Hinge(hf, base_z, rot_y)
+    # agx.Hinge()
+
+
+    # dlo.add(agxCable.BodyFixedNode(gripper_0.getRigidBody("gripper_0"), agx.Vec3()))
+    # dlo.add(agxCable.BodyFixedNode(gripper_1.getRigidBody("gripper_1"),  agx.Vec3()))
 
     # Set angular damping for segments
     sim.add(dlo)
     segment_iterator = dlo.begin()
     n_segments = dlo.getNumSegments()
+    segments = []
     for i in range(n_segments):
         if not segment_iterator.isEnd():
             seg = segment_iterator.getRigidBody()
+            segments.append(seg)
             seg.setAngularVelocityDamping(2e4)
             segment_iterator.inc()
             mass_props = seg.getMassProperties()
             mass_props.setMass(1.25*mass_props.getMass())
+
+
+    s0 = segments[0]
+    s1 = segments[-1]
+
+    h0 = agx.HingeFrame()
+    h0.setCenter(gripper_0.getRigidBody("gripper_0").getPosition())
+    h0.setAxis(agx.Vec3(0,0,1))
+    l0 = agx.Hinge(h0, s0, gripper_0.getRigidBody("gripper_0") )
+    sim.add(l0)
+
+    h1 = agx.HingeFrame()
+    h1.setCenter(gripper_1.getRigidBody("gripper_1").getPosition())
+    h1.setAxis(agx.Vec3(0,0,1))
+    l1 = agx.Hinge(h1, s1, gripper_1.getRigidBody("gripper_1") )
+    sim.add(l1)
+
+    # f0 = agx.Frame()
+    # f1 = agx.Frame()
+    # l0 = agx.LockJoint(s0, f0, gripper_0.getRigidBody("gripper_0"), f1)
+    # l1 = agx.LockJoint(s1, f0, gripper_1.getRigidBody("gripper_1"), f1)
+    # sim.add(l0)
+    # sim.add(l1)
 
     # Try to initialize dlo
     report = dlo.tryInitialize()
@@ -325,7 +360,7 @@ def is_goal_reached(sim, segments_pos):
     # Check if grippers are close enough to each other
     position_g0 = to_numpy_array(sim.getRigidBody("gripper_0").getPosition())
     position_g1 = to_numpy_array(sim.getRigidBody("gripper_1").getPosition())
-    is_grippers_close = np.linalg.norm(position_g1-position_g0) < 0.01
+    is_grippers_close = np.linalg.norm(position_g1-position_g0) < 0.02
 
     if is_within_polygon and is_correct_height and is_grippers_close:
         return True

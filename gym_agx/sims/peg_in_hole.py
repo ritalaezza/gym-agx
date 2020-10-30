@@ -29,16 +29,16 @@ logger = logging.getLogger('gym_agx.sims')
 
 FILE_NAME = "peg_in_hole"
 # Simulation parameters
-TIMESTEP = 1 / 1000
+TIMESTEP = 1 / 500
 N_SUBSTEPS = 20
 GRAVITY = True
 # Rope parameters
-RADIUS = 0.001  # meters
-RESOLUTION = 800  # segments per meter
+RADIUS = 0.00975  # meters
+RESOLUTION = 100  # segments per meter
 PEG_POISSON_RATIO = 0.1  # no unit
-YOUNG_MODULUS_BEND = 1e4  # 1e5
-YOUNG_MODULUS_TWIST = 1e9  # 1e10
-YOUNG_MODULUS_STRETCH = 1e9  # Pascals
+YOUNG_MODULUS_BEND = 1e5  # 1e4
+YOUNG_MODULUS_TWIST = 1e6  # 1e10
+YOUNG_MODULUS_STRETCH = 1e8  # Pascals
 
 # Aluminum Parameters
 ALUMINUM_POISSON_RATIO = 0.35  # no unit
@@ -50,18 +50,17 @@ PACKAGE_DIR = os.path.split(FILE_DIR)[0]
 TEXTURE_GRIPPER_FILE = os.path.join(PACKAGE_DIR, "envs/assets/textures/texture_gripper.png")
 MESH_GRIPPER_FILE = os.path.join(PACKAGE_DIR, "envs/assets/meshes/mesh_gripper.obj")
 MESH_HOLLOW_CYLINDER_FILE = os.path.join(PACKAGE_DIR, "envs/assets/meshes/mesh_hollow_cylinder.obj")
-print(MESH_HOLLOW_CYLINDER_FILE)
 # Ground Parameters
-EYE = agx.Vec3(0, -0.1, 0.05)
-CENTER = agx.Vec3(0, 0, 0.02)
+EYE = agx.Vec3(0, -1, 0.2)
+CENTER = agx.Vec3(0, 0, 0.2)
 UP = agx.Vec3(0., 0., 1.0)
 
 # Control parameters
-JOINT_RANGES = {"t_x": [-0.01,0.01],
-                "t_y": [-0.005,0.005],
-                "t_z": [-0.025,0.0025],
+JOINT_RANGES = {"t_x": [-0.1,0.1],
+                "t_y": [-0.05,0.05],
+                "t_z": [-0.15,0.05],
                 "r_y": [(-1/4)*np.pi,(1/4)*np.pi]}
-FORCE_RANGES = {"t_x": [-0.2,0.2], "t_y": [-0.2,0.2], "t_z": [-0.2,0.2], "r_y": [-0.1,0.1]}
+FORCE_RANGES = {"t_x": [-5,5], "t_y": [-5,5], "t_z": [-5,5], "r_y": [-5,5]}
 
 
 def create_gripper_peg_in_hole(sim=None,
@@ -69,7 +68,7 @@ def create_gripper_peg_in_hole(sim=None,
                                material=None,
                                position=agx.Vec3(0.0, 0.0, 0.0),
                                geometry_transform=agx.AffineMatrix4x4(),
-                               geometry_scaling=agx.Matrix3x3(agx.Vec3(0.0045)),
+                               geometry_scaling=agx.Matrix3x3(agx.Vec3(0.045)),
                                joint_ranges=None,
                                force_ranges=None):
 
@@ -92,7 +91,7 @@ def create_gripper_peg_in_hole(sim=None,
     rotation_y_to_x.setRotate(agx.Vec3.Y_AXIS(), agx.Vec3.X_AXIS())
 
     base_z = create_body(name=name + "_base_z",
-                         shape=agxCollide.Cylinder(0.0025, 0.01),
+                         shape=agxCollide.Cylinder(0.005, 0.025),
                          position=position,
                          rotation=rotation_y_to_z,
                          motion_control=agx.RigidBody.DYNAMICS,
@@ -100,14 +99,14 @@ def create_gripper_peg_in_hole(sim=None,
     sim.add(base_z)
 
     base_y = create_body(name=name + "_base_y",
-                         shape=agxCollide.Cylinder(0.0025, 0.01),
+                         shape=agxCollide.Cylinder(0.005, 0.025),
                          position=position,
                          motion_control=agx.RigidBody.DYNAMICS,
                          disable_collisions=True)
     sim.add(base_y)
 
     base_x = create_body(name=name + "_base_x",
-                         shape=agxCollide.Cylinder(0.0025, 0.01),
+                         shape=agxCollide.Cylinder(0.005, 0.025),
                          position=position,
                          rotation=rotation_y_to_x,
                          motion_control=agx.RigidBody.DYNAMICS,
@@ -117,6 +116,10 @@ def create_gripper_peg_in_hole(sim=None,
     base_x_body = base_x.getRigidBody("gripper_base_x")
     base_y_body = base_y.getRigidBody("gripper_base_y")
     base_z_body = base_z.getRigidBody("gripper_base_z")
+
+    base_x_body.getGeometry("gripper_base_x").setEnableCollisions(False)
+    base_y_body.getGeometry("gripper_base_y").setEnableCollisions(False)
+    base_z_body.getGeometry("gripper_base_z").setEnableCollisions(False)
 
     # Add prismatic joints between bases
     joint_base_x = agx.Prismatic(agx.Vec3(1, 0, 0), base_x_body)
@@ -171,19 +174,19 @@ def create_gripper_peg_in_hole(sim=None,
     # Enable motors
     joint_base_x_motor = joint_base_x.getMotor1D()
     joint_base_x_motor.setEnable(True)
-    joint_base_x_motor.setLockedAtZeroSpeed(True)
+    joint_base_x_motor.setLockedAtZeroSpeed(False)
 
     joint_base_y_motor = joint_base_y.getMotor1D()
     joint_base_y_motor.setEnable(True)
-    joint_base_y_motor.setLockedAtZeroSpeed(True)
+    joint_base_y_motor.setLockedAtZeroSpeed(False)
 
     joint_base_z_motor = joint_base_z.getMotor1D()
     joint_base_z_motor.setEnable(True)
-    joint_base_z_motor.setLockedAtZeroSpeed(True)
+    joint_base_z_motor.setLockedAtZeroSpeed(False)
 
     joint_rot_y_motor = joint_rot_y.getMotor1D()
     joint_rot_y_motor.setEnable(True)
-    joint_rot_y_motor.setLockedAtZeroSpeed(True)
+    joint_rot_y_motor.setLockedAtZeroSpeed(False)
 
     # Set max forces in motors
     if force_ranges is not None:
@@ -271,14 +274,14 @@ def build_simulation():
     create_gripper_peg_in_hole(sim=sim,
                                name="gripper",
                                material=material_hard,
-                               position=agx.Vec3(0.0, 0.0, 0.04),
+                               position=agx.Vec3(0.0, 0.0, 0.35),
                                geometry_transform=agx.AffineMatrix4x4(),
                                joint_ranges=JOINT_RANGES,
                                force_ranges=FORCE_RANGES
                                )
 
     # Create hollow cylinde with hole
-    scaling_cylinder = agx.Matrix3x3(agx.Vec3(0.004))
+    scaling_cylinder = agx.Matrix3x3(agx.Vec3(0.0275))
     hullMesh = agxUtil.createTrimeshFromWavefrontOBJ(MESH_HOLLOW_CYLINDER_FILE,0, scaling_cylinder)
     hullGeom = agxCollide.Geometry(hullMesh,  agx.AffineMatrix4x4.rotate(agx.Vec3(0,1,0),agx.Vec3(0,0,1)))
     hollow_cylinder = agx.RigidBody("hollow_cylinder")
@@ -300,9 +303,9 @@ def build_simulation():
 
     # Add connection between cable and gripper
     tf_0 = agx.AffineMatrix4x4()
-    tf_0.setTranslate(0.0 ,0, 0.0075)
+    tf_0.setTranslate(0.0 ,0, 0.075)
     peg.add(agxCable.BodyFixedNode(sim.getRigidBody("gripper_body"),tf_0))
-    peg.add(agxCable.FreeNode(0.0,0.0,0.010))
+    peg.add(agxCable.FreeNode(0.0,0.0,0.1))
 
     sim.add(peg)
 
@@ -311,7 +314,7 @@ def build_simulation():
     for i in range(n_segments):
         if not segment_iterator.isEnd():
             seg = segment_iterator.getRigidBody()
-            seg.setAngularVelocityDamping(5e3)
+            seg.setAngularVelocityDamping(1e3)
             segment_iterator.inc()
 
 
@@ -340,12 +343,12 @@ def build_simulation():
     motor_y = sim.getConstraint1DOF("gripper_joint_base_y").getMotor1D()
     motor_z = sim.getConstraint1DOF("gripper_joint_base_z").getMotor1D()
     motor_rot_y = sim.getConstraint1DOF("gripper_joint_rot_y").getMotor1D()
-    key_motor_map = {agxSDK.GuiEventListener.KEY_Up: (motor_y, 0.05),
-                     agxSDK.GuiEventListener.KEY_Down: (motor_y, -0.05),
-                     agxSDK.GuiEventListener.KEY_Right: (motor_x, 0.05),
-                     agxSDK.GuiEventListener.KEY_Left: (motor_x, -0.05),
-                     65365: (motor_z, 0.05),
-                     65366: (motor_z, -0.05),
+    key_motor_map = {agxSDK.GuiEventListener.KEY_Up: (motor_y, 0.5),
+                     agxSDK.GuiEventListener.KEY_Down: (motor_y, -0.5),
+                     agxSDK.GuiEventListener.KEY_Right: (motor_x, 0.5),
+                     agxSDK.GuiEventListener.KEY_Left: (motor_x, -0.5),
+                     65365: (motor_z, 0.5),
+                     65366: (motor_z, -0.5),
                      120: (motor_rot_y, 5),
                      121: (motor_rot_y, -5)}
     sim.add(KeyboardMotorHandler(key_motor_map))
@@ -388,9 +391,9 @@ def is_goal_reached(sim):
 
             if i >= n_segments/2:
                 # Return False if segment is ouside bounds
-                if not (cylinder_pos[0]-0.003 <= p[0] <= cylinder_pos[0]+0.003 and
-                        cylinder_pos[1]-0.003 <= p[1] <= cylinder_pos[1]+0.003 and
-                        -0.01 <= p[2] <=0.006):
+                if not (cylinder_pos[0]-0.015 <= p[0] <= cylinder_pos[0]+0.015 and
+                        cylinder_pos[1]-0.015 <= p[1] <= cylinder_pos[1]+0.015 and
+                        -0.1 <= p[2] <=0.07):
                     return False
 
     return True
@@ -406,9 +409,9 @@ def determine_n_segments_inserted(segment_pos, cylinder_pos):
     n_inserted = 0
     for p in segment_pos:
         # Return False if segment is ouside bounds
-        if cylinder_pos[0]-0.003 <= p[0] <= cylinder_pos[0]+0.003 and \
-            cylinder_pos[1]-0.003 <= p[1] <= cylinder_pos[1]+ 0.003 and \
-                -0.01 <= p[2] <=0.006:
+        if cylinder_pos[0]-0.015 <= p[0] <= cylinder_pos[0]+0.015 and \
+            cylinder_pos[1]-0.015 <= p[1] <= cylinder_pos[1]+ 0.015 and \
+                -0.1 <= p[2] <=0.07:
             n_inserted +=1
     return n_inserted
 
@@ -446,13 +449,14 @@ def main(args):
     app.setCameraHome(EYE, CENTER, UP)
     app.initSimulation(sim, True)
 
-    cylinder_pos_x = np.random.uniform(-0.01, 0.01)
-    cylinder_pos_y = np.random.uniform(0.005, 0.005)
+    cylinder_pos_x = np.random.uniform(-0.1, 0.1)
+    cylinder_pos_y = np.random.uniform(0.05, 0.05)
+
     cylinder = sim.getRigidBody("hollow_cylinder")
     cylinder.setPosition(agx.Vec3(cylinder_pos_x, cylinder_pos_y, 0.0))
 
     segment_pos_old = compute_segments_pos(sim)
-    reward_type = "sparse"
+    reward_type = "dense"
 
     for _ in range(10000):
         sim.stepForward()
@@ -462,7 +466,7 @@ def main(args):
         segment_pos = compute_segments_pos(sim)
 
         # Compute reward
-        if reward_type == "dense":
+        if reward_type == "sparse":
             reward, goal_reached = compute_dense_reward_and_check_goal(sim, segment_pos, segment_pos_old)
         else:
             goal_reached = is_goal_reached(sim)

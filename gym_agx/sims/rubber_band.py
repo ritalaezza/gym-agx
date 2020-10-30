@@ -31,17 +31,17 @@ TIMESTEP = 1 / 1000
 N_SUBSTEPS = 20
 GRAVITY = True
 # Rubber band parameters
-DIAMETER = 0.025
+DIAMETER = 0.0225
 DLO_CIRCLE_STEPS = 20
 RADIUS = 0.001  # meters
-RESOLUTION = 800  # segments per meter
+RESOLUTION = 750  # segments per meter
 PEG_POISSON_RATIO = 0.1  # no unit
-YOUNG_MODULUS_BEND = 0.5e6
-YOUNG_MODULUS_TWIST = 0.5e6
-YOUNG_MODULUS_STRETCH = 0.5e6
+YOUNG_MODULUS_BEND = 1e6
+YOUNG_MODULUS_TWIST = 1e6
+YOUNG_MODULUS_STRETCH = 6e5
 
-GROUND_LENGTH_X = 0.025
-GROUND_LENGTH_Y = 0.025
+GROUND_LENGTH_X = 0.02
+GROUND_LENGTH_Y = 0.02
 GROUND_HEIGHT = 0.0025
 
 # Aluminum Parameters
@@ -49,7 +49,7 @@ ALUMINUM_POISSON_RATIO = 0.35  # no unit
 ALUMINUM_YOUNG_MODULUS = 69e9  # Pascals
 ALUMINUM_YIELD_POINT = 5e7  # Pascals
 
-POLE_POSITION_OFFSETS = [[0.0, 0.012], [-0.012, -0.012],[0.012, -0.012]]
+POLE_POSITION_OFFSETS = [[0.0, 0.01], [-0.01, -0.01],[0.01, -0.01]]
 POLE_RADIUS = 0.003
 
 # Ground Parameters
@@ -64,7 +64,10 @@ GOAL_MAX_Z = 0.0125
 GRIPPER_HEIGHT = 0.025
 MAX_X = 0.01
 MAX_Y = 0.01
-
+GRIPPER_MAX_X = 0.0275
+GRIPPER_MAX_Y = 0.0275
+GRIPPER_MIN_Z = -0.035
+GRIPPER_MAX_Z = 0.007
 
 def create_pole(id, sim, position, material):
 
@@ -173,8 +176,7 @@ def build_simulation():
                                                              GROUND_LENGTH_Y,
                                                              GROUND_HEIGHT),
                          position=agx.Vec3(0, 0, -0.005),
-                         motion_control=agx.RigidBody.STATIC,
-                         material=material_hard)
+                         motion_control=agx.RigidBody.STATIC)
     sim.add(ground)
 
     # Creates poles
@@ -193,9 +195,9 @@ def build_simulation():
 
     #Create base for pusher motors
     prismatic_base = create_locked_prismatic_base("gripper", gripper.getRigidBody("gripper"),
-                                                  position_ranges=[(-MAX_X-GROUND_LENGTH_X/2.0, MAX_X+GROUND_LENGTH_X/2.0),
-                                                                   (-MAX_Y-GROUND_LENGTH_Y/2.0, MAX_Y+GROUND_LENGTH_Y/2.0),
-                                                                   (-0.035, 0.01)],
+                                                  position_ranges=[(-GRIPPER_MAX_X, GRIPPER_MAX_X),
+                                                                   (-GRIPPER_MAX_Y, GRIPPER_MAX_Y),
+                                                                   (GRIPPER_MIN_Z, GRIPPER_MAX_Z)],
                                                   motor_ranges=[(-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE),
                                                                 (-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE),
                                                                 (-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE)])
@@ -386,6 +388,7 @@ def main(args):
 
     # Set random obstacle position
     center_pos = np.random.uniform([-MAX_X, -MAX_Y], [MAX_X, MAX_Y])
+    center_pos = np.array([-MAX_X, -MAX_Y])
     set_center_obstacle(sim, center_pos)
 
     for _ in range(10000):

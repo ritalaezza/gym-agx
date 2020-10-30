@@ -3,6 +3,7 @@ import logging
 import os
 import numpy as np
 
+import agxSDK
 import agx
 import agxCable
 import agxOSG
@@ -11,7 +12,7 @@ from agxPythonModules.utils.numpy_utils import create_numpy_array
 from gym_agx.utils.utils import point_inside_polygon, all_points_below_z
 
 from gym_agx.envs import agx_env
-from gym_agx.rl.observation import get_cable_segment_positions
+from gym_agx.rl.observation import get_cable_segment_positions, get_cable_segment_positions_and_velocities
 from gym_agx.rl.end_effector import EndEffector, EndEffectorConstraint
 from gym_agx.utils.agx_classes import CameraConfig
 from gym_agx.utils.agx_utils import to_numpy_array
@@ -274,8 +275,6 @@ class RubberBandEnv(agx_env.AgxEnv):
         scene_decorator.setBackgroundColor(agxRender.Color(1.0, 1.0, 1.0, 1.0))
 
     def _get_observation(self):
-        # TODO use modular structure for observations and allow different type of observations
-
         rgb_buffer = None
         depth_buffer = None
         for buffer in self.render_to_image:
@@ -284,6 +283,8 @@ class RubberBandEnv(agx_env.AgxEnv):
                 rgb_buffer = buffer
             elif name == 'depth_buffer':
                 depth_buffer = buffer
+
+        assert self.observation_type in ("rgb", "depth", "rgb_and_depth", "pos", "pos_and_vel")
 
         if self.observation_type == "rgb":
             image_ptr = rgb_buffer.getImageData()
@@ -304,12 +305,24 @@ class RubberBandEnv(agx_env.AgxEnv):
             image_ptr = depth_buffer.getImageData()
             image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1]), np.float32)
             obs[:, :, 3] = np.flipud(image_data)
-        else:
+        elif self.observation_type == "pos":
+
+            goal_pos  = to_numpy_array(self.sim.getRigidBody("ground").getPosition())[0:2]
             seg_pos = get_cable_segment_positions(cable=agxCable.Cable.find(self.sim, "DLO")).flatten()
             gripper = self.sim.getRigidBody("gripper")
             gripper_pos = to_numpy_array(gripper.getPosition())[0:3]
+            obs = np.concatenate([gripper_pos, seg_pos, goal_pos])
 
-            obs = np.concatenate([gripper_pos, seg_pos])
+        elif self.observation_type == "pos_and_vel":
+            goal_pos = to_numpy_array(self.sim.getRigidBody("ground").getPosition())[0:2]
+            seg_pos, seg_vel = get_cable_segment_positions_and_velocities(cable=agxCable.Cable.find(self.sim, "DLO"))
+            seg_pos = seg_pos.flatten()
+            seg_vel = seg_vel.flatten()
+            gripper = self.sim.getRigidBody("gripper")
+            gripper_pos = to_numpy_array(gripper.getPosition())[0:3]
+            gripper_vel = to_numpy_array(gripper.getVelocity())[0:3]
+
+            obs = np.concatenate([gripper_pos, gripper_vel, seg_pos, seg_vel, goal_pos])
 
         return obs
 
