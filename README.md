@@ -1,6 +1,6 @@
 # Gym AGX
 
-This project contains an OpenAI Gym interface for the [AGX Dynamics](https://www.algoryx.se/agx-dynamics/?utm_term=agx%20dynamics&utm_campaign=AGX&utm_source=adwords&utm_medium=ppc&hsa_acc=3676762440&hsa_cam=10062947755&hsa_grp=102831328442&hsa_ad=435384703433&hsa_src=g&hsa_tgt=kwd-906704179615&hsa_kw=agx%20dynamics&hsa_mt=b&hsa_net=adwords&hsa_ver=3&gclid=Cj0KCQjwlvT8BRDeARIsAACRFiXDJcSOP7NdKyqL4_VEyteCktN5P2D58gd0qkDZFetd2rrbhlN1gcIaAuO4EALw_wcB) simulation software.
+OpenAI Gym interface for the [AGX Dynamics](https://www.algoryx.se/agx-dynamics/?utm_term=agx%20dynamics&utm_campaign=AGX&utm_source=adwords&utm_medium=ppc&hsa_acc=3676762440&hsa_cam=10062947755&hsa_grp=102831328442&hsa_ad=435384703433&hsa_src=g&hsa_tgt=kwd-906704179615&hsa_kw=agx%20dynamics&hsa_mt=b&hsa_net=adwords&hsa_ver=3&gclid=Cj0KCQjwlvT8BRDeARIsAACRFiXDJcSOP7NdKyqL4_VEyteCktN5P2D58gd0qkDZFetd2rrbhlN1gcIaAuO4EALw_wcB) simulation software.
 
 ## ReForm
 
