@@ -20,7 +20,7 @@ BendWire                   |  BendWireObstacle         |  PushRope
 
 PigInHole                   |  CableClosing         |  RubberBand
 :-------------------------:|:-------------------------:|:-------------------------:
-<img src="https://drive.google.com/uc?export=view&id=1OT4GVt3xCTo2mkpzOVuaASToH36y2Jde" width="200"> | <img src="https://drive.google.com/uc?export=view&id=1XtOxhQP2ZN2vWk43UJ7Op4g_d-gkBfw4" width="200"> | <img src="https://drive.google.com/uc?export=view&id=1halbLByFBRG6yQ0wG-icG46lCcOL3Pw4" width="200">
+<img src="https://drive.google.com/uc?export=view&id=1oENntc7lSrSpt09vUci-xWGkyPGgRqIp" width="200"> | <img src="https://drive.google.com/uc?export=view&id=1ZEuetvAu7JIiFZ4qBMtKgsnQ9lqkyeAp" width="200"> | <img src="https://drive.google.com/uc?export=view&id=1-Yij-Fqg48IL3u4VgPVXUo5wuFyxfSVL" width="200">
 
 ## Getting Started
 
