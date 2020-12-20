@@ -4,12 +4,16 @@ import agx
 import logging
 import numpy as np
 
+import agxIO
+import agxSDK
+
 from gym_agx.envs import dlo_env
 from gym_agx.rl.observation import ObservationConfig
 from gym_agx.rl.reward import RewardConfig
 from gym_agx.utils.agx_classes import CameraConfig
 from gym_agx.rl.end_effector import EndEffector, EndEffectorConstraint
 from gym_agx.utils.utils import goal_distance
+from gym_agx.sims import bend_wire_obstacle_random_goal
 
 FILE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 PACKAGE_DIRECTORY = os.path.split(FILE_DIRECTORY)[0]
@@ -151,6 +155,7 @@ class BendWireObstacleEnv(dlo_env.DloEnv):
         show_goal = kwargs['show_goal'] if 'show_goal' in kwargs else False
         osg_window = kwargs['osg_window'] if 'osg_window' in kwargs else False
         agx_only = kwargs['agx_only'] if 'agx_only' in kwargs else False
+        randomized_goal = kwargs['randomized_goal'] if 'randomized_goal' in kwargs else False
 
         if not os.path.exists(SCENE_PATH):
             raise IOError("File %s does not exist" % SCENE_PATH)
@@ -163,8 +168,34 @@ class BendWireObstacleEnv(dlo_env.DloEnv):
                                                   observation_config=observation_config,
                                                   camera_config=camera_config,
                                                   reward_config=reward_config,
-                                                  randomized_goal=False,
+                                                  randomized_goal=randomized_goal,
                                                   goal_scene_path=GOAL_SCENE_PATH,
                                                   show_goal=show_goal,
                                                   osg_window=osg_window,
                                                   agx_only=agx_only)
+
+    def _sample_goal(self):
+
+        if self.randomized_goal:
+            goal_cable_length, goal_cable_segments = bend_wire_obstacle_random_goal.add_goal(self.sim, logger)
+            logger.info(f"Added goal cable consisting of {goal_cable_segments} segments "
+                        f"with a total length of {goal_cable_length}.")
+
+        else:
+            scene = agxSDK.Assembly()  # Create a new empty Assembly
+            scene.setName("goal_assembly")
+
+            if not agxIO.readFile(self.goal_scene_path, self.sim, scene, agxSDK.Simulation.READ_ALL):
+                raise RuntimeError("Unable to open goal file \'" + self.goal_scene_path + "\'")
+
+            self.sim.add(scene)
+
+        goal = self.observation_config.get_observations(self.sim, self.render_to_image, self.end_effectors, cable="DLO",
+                                                        goal_only=True)
+
+        if self.show_goal:
+            self._add_rendering()
+        else:
+            self._reset_sim()
+
+        return goal
