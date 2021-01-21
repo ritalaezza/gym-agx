@@ -36,7 +36,10 @@ def add_goal(sim, logger):
     new_node_y = random.uniform((-0.9 * LENGTH + RADIUS), (0.9 * LENGTH - RADIUS))
 
     # compute angle pointing towards center
-    rope_angle = math.atan2(-new_node_y, -new_node_x)
+    # rope_angle = math.atan2(-new_node_y, -new_node_x)
+
+    # Uniformly distributed initial angle
+    rope_angle = random.uniform(-math.pi, math.pi)
 
     rope.add(agxCable.FreeNode(new_node_x, new_node_y, rope_z))
 

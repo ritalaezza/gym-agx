@@ -20,7 +20,7 @@ N_SUBSTEPS = 2
 TIMESTEP = 1 / 100
 GRAVITY = True
 RADIUS = 0.001
-LENGTH = 0.3  # meters # ?? INITAIL LENGTH
+LENGTH = 0.3  # meters
 LENGTH += 2 * RADIUS  # meters
 RESOLUTION = 300  # segments per meter
 CYLINDER_LENGTH = 0.1
@@ -205,21 +205,70 @@ def add_goal(sim, logger):
     right_gripper = sim.getRigidBody("gripper_right_goal")
     left_gripper = sim.getRigidBody("gripper_left_goal")
 
-    # Randomize the goal end position in a safe space
-    x_right = np.random.uniform(CYLINDER_RADIUS/8, LENGTH/2)
-    y_right = np.random.uniform(-CYLINDER_LENGTH, CYLINDER_LENGTH)
-    z_right = np.random.uniform(-3*CYLINDER_RADIUS, -10 * CYLINDER_RADIUS)
+    x_right = LENGTH / 2
+    y_right = 0
+    z_right = 0
 
-    x_left = np.random.uniform(-CYLINDER_RADIUS/8, -LENGTH/2)
-    y_left = np.random.uniform(-CYLINDER_LENGTH, CYLINDER_LENGTH)
-    z_left = np.random.uniform(-3*CYLINDER_RADIUS, -10 * CYLINDER_RADIUS)
+    x_left = -LENGTH / 2
+    y_left = 0
+    z_left = 0
 
-    # Check the distance between the random end positions
-    distance = np.linalg.norm(np.array([x_left, y_left, z_left]) - np.array([x_right, y_right, z_right]))
-    while distance > LENGTH:
-        # Randomize a new coordinate and compute the new distance
+    coords_allowed = False
+    counter = 1
+
+    while not coords_allowed:
+
+        # Randomize the goal end position in a safe space
+        x_right = np.random.uniform(CYLINDER_RADIUS, LENGTH / 2)
+        y_right = np.random.uniform(-CYLINDER_LENGTH, CYLINDER_LENGTH)
+        z_right = np.random.uniform(-3 * CYLINDER_RADIUS, -10 * CYLINDER_RADIUS)
+
+        x_left = np.random.uniform(-CYLINDER_RADIUS, -LENGTH / 2)
+        y_left = np.random.uniform(-CYLINDER_LENGTH, CYLINDER_LENGTH)
         z_left = np.random.uniform(-3 * CYLINDER_RADIUS, -10 * CYLINDER_RADIUS)
-        distance = np.linalg.norm(np.array([x_left, y_left, z_left]) - np.array([x_right, y_right, z_right]))
+
+        # print(f"LEFT:\t[{x_left}, {y_left}, {z_left}]")
+        # print(f"RIGHT:\t[{x_right}, {y_right}, {z_right}]")
+
+        # To comply with the length constraint, we approximate the minimum wire length by assuming a cuboid obstacle
+        # Start by calculating the relevant "per-coordinate" distances
+        x_dist = x_right - x_left
+        y_dist = y_right - y_left
+
+        # which ratio of the entire x distance lies to the left of / on / to the right of the obstacle?
+        x_ratio_left = (-CYLINDER_RADIUS - x_left) / x_dist
+        x_ratio_obstacle = (2 * CYLINDER_RADIUS) / x_dist
+        # x_ratio_right = (x_right - CYLINDER_RADIUS) / x_dist  # only used for verification
+
+        # use these ratios to determine the respective y distance crossed (assuming a straight x-y-connection)
+        y_dist_left = x_ratio_left * y_dist
+        y_dist_obstacle = x_ratio_obstacle * y_dist
+        # y_dist_right = x_ratio_right * y_dist  # only used for verification
+
+        # this gives us the coordinates of the cable on both top edges of the imaginary cuboid
+        # Note: x and z are predetermined (+/- CYLINDER_RADIUS and -CYLINDER_RADIUS respectively)
+        y_cuboid_left = y_left + y_dist_left
+        y_cuboid_right = y_cuboid_left + y_dist_obstacle
+
+        left_gripper_coords = np.array([x_left, y_left, z_left])
+        left_cuboid_coords = np.array([-CYLINDER_RADIUS, y_cuboid_left, -CYLINDER_RADIUS])
+
+        right_cuboid_coords = np.array([CYLINDER_RADIUS, y_cuboid_right, -CYLINDER_RADIUS])
+        right_gripper_coords = np.array([x_right, y_right, z_right])
+
+        # Minimal length approximation:
+        length_left = np.linalg.norm(left_gripper_coords - left_cuboid_coords)
+        length_obst = np.linalg.norm(right_cuboid_coords - left_cuboid_coords)
+        length_right = np.linalg.norm(right_gripper_coords - right_cuboid_coords)
+
+        length_approx = length_left + length_obst + length_right
+
+        if length_approx < LENGTH:
+            logger.info(f"Found valid coordinate combination! Number of tries: {counter}\n"
+                        f"Approximated minimal length is ~{round(length_approx/LENGTH*100)}% of the wire length.")
+            coords_allowed = True
+        else:
+            counter += 1
 
     goal_end_position_right = np.array([x_right, y_right, z_right])
     goal_end_position_left = np.array([x_left, y_left, z_left])

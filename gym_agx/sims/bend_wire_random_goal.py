@@ -181,26 +181,47 @@ def add_goal(sim, logger):
     left_gripper_distance = 0.002  # in meters
     start_distance = np.linalg.norm(start_position - left_gripper_distance)
 
-    # methodology of length(and hemisphere) constraint
-    r = np.arange(2)
-    phi = np.arange(2)
-    theta = np.arange(2)
-    for m in r:
-        r[m] = random.randint(2, LENGTH * 100)  # we multiply by a 100 to scale it in integer values
-        phi[m] = random.randint(1, 180)
-        theta[m] = random.randint(1, 180)
+    # Uniform sampling in a cuboid then checking the LENGTH-constraint
 
-    # calculation of trajectory coordinates
-    x_1 = r[0] * np.sin(theta[0]) * np.sin(phi[0]) * 0.01  # /100 because of r, line 346!
-    y_1 = r[0] * np.sin(theta[0]) * np.cos(phi[0]) * 0.01
-    z_1 = r[0] * np.cos(theta[0]) * 0.01
-    x_2 = r[1] * np.sin(theta[1]) * np.sin(phi[1]) * 0.01
-    y_2 = r[1] * np.sin(theta[1]) * np.cos(phi[1]) * 0.01
-    z_2 = r[1] * np.cos(theta[1]) * 0.01
+    intermediate_found = False
+    x_1 = 0
+    y_1 = 0
+    z_1 = 0
+    r_1 = 0
+    while not intermediate_found:
+        x_1 = random.uniform(LENGTH/20, LENGTH)
+        y_1 = random.uniform(-LENGTH, LENGTH)
+        z_1 = random.uniform(-LENGTH, LENGTH)
+
+        r_1 = np.linalg.norm([x_1, y_1, z_1])
+
+        if r_1 <= LENGTH:
+            intermediate_found = True
+
+    logger.info(f"Intermediate position has normalized coordinates "
+                f"[{round(x_1/LENGTH*100)/100}, {round(y_1/LENGTH*100)/100}, {round(z_1/LENGTH*100)/100}] - "
+                f"normalized distance to left gripper is: {round(r_1/LENGTH*100)/100}")
+
+    final_found = False
+    x_2 = 0
+    y_2 = 0
+    z_2 = 0
+    r_2 = 0
+    while not final_found:
+        x_2 = random.uniform(LENGTH / 20, LENGTH)
+        y_2 = random.uniform(-LENGTH, LENGTH)
+        z_2 = random.uniform(-LENGTH, LENGTH)
+
+        r_2 = np.linalg.norm([x_2, y_2, z_2])
+
+        if r_2 <= LENGTH:
+            final_found = True
+
+    logger.info(f"Final position has normalized coordinates "
+                f"[{round(x_2/LENGTH*100)/100}, {round(y_2/LENGTH*100)/100}, {round(z_2/LENGTH*100)/100}] - "
+                f"normalized distance to left gripper is: {round(r_2/LENGTH*100)/100}")
 
     end_position = [x_1, y_1, z_1]
-    if np.linalg.norm(end_position) >= LENGTH:
-        end_position = [0, 0, 0]
 
     velocity = np.zeros_like(start_position)
     velocities = [velocity * 100]
