@@ -42,6 +42,12 @@ register(
     kwargs={'n_substeps': 2},
     max_episode_steps=int(1000),
 )
+register(
+    id='BendWireYuMi-v0',
+    entry_point='gym_agx.envs:BendWireYuMiEnv',
+    kwargs={'n_substeps': 20},
+    max_episode_steps=int(1000),
+)
 
 register(
     id='BendWireObstacle-v0',

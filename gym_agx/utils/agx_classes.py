@@ -97,3 +97,44 @@ class HelpListener(agxSDK.StepEventListener):
                 self.app.getSceneDecorator().setText(start_row + i - 1, v, agx.Vec4f(0.3, 0.6, 0.7, 1))
 
         self.app.getSceneDecorator().setText(self.row, "Press e to start simulation", agx.Vec4f(0.3, 0.6, 0.7, 1))
+
+
+class ContactEventListenerRigidBody(agxSDK.ContactEventListener):
+    def __init__(self, name, rigid_body, objects_to_ignore):
+        """Contact event listener for rigid-body.
+        :param String name: agx name for the event listener
+        :param agx.RigidBody rigid_body: the rigid-body for which the collision is checked
+        :param list objects_to_ignore: list of strings of geometry names to ignore, does not change actual contact only
+        if the event listener ignores it
+        :return: Bool for collision
+        """
+        super().__init__(agxSDK.ContactEventListener.ALL)
+        self.contactState = False
+        self.setName(name)
+        self.objects_to_ignore = objects_to_ignore
+        self.objects_to_ignore_range = range(len(self.objects_to_ignore))
+        self.setFilter(agxSDK.RigidBodyFilter(rigid_body))
+
+    def impact(self, time, contact):
+        for i in self.objects_to_ignore_range:
+            if contact.geometry(0).getName() == self.objects_to_ignore[i] or contact.geometry(1).getName() == \
+                    self.objects_to_ignore[i]:
+                return agxSDK.ContactEventListener.KEEP_CONTACT
+        self.contactState = True
+        return agxSDK.ContactEventListener.KEEP_CONTACT
+
+    def contact(self, time, contact):
+        for i in self.objects_to_ignore_range:
+            if contact.geometry(0).getName() == self.objects_to_ignore[i] or contact.geometry(1).getName() == \
+                    self.objects_to_ignore[i]:
+                return agxSDK.ContactEventListener.KEEP_CONTACT
+        self.contactState = True
+        return agxSDK.ContactEventListener.KEEP_CONTACT
+
+    def separation(self, time, contact_pair):
+        for i in self.objects_to_ignore_range:
+            if contact_pair.first().getName() == self.objects_to_ignore[i] or contact_pair.second().getName() == \
+                    self.objects_to_ignore[i]:
+                print('name: ', contact_pair.first().getName(), contact_pair.second().getName())
+                return
+        self.contactState = False

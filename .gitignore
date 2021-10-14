@@ -12,6 +12,7 @@ logs/
 # Extensions:
 *.pyc
 *.aagx
+*.agx
 *.h5f
 
 # Ignore files

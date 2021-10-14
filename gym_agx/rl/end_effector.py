@@ -58,6 +58,7 @@ class EndEffector:
         :param float min_compliance: Minimum compliance of the end-effector grip.
         :param float max_compliance: Maximum compliance of the end-effector grip.
         """
+        self.type = "EndEffector"
         self.name = name
         self.controllable = controllable
         self.observable = observable

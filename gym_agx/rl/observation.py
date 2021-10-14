@@ -25,6 +25,9 @@ class ObservationConfig:
         EE_ROTATION = "ee_rotation"
         EE_VELOCITY = "ee_velocity"
         EE_ANGULAR_VELOCITY = "ee_angular_velocity"
+        JOINT_VELOCITY = "joint_velocity"
+        JOINT_POSITION = "joint_position"
+        YUMI_CONTACT_LISTENER = "yumi_contact_listener"
 
     def __init__(self, goals, observations=None):
         """Initialize observation configuration object with list of observations and goal type.
@@ -110,7 +113,7 @@ class ObservationConfig:
             elif gobs == self.ObservationType.EE_FORCE_TORQUE:
                 ee_force_torque = dict()
                 for ee in end_effectors:
-                    if ee.observable:
+                    if ee.observable and ee.type == 'EndEffector':
                         force_torque = dict()
                         for key, constraint in ee.constraints.items():
                             if constraint.compute_forces_enabled:
@@ -123,14 +126,14 @@ class ObservationConfig:
             elif gobs == self.ObservationType.EE_VELOCITY:
                 ee_velocity = dict()
                 for ee in end_effectors:
-                    if ee.observable:
+                    if ee.observable and ee.type == 'EndEffector':
                         ee_velocity[ee.name] = get_rigid_body_velocity(sim, ee.name + goal_string)
                 assert ee_velocity, "At least one of the end-effectors must be observable to obtain velocity."
                 goal_obs[gobs.value] = ee_velocity
             elif gobs == self.ObservationType.EE_ANGULAR_VELOCITY:
                 ee_angular_velocity = dict()
                 for ee in end_effectors:
-                    if ee.observable:
+                    if ee.observable and ee.type == 'EndEffector':
                         ee_angular_velocity[ee.name] = get_rigid_body_angular_velocity(sim, ee.name + goal_string)
                 assert ee_angular_velocity, "At least one of the end-effectors must be observable to obtain angular " \
                                             "velocity."
@@ -138,17 +141,35 @@ class ObservationConfig:
             elif gobs == self.ObservationType.EE_POSITION:
                 ee_position = dict()
                 for ee in end_effectors:
-                    if ee.observable:
+                    if ee.observable and ee.type == 'EndEffector':
                         ee_position[ee.name] = get_rigid_body_position(sim, ee.name + goal_string)
                 assert ee_position, "At least one of the end-effectors must be observable to obtain position."
                 goal_obs[gobs.value] = ee_position
             elif gobs == self.ObservationType.EE_ROTATION:
                 ee_rotation = dict()
                 for ee in end_effectors:
-                    if ee.observable:
+                    if ee.observable and ee.type == 'EndEffector':
                         ee_rotation[ee.name] = get_rigid_body_rotation(sim, ee.name + goal_string)
                 assert ee_rotation, "At least one of the end-effectors must be observable to obtain rotation."
                 goal_obs[gobs.value] = ee_rotation
+            elif gobs == self.ObservationType.JOINT_VELOCITY:
+                joint_velocity = dict()
+                for joint_entity in end_effectors:
+                    if joint_entity.observable and joint_entity.type == 'JointObject':
+                        for key, constraint in joint_entity.constraints.items():
+                            joint_velocity[key] = get_joint_velocity(sim, key + goal_string)
+                assert joint_velocity, "At least one of the end-effectors must be observable to obtain rotation."
+                goal_obs[gobs.value] = joint_velocity
+            elif gobs == self.ObservationType.JOINT_POSITION:
+                joint_position = dict()
+                for joint_entity in end_effectors:
+                    if joint_entity.observable and joint_entity.type == 'JointObject':
+                        for key, constraint in joint_entity.constraints.items():
+                            joint_position[key] = get_joint_position(sim, key + goal_string)
+                assert joint_position, "At least one of the end-effectors must be observable to obtain rotation."
+                goal_obs[gobs.value] = joint_position
+            elif gobs == self.ObservationType.YUMI_CONTACT_LISTENER:
+                goal_obs[gobs.value] = get_yumi_contact_event(sim)
 
         achieved_goal = dict()
         for goal in self.goals:
@@ -243,6 +264,22 @@ class ObservationConfig:
         self.observations.add(self.ObservationType.EE_VELOCITY)
         self.observations.add(self.ObservationType.EE_ANGULAR_VELOCITY)
         self.observations.add(self.ObservationType.EE_FORCE_TORQUE)
+
+    def set_joint_position(self):
+        self.observations.add(self.ObservationType.JOINT_POSITION)
+
+    def set_joint_velocity(self):
+        self.observations.add(self.ObservationType.JOINT_VELOCITY)
+
+    def set_yumi_contact_listener(self):
+        self.observations.add(self.ObservationType.YUMI_CONTACT_LISTENER)
+
+def get_joint_velocity(sim, name):
+    return np.array(sim.getConstraint1DOF(name).getCurrentSpeed())
+
+
+def get_joint_position(sim, name):
+    return np.array(sim.getConstraint1DOF(name).getAngle())
 
 
 def get_cable_segment_rotations(cable):
@@ -399,3 +436,14 @@ def get_constraint_force_torque(sim, name, constraint_name):
     logger.debug("Constraint {}, force: {}, torque: {}".format(constraint_name, force, torque))
 
     return np.concatenate((force, torque))
+
+
+def get_yumi_contact_event(sim):
+    contact = False
+    yumi_rb_names = ['contact_gripper_r_finger_r', 'contact_gripper_r_finger_l']
+    for i in range(len(yumi_rb_names)):
+        contact = contact or sim.getEventListener(yumi_rb_names[i]).contactState
+    if contact:
+        return np.array(1)
+    else:
+        return np.array(0)

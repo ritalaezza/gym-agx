@@ -20,7 +20,7 @@ import sys
 
 # Local modules
 from gym_agx.utils.agx_utils import create_body, save_simulation, save_goal_simulation
-from gym_agx.utils.utils import sinusoidal_trajectory
+from gym_agx.utils.utils import harmonic_trajectory
 
 logger = logging.getLogger('gym_agx.sims')
 
@@ -283,7 +283,7 @@ def main(args):
     previous_velocity = 0
     for k in range(n_steps):
         app.executeOneStepWithGraphics()
-        velocity_x = sinusoidal_trajectory(amplitude, rad_frequency, k * TIMESTEP * N_SUBSTEPS)
+        velocity_x = harmonic_trajectory(amplitude, rad_frequency, k * TIMESTEP * N_SUBSTEPS)
         if velocity_x * previous_velocity < 0:
             if count == 0:
                 amplitude /= 2

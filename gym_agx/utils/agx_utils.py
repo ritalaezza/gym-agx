@@ -19,10 +19,10 @@ def save_simulation(sim, file_name):
     """
     file_directory = os.path.dirname(os.path.abspath(__file__))
     package_directory = os.path.split(file_directory)[0]
-    markup_file = os.path.join(package_directory, 'envs/assets', file_name + ".aagx")
-    if not agxIO.writeFile(markup_file, sim):
-        print("Unable to save simulation to markup file!")
-        return False
+    #markup_file = os.path.join(package_directory, 'envs/assets', file_name + ".aagx")
+    #if not agxIO.writeFile(markup_file, sim):
+    #    print("Unable to save simulation to markup file!")
+    #    return False
     binary_file = os.path.join(package_directory, 'envs/assets', file_name + ".agx")
     if not agxIO.writeFile(binary_file, sim):
         print("Unable to save simulation to binary file!")
@@ -42,13 +42,15 @@ def save_goal_simulation(sim, file_name, remove_assemblies=[]):
         ass = sim.getAssembly(assembly)
         sim.remove(ass)
     # Make all rigid bodies left static, collision free and add goal to their name
+
     rbs = sim.getRigidBodies()
     for rb in rbs:
         name = rb.getName()
         rb.setName(name + '_goal')
         rb.setMotionControl(agx.RigidBody.STATIC)
         rb_geometries = rb.getGeometries()
-        rb_geometries[0].setEnableCollisions(False)
+        for i in range(len(rb_geometries)):
+            rb_geometries[i].setEnableCollisions(False)
     # Add goal to all constraint names which are not empty
     constraints = sim.getConstraints()
     for constraint in constraints:
@@ -57,10 +59,10 @@ def save_goal_simulation(sim, file_name, remove_assemblies=[]):
             constraint.setName(name + '_goal')
     file_directory = os.path.dirname(os.path.abspath(__file__))
     package_directory = os.path.split(file_directory)[0]
-    markup_file = os.path.join(package_directory, 'envs/assets', file_name + "_goal.aagx")
-    if not agxIO.writeFile(markup_file, sim):
-        print("Unable to save simulation to markup file!")
-        return False
+    #markup_file = os.path.join(package_directory, 'envs/assets', file_name + "_goal.aagx")
+    #if not agxIO.writeFile(markup_file, sim):
+    #    print("Unable to save simulation to markup file!")
+    #    return False
     binary_file = os.path.join(package_directory, 'envs/assets', file_name + "_goal.agx")
     if not agxIO.writeFile(binary_file, sim):
         print("Unable to save simulation to binary file!")
