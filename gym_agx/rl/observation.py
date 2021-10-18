@@ -27,7 +27,7 @@ class ObservationConfig:
         EE_ANGULAR_VELOCITY = "ee_angular_velocity"
         JOINT_VELOCITY = "joint_velocity"
         JOINT_POSITION = "joint_position"
-        YUMI_CONTACT_LISTENER = "yumi_contact_listener"
+        CONTACT_LISTENER = "contact_listener"
 
     def __init__(self, goals, observations=None):
         """Initialize observation configuration object with list of observations and goal type.
@@ -41,7 +41,7 @@ class ObservationConfig:
             self.observations = set()
         else:
             self.observations = set(dict.fromkeys(observations))
-
+        self.contact_names = None
         self.rgb_in_obs = False
         self.depth_in_obs = False
         self.image_size = (256, 256)  # (default) all image data will have same first two dimensions.
@@ -168,8 +168,8 @@ class ObservationConfig:
                             joint_position[key] = get_joint_position(sim, key + goal_string)
                 assert joint_position, "At least one of the end-effectors must be observable to obtain rotation."
                 goal_obs[gobs.value] = joint_position
-            elif gobs == self.ObservationType.YUMI_CONTACT_LISTENER:
-                goal_obs[gobs.value] = get_yumi_contact_event(sim)
+            elif gobs == self.ObservationType.CONTACT_LISTENER:
+                goal_obs[gobs.value] = get_contact_event(sim, self.contact_names)
 
         achieved_goal = dict()
         for goal in self.goals:
@@ -271,8 +271,9 @@ class ObservationConfig:
     def set_joint_velocity(self):
         self.observations.add(self.ObservationType.JOINT_VELOCITY)
 
-    def set_yumi_contact_listener(self):
-        self.observations.add(self.ObservationType.YUMI_CONTACT_LISTENER)
+    def set_rb_contact_listener(self, contact_names):
+        self.contact_names = contact_names
+        self.observations.add(self.ObservationType.CONTACT_LISTENER)
 
 def get_joint_velocity(sim, name):
     return np.array(sim.getConstraint1DOF(name).getCurrentSpeed())
@@ -438,12 +439,17 @@ def get_constraint_force_torque(sim, name, constraint_name):
     return np.concatenate((force, torque))
 
 
-def get_yumi_contact_event(sim):
+def get_contact_event(sim, contact_names):
     contact = False
-    yumi_rb_names = ['contact_gripper_r_finger_r', 'contact_gripper_r_finger_l']
-    for i in range(len(yumi_rb_names)):
-        contact = contact or sim.getEventListener(yumi_rb_names[i]).contactState
-    if contact:
-        return np.array(1)
+    if contact_names:
+        try:
+            for i in range(len(contact_names)):
+                contact = contact or sim.getEventListener(contact_names[i]).contactState
+        except:
+            pass
+        if contact:
+            return np.array(1)
+        else:
+            return np.array(0)
     else:
-        return np.array(0)
+        raise Exception('No collision names')

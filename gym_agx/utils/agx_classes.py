@@ -135,6 +135,5 @@ class ContactEventListenerRigidBody(agxSDK.ContactEventListener):
         for i in self.objects_to_ignore_range:
             if contact_pair.first().getName() == self.objects_to_ignore[i] or contact_pair.second().getName() == \
                     self.objects_to_ignore[i]:
-                print('name: ', contact_pair.first().getName(), contact_pair.second().getName())
                 return
         self.contactState = False

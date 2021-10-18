@@ -582,3 +582,9 @@ def create_prismatic_base(name, radius, length, compute_forces,
         joint_base_z_lock.setEnable(True)
 
     return assembly
+
+
+def add_collision_events(link_names, contact_names, ignore_names, ContactEventListenerRigidBody, sim):
+    for i in range(len(link_names)):
+        sim.addEventListener(
+            ContactEventListenerRigidBody(contact_names[i], sim.getRigidBody(link_names[i]), ignore_names))
