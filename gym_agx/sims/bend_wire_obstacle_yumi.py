@@ -1,54 +1,69 @@
-"""Simulation for bend_wire with obstacle environment
+"""Simulation for BendWire environment
 
-This module creates the simulation files which will be used in bend_wire with obstacle environments.
+This module creates the simulation files which will be used in BendWire environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).
 """
 # AGX Dynamics imports
 import agx
 import agxPython
 import agxCollide
+import agxRender
 import agxSDK
 import agxCable
 import agxIO
 import agxOSG
-import agxRender
 
 # Python modules
-import sys
-import math
 import logging
+import math
+import sys
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, save_goal_simulation
-from gym_agx.utils.agx_classes import KeyboardMotorHandler
+from gym_agx.utils.agx_utils import create_body, save_simulation, save_goal_simulation
+from gym_agx.utils.agx_classes import ContactEventListenerRigidBody
+from gym_agx.utils.utils import harmonic_trajectory
+from yumi import build_yumi
 
 logger = logging.getLogger('gym_agx.sims')
 
-FILE_NAME = 'bend_wire_obstacle_planar'
-# Simulation parameters
-N_SUBSTEPS = 2
-TIMESTEP = 1 / 100
-GRAVITY = True
-RADIUS = 0.001
+FILE_NAME = 'bend_wire_hinge_yumi'
+# Simulation Parameters
+N_SUBSTEPS = 10
+TIMESTEP = 1 / 400  # seconds (eq. 100 Hz)
 LENGTH = 0.3  # meters
+RADIUS = LENGTH / 100  # meters
 LENGTH += 2 * RADIUS  # meters
 RESOLUTION = 300  # segments per meter
+GRAVITY = True
 CYLINDER_LENGTH = 0.1
 CYLINDER_RADIUS = CYLINDER_LENGTH / 4
-
 # Aluminum Parameters
 POISSON_RATIO = 0.35  # no unit
-YOUNG_MODULUS = 69e9  # Pascals (1e9)
-YIELD_POINT = 5e7  # Pascals (1e7)
+YOUNG_MODULUS = 69e9  # Pascals
+YIELD_POINT = 5e7  # Pascals
 CONTACT_YOUNG_MODULUS = 67e12  # Pascals
 
 # Rendering Parameters
 GROUND_WIDTH = 0.0001  # meters
 CABLE_GRIPPER_RATIO = 2
+YUMI_GRIPPER_OFFSET = 0.134
 SIZE_GRIPPER = CABLE_GRIPPER_RATIO * RADIUS
-EYE = agx.Vec3(0, -1.0, 0)
-CENTER = agx.Vec3(0, 0, -2 * CYLINDER_RADIUS)
+EYE = agx.Vec3(1, 0.1, 0.3)
+CENTER = agx.Vec3(0.3, 0, 0.3)
 UP = agx.Vec3(0., 0., 1.)
+# Control parameters
+FORCE_RANGE = 2.5  # N
+
+
+JOINT_NAMES_REV = ['yumi_joint_1_l', 'yumi_joint_2_l', 'yumi_joint_7_l', 'yumi_joint_3_l', 'yumi_joint_4_l',
+                      'yumi_joint_5_l', 'yumi_joint_6_l',
+                      'yumi_joint_1_r', 'yumi_joint_2_r', 'yumi_joint_7_r', 'yumi_joint_3_r', 'yumi_joint_4_r',
+                      'yumi_joint_5_r', 'yumi_joint_6_r']
+# TODO change to 30 cm
+JOINT_INIT_POS = [1.0558230348154325, -2.1792691721844477, -0.9291465108778548, 0.47544834641447836, -0.865295002022088,
+                  1.6076042186663877, -0.22853245647681622, 0.0, 0.0, -1.059454804382163, -2.178867367458489,
+                  0.9295942277213521, 0.47536463273058094, 0.8648980748196241, 1.6072022209837415, 0.22895471472609913,
+                  0.0, 0.0]
 
 
 def add_rendering(sim):
@@ -68,12 +83,6 @@ def add_rendering(sim):
         if rb.getName() == "ground":
             ground_node = agxOSG.createVisual(rb, root)
             agxOSG.setDiffuseColor(ground_node, agxRender.Color.Gray())
-        elif rb.getName() == "gripper_left":
-            gripper_left_node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(gripper_left_node, agxRender.Color(1.0, 0.0, 0.0, 1.0))
-        elif rb.getName() == "gripper_right":
-            gripper_right_node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(gripper_right_node, agxRender.Color(0.0, 0.0, 1.0, 1.0))
         elif rb.getName() == "obstacle":
             gripper_right_node = agxOSG.createVisual(rb, root)
             agxOSG.setDiffuseColor(gripper_right_node, agxRender.Color.Gray())
@@ -81,9 +90,8 @@ def add_rendering(sim):
             cable_node = agxOSG.createVisual(rb, root)
             agxOSG.setDiffuseColor(cable_node, agxRender.Color(0.0, 1.0, 0.0, 1.0))
         else:
-            node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(node, agxRender.Color.Beige())
-            agxOSG.setAlpha(node, 0.2)
+            cable_node = agxOSG.createVisual(rb, root)
+            agxOSG.setDiffuseColor(cable_node, agxRender.Color.Beige())
 
     scene_decorator = app.getSceneDecorator()
     light_source_0 = scene_decorator.getLightSource(agxOSG.SceneDecorator.LIGHT0)
@@ -97,6 +105,9 @@ def add_rendering(sim):
 def build_simulation():
     # Instantiate a simulation
     sim = agxSDK.Simulation()
+
+    # build yumi into scene
+    build_yumi(sim, JOINT_INIT_POS)
 
     # By default the gravity vector is 0,0,-9.81 with a uniform gravity field. (we CAN change that
     # too by creating an agx.PointGravityField for example).
@@ -117,56 +128,38 @@ def build_simulation():
     dt = sim.getTimeStep()
     logger.debug("new dt = {}".format(dt))
 
-    # Create a ground plane for reference
-    ground = create_body(name="ground", shape=agxCollide.Box(LENGTH, LENGTH, GROUND_WIDTH),
-                         position=agx.Vec3(0, 0, -(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH)),
-                         motion_control=agx.RigidBody.STATIC)
-    sim.add(ground)
-
-    # Create two grippers one static one kinematic
-    gripper_left = create_body(name="gripper_left",
-                               shape=agxCollide.Box(SIZE_GRIPPER, SIZE_GRIPPER, SIZE_GRIPPER),
-                               position=agx.Vec3(-LENGTH / 2, 0, 0),
-                               motion_control=agx.RigidBody.DYNAMICS)
-    sim.add(gripper_left)
-
-    gripper_right = create_body(name="gripper_right",
-                                shape=agxCollide.Box(SIZE_GRIPPER, SIZE_GRIPPER, SIZE_GRIPPER),
-                                position=agx.Vec3(LENGTH / 2, 0, 0),
-                                motion_control=agx.RigidBody.DYNAMICS)
-    sim.add(gripper_right)
-
-    gripper_left_body = gripper_left.getRigidBody("gripper_left")
-    gripper_right_body = gripper_right.getRigidBody("gripper_right")
-
     # Create cable
     cable = agxCable.Cable(RADIUS, RESOLUTION)
+    cable.setName("DLO")
 
     # Create Frames for each gripper:
     # Cables are attached passing through the attachment point along the Z axis of the body's coordinate frame.
     # The translation specified in the transformation is relative to the body and not the world
     left_transform = agx.AffineMatrix4x4()
-    left_transform.setTranslate(SIZE_GRIPPER + RADIUS, 0, 0)
-    left_transform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.Y_AXIS())  # Rotation matrix which switches Z with Y
+    left_transform.setTranslate(0, 0, YUMI_GRIPPER_OFFSET + SIZE_GRIPPER + RADIUS)
+    left_transform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())  # Rotation matrix which switches Z with Y
     frame_left = agx.Frame(left_transform)
 
     right_transform = agx.AffineMatrix4x4()
-    right_transform.setTranslate(- SIZE_GRIPPER - RADIUS, 0, 0)
-    right_transform.setRotate(agx.Vec3.Z_AXIS(), -agx.Vec3.Y_AXIS())  # Rotation matrix which switches Z with -Y
+    right_transform.setTranslate(0, 0, YUMI_GRIPPER_OFFSET + SIZE_GRIPPER + RADIUS)
+    right_transform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())  # Rotation matrix which switches Z with -Y
     frame_right = agx.Frame(right_transform)
 
-    cable.add(agxCable.FreeNode(agx.Vec3(-LENGTH / 2 + SIZE_GRIPPER + RADIUS, 0, 0)))  # Fix cable to gripper_left
-    cable.add(agxCable.FreeNode(agx.Vec3(LENGTH / 2 - SIZE_GRIPPER - RADIUS, 0, 0)))  # Fix cable to gripper_right
+    # Cable nodes
+    cable.add(agxCable.FreeNode(agx.Vec3(0.3, -LENGTH/2 + SIZE_GRIPPER + RADIUS, 0.2)))  # Fix cable to gripper_left
+    cable.add(agxCable.FreeNode(agx.Vec3(0.3, LENGTH/2 - SIZE_GRIPPER - RADIUS, 0.2)))  # Fix cable to gripper_right
 
     material_cylinder = agx.Material("cylinder_material")
     bulk_material_cylinder = material_cylinder.getBulkMaterial()
     bulk_material_cylinder.setPoissonsRatio(POISSON_RATIO)
     bulk_material_cylinder.setYoungsModulus(YOUNG_MODULUS)
-
+    rotation_cylinder = agx.OrthoMatrix3x3()
+    rotation_cylinder.set(agx.EulerAngles(0, 0, math.pi/2))
     cylinder = create_body(name="obstacle",
                            shape=agxCollide.Cylinder(CYLINDER_RADIUS, CYLINDER_LENGTH),
-                           position=agx.Vec3(0, 0, -2 * CYLINDER_RADIUS), motion_control=agx.RigidBody.STATIC,
-                           material=material_cylinder)
+                           position=agx.Vec3(0.3, 0, -2 * CYLINDER_RADIUS + 0.2), motion_control=agx.RigidBody.STATIC,
+                           material=material_cylinder,
+                           rotation=rotation_cylinder)
     sim.add(cylinder)
 
     # Set cable name and properties
@@ -211,19 +204,23 @@ def build_simulation():
     # Add segment names and get first and last segment
     count = 1
     iterator = cable.begin()
-    segment_left = iterator.getRigidBody()
-    segment_left.setName('dlo_' + str(count))
+    segment_right = iterator.getRigidBody()
+    segment_right.setName('dlo_' + str(count))
     while not iterator.isEnd():
         count += 1
-        segment_right = iterator.getRigidBody()
-        segment_right.setName('dlo_' + str(count))
+        segment_left = iterator.getRigidBody()
+        segment_left.setName('dlo_' + str(count))
+        # set name of geometry, can be used for collision event listener
+        geo = segment_left.getGeometries()
+        for j in range(len(geo)):
+            geo[j].setName('dlo')
         iterator.inc()
 
     # Add hinge constraints
-    hinge_joint_left = agx.Hinge(sim.getRigidBody("gripper_left"), frame_left, segment_left)
+    hinge_joint_left = agx.Hinge(sim.getRigidBody("gripper_l_base"), frame_left, segment_left)
     hinge_joint_left.setName('hinge_joint_left')
     motor_left = hinge_joint_left.getMotor1D()
-    motor_left.setEnable(False)
+    motor_left.setEnable(True)
     motor_left_param = motor_left.getRegularizationParameters()
     motor_left_param.setCompliance(1e12)
     motor_left.setLockedAtZeroSpeed(False)
@@ -234,10 +231,10 @@ def build_simulation():
     range_left.setRange(agx.RangeReal(-math.pi / 2, math.pi / 2))
     sim.add(hinge_joint_left)
 
-    hinge_joint_right = agx.Hinge(sim.getRigidBody("gripper_right"), frame_right, segment_right)
+    hinge_joint_right = agx.Hinge(sim.getRigidBody("gripper_r_base"), frame_right, segment_right)
     hinge_joint_right.setName('hinge_joint_right')
     motor_right = hinge_joint_right.getMotor1D()
-    motor_right.setEnable(False)
+    motor_right.setEnable(True)
     motor_right_param = motor_right.getRegularizationParameters()
     motor_right_param.setCompliance(1e12)
     motor_right.setLockedAtZeroSpeed(False)
@@ -248,48 +245,9 @@ def build_simulation():
     range_right.setRange(agx.RangeReal(-math.pi / 2, math.pi / 2))
     sim.add(hinge_joint_right)
 
-    # Create bases for gripper motors
-    prismatic_base_left = create_locked_prismatic_base("gripper_left", gripper_left_body, compliance=0,
-                                                       position_ranges=[(-LENGTH / 2 + CYLINDER_RADIUS,
-                                                                         LENGTH / 2 - CYLINDER_RADIUS),
-                                                                        (-CYLINDER_LENGTH / 3, CYLINDER_LENGTH / 3),
-                                                                        (-(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH),
-                                                                         0)],
-                                                       lock_status=[False, True, False])
-    sim.add(prismatic_base_left)
-    prismatic_base_right = create_locked_prismatic_base("gripper_right", gripper_right_body, compliance=0,
-                                                        position_ranges=[(-LENGTH / 2 + CYLINDER_RADIUS,
-                                                                          LENGTH / 2 - CYLINDER_RADIUS),
-                                                                         (-CYLINDER_LENGTH / 3, CYLINDER_LENGTH / 3),
-                                                                         (-(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH),
-                                                                          0)],
-                                                        lock_status=[False, True, False])
-    sim.add(prismatic_base_right)
-
-    # Add keyboard listener
-    left_motor_x = sim.getConstraint1DOF("gripper_left_joint_base_x").getMotor1D()
-    left_motor_y = sim.getConstraint1DOF("gripper_left_joint_base_y").getMotor1D()
-    left_motor_z = sim.getConstraint1DOF("gripper_left_joint_base_z").getMotor1D()
-    right_motor_x = sim.getConstraint1DOF("gripper_right_joint_base_x").getMotor1D()
-    right_motor_y = sim.getConstraint1DOF("gripper_right_joint_base_y").getMotor1D()
-    right_motor_z = sim.getConstraint1DOF("gripper_right_joint_base_z").getMotor1D()
-    key_motor_map = {agxSDK.GuiEventListener.KEY_Right: (right_motor_x, 0.1),
-                     agxSDK.GuiEventListener.KEY_Left: (right_motor_x, -0.1),
-                     agxSDK.GuiEventListener.KEY_Up: (right_motor_y, 0.1),
-                     agxSDK.GuiEventListener.KEY_Down: (right_motor_y, -0.1),
-                     65365: (right_motor_z, 0.1),
-                     65366: (right_motor_z, -0.1),
-                     0x64: (left_motor_x, 0.1),
-                     0x61: (left_motor_x, -0.1),
-                     0x32: (left_motor_y, 0.1),  # 0x77
-                     0x73: (left_motor_y, -0.1),
-                     0x71: (left_motor_z, 0.1),
-                     0x65: (left_motor_z, -0.1)}
-    sim.add(KeyboardMotorHandler(key_motor_map))
-
     return sim
 
-
+# Build and save scene to file
 def main(args):
     # Build simulation object
     sim = build_simulation()
@@ -312,8 +270,18 @@ def main(args):
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 
-    n_seconds = 60
+    yumi = sim.getAssembly('yumi')
+    yumi.getConstraint1DOF(JOINT_NAMES_REV[0]).getMotor1D().setSpeed(float(-0.02))
+    yumi.getConstraint1DOF(JOINT_NAMES_REV[7]).getMotor1D().setSpeed(float(0.02))
+    yumi.getConstraint1DOF(JOINT_NAMES_REV[3]).getMotor1D().setSpeed(float(-0.05))
+    yumi.getConstraint1DOF(JOINT_NAMES_REV[10]).getMotor1D().setSpeed(float(-0.05))
+
+    n_seconds = 10
     n_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
+
+
+    count = 0
+    previous_velocity = 0
     for k in range(n_steps):
         app.executeOneStepWithGraphics()
 
@@ -323,11 +291,10 @@ def main(args):
             sim.stepForward()
             t = sim.getTimeStamp()
 
-    # Save goal simulation to file (but first make grippers static, remove clutter and rename)
+    # Save goal simulation to file (but first make grippers static, disable collisions, remove clutter and rename)
     cable = agxCable.Cable.find(sim, "DLO")
     cable.setName("DLO_goal")
-    success = save_goal_simulation(sim, FILE_NAME, ['ground', 'obstacle', 'gripper_left_prismatic_base',
-                                                    'gripper_right_prismatic_base'])
+    success = save_goal_simulation(sim, FILE_NAME, ['ground'])
     if success:
         logger.debug("Goal simulation saved!")
     else:

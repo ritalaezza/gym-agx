@@ -40,7 +40,7 @@ JOINT_NAMES_REV = ['yumi_joint_1_l', 'yumi_joint_2_l', 'yumi_joint_7_l', 'yumi_j
                       'yumi_joint_1_r', 'yumi_joint_2_r', 'yumi_joint_7_r', 'yumi_joint_3_r', 'yumi_joint_4_r',
                       'yumi_joint_5_r', 'yumi_joint_6_r']
 
-JOINT_EFFORT_REV = [25, 25, 20, 15, 10, 5, 5, 25, 25, 20, 15, 10, 5, 5]  # maximum joint effort, assuming same force in
+JOINT_EFFORT_REV = 2*[25, 25, 20, 15, 10, 5, 5, 25, 25, 20, 15, 10, 5, 5]  # maximum joint effort, assuming same force in
                                                                     # upper and lower, same order as jointNamesRevolute
 
 GRIPPER_EFFORT = 15  # set the grip force

@@ -207,12 +207,6 @@ def build_simulation():
     # range_right.setRange(agx.RangeReal(-math.pi / 2, math.pi / 2))
     sim.add(hinge_joint_right)
 
-    ignore_contact = ['dlo']
-    sim.addEventListener(
-        ContactEventListenerRigidBody('contact_gripper_r_finger_r', sim.getRigidBody('gripper_r_finger_r'), ignore_contact))
-    sim.addEventListener(
-        ContactEventListenerRigidBody('contact_gripper_r_finger_l', sim.getRigidBody('gripper_r_finger_l'), ignore_contact))
-
     return sim
 
 # Build and save scene to file

@@ -2,7 +2,7 @@ import gym
 from gym_agx import envs
 from gym_agx.wrappers import GoalEnvFlattenObservation
 
-env = gym.make("BendWireYuMi-v0", osg_window=True, show_goal=True)
+env = gym.make("BendWireObstacle-v0", osg_window=True, show_goal=True)
 env = GoalEnvFlattenObservation(env)
 observation = env.reset()
 
