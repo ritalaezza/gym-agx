@@ -26,7 +26,7 @@ from yumi import build_yumi
 
 logger = logging.getLogger('gym_agx.sims')
 
-FILE_NAME = 'bend_wire_hinge_yumi'
+FILE_NAME = 'bend_wire_obstacle_yumi'
 # Simulation Parameters
 N_SUBSTEPS = 10
 TIMESTEP = 1 / 400  # seconds (eq. 100 Hz)
