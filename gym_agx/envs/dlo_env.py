@@ -87,7 +87,7 @@ class DloEnv(agx_goal_env.AgxGoalEnv):
                 agxOSG.setDiffuseColor(node, agxRender.Color.Green())
             elif "obstacle" in name or "cylinder" in name:
                 agxOSG.setDiffuseColor(node, agxRender.Color.DimGray())
-            elif name == "bounding_box":
+            elif "bounding_box" in name:
                 agxOSG.setDiffuseColor(node, agxRender.Color.White())
                 agxOSG.setAlpha(node, 0.2)
             else:

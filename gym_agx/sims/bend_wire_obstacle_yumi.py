@@ -51,15 +51,14 @@ SIZE_GRIPPER = CABLE_GRIPPER_RATIO * RADIUS
 EYE = agx.Vec3(1, 0.1, 0.3)
 CENTER = agx.Vec3(0.3, 0, 0.3)
 UP = agx.Vec3(0., 0., 1.)
-# Control parameters
-FORCE_RANGE = 2.5  # N
+
 
 
 JOINT_NAMES_REV = ['yumi_joint_1_l', 'yumi_joint_2_l', 'yumi_joint_7_l', 'yumi_joint_3_l', 'yumi_joint_4_l',
                       'yumi_joint_5_l', 'yumi_joint_6_l',
                       'yumi_joint_1_r', 'yumi_joint_2_r', 'yumi_joint_7_r', 'yumi_joint_3_r', 'yumi_joint_4_r',
                       'yumi_joint_5_r', 'yumi_joint_6_r']
-# TODO change to 30 cm
+
 JOINT_INIT_POS = [1.0558230348154325, -2.1792691721844477, -0.9291465108778548, 0.47544834641447836, -0.865295002022088,
                   1.6076042186663877, -0.22853245647681622, 0.0, 0.0, -1.059454804382163, -2.178867367458489,
                   0.9295942277213521, 0.47536463273058094, 0.8648980748196241, 1.6072022209837415, 0.22895471472609913,

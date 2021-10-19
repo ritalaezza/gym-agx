@@ -5,6 +5,7 @@ from gym_agx.envs.explicit.bend_wire_obstacle_env import BendWireObstacleEnv
 from gym_agx.envs.explicit.push_rope_env import PushRopeEnv
 from gym_agx.envs.explicit.bend_wire_yumi_env import BendWireYuMiEnv
 from gym_agx.envs.explicit.bend_wire_obstacle_yumi_env import BendWireObstacleYuMiEnv
+from gym_agx.envs.explicit.push_rope_yumi_env import PushRopeYuMiEnv
 
 # Implicit Shape Control
 from gym_agx.envs.implicit.peg_in_hole_env import PegInHoleEnv

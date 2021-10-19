@@ -68,6 +68,12 @@ register(
     kwargs={'n_substeps': 20},
     max_episode_steps=int(3000),
 )
+register(
+    id='PushRopeYuMi-v0',
+    entry_point='gym_agx.envs:PushRopeYuMiEnv',
+    kwargs={'n_substeps': 20},
+    max_episode_steps=int(3000),
+)
 
 register(
     id='InsertORing-v0',
