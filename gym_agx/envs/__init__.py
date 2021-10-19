@@ -11,3 +11,4 @@ from gym_agx.envs.explicit.push_rope_yumi_env import PushRopeYuMiEnv
 from gym_agx.envs.implicit.peg_in_hole_env import PegInHoleEnv
 from gym_agx.envs.implicit.rubber_band_env import RubberBandEnv
 from gym_agx.envs.implicit.cable_closing_env import CableClosingEnv
+from gym_agx.envs.implicit.peg_in_hole_yumi_env import PegInHoleYuMiEnv

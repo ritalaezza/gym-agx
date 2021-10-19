@@ -75,7 +75,7 @@ JOINT_NAMES_REV = ['yumi_joint_1_l', 'yumi_joint_2_l', 'yumi_joint_7_l', 'yumi_j
                       'yumi_joint_5_l', 'yumi_joint_6_l',
                       'yumi_joint_1_r', 'yumi_joint_2_r', 'yumi_joint_7_r', 'yumi_joint_3_r', 'yumi_joint_4_r',
                       'yumi_joint_5_r', 'yumi_joint_6_r']
-# TODO change to other pose
+
 JOINT_INIT_POS = [1.4889354893851254, -1.8654967965940852, -1.813458522831059, 0.8380882202714545, -3.0307165224217685,
                   1.7103558092465352, 1.17651581399501, 0.005, 0.005, -0.07832728082503805, -2.085892606165076,
                   1.7313167841682604, 0.656188596211846, 2.1706966966564973, 0.6837234666951671, 0.2925179128574373,
@@ -148,13 +148,6 @@ def build_simulation():
     # Confirm timestep changed
     dt = sim.getTimeStep()
     logger.debug("new dt = {}".format(dt))
-
-    ground = sim.getAssembly('ground')
-    print(ground)
-    ground_rb = ground.getRigidBody('ground')
-    print(ground_rb)
-    ground_geometry = ground_rb.getGeometry('ground')
-    print(ground_geometry)
 
     # Define materials
     material_ground = agx.Material("Aluminum")
