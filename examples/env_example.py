@@ -1,7 +1,7 @@
 import gym
 from gym_agx import envs
 
-env = gym.make("RubberBandYuMi-v0", reward_type="dense", observation_type="pos", headless=0)
+env = gym.make("PegInHole-v0", reward_type="dense", observation_type="pos", headless=0)
 observation = env.reset()
 
 for _ in range(1000):

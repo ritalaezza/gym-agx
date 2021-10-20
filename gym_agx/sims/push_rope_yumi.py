@@ -157,7 +157,8 @@ def build_simulation():
     surface_material = material_ground.getSurfaceMaterial()
     surface_material.setRoughness(GROUND_ROUGHNESS)
     surface_material.setAdhesion(GROUND_ADHESION, GROUND_ADHESION_OVERLAP)
-    ground_geometry.setMaterial(material_ground)
+    for g in sim.getRigidBody('ground').getGeometries():
+        g.setMaterial(material_ground)
 
     material_pusher = agx.Material("Aluminum")
     bulk_material = material_pusher.getBulkMaterial()

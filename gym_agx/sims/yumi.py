@@ -14,7 +14,8 @@ import logging
 import math
 import sys
 import os
-from gym_agx.utils.agx_utils import create_body, save_simulation, save_goal_simulation
+from gym_agx.utils.agx_utils import create_body, save_simulation
+from gym_agx.utils.agx_utils_optimize import createConvexDecomposition, reduceMesh
 
 logger = logging.getLogger('gym_agx.sims')
 
@@ -46,6 +47,60 @@ JOINT_EFFORT_REV = 2*[25, 25, 20, 15, 10, 5, 5, 25, 25, 20, 15, 10, 5, 5]  # max
 GRIPPER_EFFORT = 15  # set the grip force
 JOINT_NAME_GRIPPER = ['gripper_l_joint', 'gripper_l_joint_m', 'gripper_r_joint',
                       'gripper_r_joint_m']  # name of gripper joints in urdf
+
+# How to set up contact material for grasping.
+'''
+# contact material for grippers
+MaterialDescription = {
+    'friction': 0.3,  # Friction value (between 0..1).
+    'frictionModel': agx.FrictionModel.DIRECT,
+    # Use the direct solver for stable grasping - computationally more expensive, but necessary here.
+    'restitution': 0.0,  # Coefficient of restitution. Leave it at zero here.
+    'useContactArea': True,
+    # Use the more detailed contact area approach for calculating the contact forces. Default is false.
+    'maxElasticRestLength': 1E-3,
+    # Let maximum 0.02m of the contact rest length be in the elastic domain (solid above that).
+    'youngsModulus': 1e10
+    # Stiffness of the contact, 200GPa would be Steel-Steel, but this grasping material is softer.
+}
+
+
+def setupContactMaterial(sim):
+    material1 = agx.Material("gripperMaterial")
+    material2 = agx.Material("objectMaterial")
+
+    cm = sim.getMaterialManager().getOrCreateContactMaterial(material1, material2)
+    fm = agx.IterativeProjectedConeFriction()
+    fm.setSolveType(MaterialDescription['frictionModel'])
+
+    # Now setup the material properties from the description
+    cm.setFrictionCoefficient(MaterialDescription['friction'])
+    cm.setRestitution(MaterialDescription['restitution'])
+    cm.setUseContactAreaApproach(MaterialDescription['useContactArea'])
+    cm.setMinMaxElasticRestLength(cm.getMinElasticRestLength(), MaterialDescription['maxElasticRestLength'])
+    cm.setFrictionModel(fm)
+    cm.setYoungsModulus(MaterialDescription['youngsModulus'])
+
+    return material1, material2
+'''
+
+
+def optimize(rigid_bodies):
+    render_data_size = 0
+    mesh_data_size = 0
+    for b in rigid_bodies:
+        for g in b.getGeometries():
+            if not g.getEnableCollisions():
+                print("Not enabled for collision, skipped: ", g.getName())
+                continue
+            if "gripper" in b.getName():
+                size, size_mesh = createConvexDecomposition(g)
+            else:
+                size, size_mesh = reduceMesh(g)
+            render_data_size += size
+            mesh_data_size += size_mesh
+    print("Total render data size {} Mb".format(render_data_size/1E6))
+    print("Total mesh data size {} Mb".format(mesh_data_size/1E6))
 
 
 def collision_between_bodies(rb1, rb2, collision=True):
@@ -113,10 +168,13 @@ def build_yumi(sim, init_joint_pos_):
         print("Error reading the URDF file.")
         sys.exit(2)
 
+    yumi = yumi_assembly_ref.get()
+
+    # optimize geometry
+    optimize(yumi_assembly_ref.getRigidBodies())
+
     # Add the yumi assembly to the simulation and create visualization for it
     sim.add(yumi_assembly_ref.get())
-
-    yumi = yumi_assembly_ref.get()
 
     # Enable Motor1D (speed controller) on all revolute joints and set effort limits
     for i in range(len(JOINT_NAMES_REV)):
@@ -191,6 +249,8 @@ def build_yumi(sim, init_joint_pos_):
                              yumi_assembly_ref.getRigidBody('gripper_l_finger_l'), False)
     collision_between_bodies(yumi_assembly_ref.getRigidBody('gripper_l_finger_r'),
                              yumi_assembly_ref.getRigidBody('gripper_l_finger_l'), False)
+
+
 
 
 # Build and save scene to file
