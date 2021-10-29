@@ -90,12 +90,15 @@ class DloEnv(agx_goal_env.AgxGoalEnv):
             elif "bounding_box" in name:
                 agxOSG.setDiffuseColor(node, agxRender.Color.White())
                 agxOSG.setAlpha(node, 0.2)
+            elif "yumi" in name:
+                agxOSG.setDiffuseColor(node, agxRender.Color.Gray())
             else:
                 agxOSG.setAlpha(node, 0)
                 logger.info("No color set for {}.".format(name))
 
             if "goal" in name:
                 agxOSG.setAlpha(node, 0.2)
+
         scene_decorator = self.app.getSceneDecorator()
         light_source_0 = scene_decorator.getLightSource(agxOSG.SceneDecorator.LIGHT0)
         light_source_0.setPosition(self.light_pose['light_position'])

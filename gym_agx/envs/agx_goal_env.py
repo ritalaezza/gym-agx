@@ -212,6 +212,13 @@ class AgxGoalEnv(gym.GoalEnv):
         """
         logger.info("init app")
         self.app.init(agxIO.ArgumentParser([sys.executable] + self.args))
+
+        # solve rendering artifacts
+        cameraData = self.app.getCameraData()
+        cameraData.nearClippingPlane = 0.1
+        cameraData.farClippingPlane = 50
+        self.app.applyCameraData(cameraData)
+
         self.app.setCameraHome(self.camera_pose['eye'],
                                self.camera_pose['center'],
                                self.camera_pose['up'])  # only after app.init

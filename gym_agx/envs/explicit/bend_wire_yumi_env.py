@@ -21,7 +21,10 @@ GOAL_SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_hinge_yum
 
 logger = logging.getLogger('gym_agx.envs')
 
-
+JOINT_NAMES_REV = ['yumi_joint_1_l', 'yumi_joint_2_l', 'yumi_joint_7_l', 'yumi_joint_3_l', 'yumi_joint_4_l',
+                      'yumi_joint_5_l', 'yumi_joint_6_l',
+                      'yumi_joint_1_r', 'yumi_joint_2_r', 'yumi_joint_7_r', 'yumi_joint_3_r', 'yumi_joint_4_r',
+                      'yumi_joint_5_r', 'yumi_joint_6_r']  # names of the revolute joints
 class Reward(RewardConfig):
 
     def reward_function(self, achieved_goal, desired_goal, info):
@@ -65,10 +68,10 @@ class BendWireYuMiEnv(dlo_env.DloEnv):
         length = 0.1  # meters
         camera_distance = 0.5  # meters
         camera_config = CameraConfig(
-            eye=agx.Vec3(1, 0.1, 0.3),
-            center=agx.Vec3(0.3, 0, 0.3),
+            eye=agx.Vec3(1.2, 0.0, 0.3),
+            center=agx.Vec3(0.2, 0, 0.27),
             up=agx.Vec3(0., 0., 1.),
-            light_position=agx.Vec4(length / 2, - camera_distance, camera_distance, 1.),
+            light_position=agx.Vec4(10, 1, 10, 1.),
             light_direction=agx.Vec3(0., 0., -1.)
         )
 
@@ -79,33 +82,19 @@ class BendWireYuMiEnv(dlo_env.DloEnv):
         # 'yumi_joint_5_r', 'yumi_joint_6_r'
 
         if not joints:
+
             yumi = JointObjects(
                 name='yumi',
                 controllable=True,
                 observable=True,
             )
-            yumi.add_constraint(name='yumi_joint_1_l',
-                                type_of_joint=JointConstraint.Type.REVOLUTE,
-                                velocity_control=True)
-            yumi.add_constraint(name='yumi_joint_2_l',
-                                type_of_joint=JointConstraint.Type.REVOLUTE,
-                                velocity_control=True)
-            yumi.add_constraint(name='yumi_joint_7_l',
-                                type_of_joint=JointConstraint.Type.REVOLUTE,
-                                velocity_control=True)
-            yumi.add_constraint(name='yumi_joint_3_l',
-                                type_of_joint=JointConstraint.Type.REVOLUTE,
-                                velocity_control=True)
-            yumi.add_constraint(name='yumi_joint_4_l',
-                                type_of_joint=JointConstraint.Type.REVOLUTE,
-                                velocity_control=True)
-            yumi.add_constraint(name='yumi_joint_5_l',
-                                type_of_joint=JointConstraint.Type.REVOLUTE,
-                                velocity_control=True)
-            yumi.add_constraint(name='yumi_joint_6_l',
-                                type_of_joint=JointConstraint.Type.REVOLUTE,
-                                velocity_control=True)
+            for i in range(len(JOINT_NAMES_REV)):
+                yumi.add_constraint(name=JOINT_NAMES_REV[i],
+                                    type_of_joint=JointConstraint.Type.REVOLUTE,
+                                    velocity_control=True)
             joints = [yumi]
+
+
 
         if not observation_config:
             observation_config = ObservationConfig(goals=[ObservationConfig.ObservationType.DLO_CURVATURE])
@@ -132,7 +121,8 @@ class BendWireYuMiEnv(dlo_env.DloEnv):
         if not os.path.exists(SCENE_PATH):
             raise IOError("File %s does not exist" % SCENE_PATH)
         logger.info("Fetching environment from {}".format(SCENE_PATH))
-
+        # Change window size
+        args.extend(["--window", "1500", "1160"])
         super(BendWireYuMiEnv, self).__init__(args=args,
                                           scene_path=scene_path,
                                           n_substeps=n_substeps,

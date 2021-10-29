@@ -35,13 +35,14 @@ CENTER = agx.Vec3(LENGTH / 2, 0, 0)
 UP = agx.Vec3(0., 0., 1.)
 
 INIT_JOINT_POS = [0.7, -1.7, -0.8, 1.0, -2.2, 1.0, 0.0, 0.0, 0.0, -0.7, -1.7, 0.8, 1.0, 2.2, 1.0, 0.0, 0.0, 0.0]
+
 # urdf name for joints
 JOINT_NAMES_REV = ['yumi_joint_1_l', 'yumi_joint_2_l', 'yumi_joint_7_l', 'yumi_joint_3_l', 'yumi_joint_4_l',
                       'yumi_joint_5_l', 'yumi_joint_6_l',
                       'yumi_joint_1_r', 'yumi_joint_2_r', 'yumi_joint_7_r', 'yumi_joint_3_r', 'yumi_joint_4_r',
                       'yumi_joint_5_r', 'yumi_joint_6_r']
 
-JOINT_EFFORT_REV = 2*[25, 25, 20, 15, 10, 5, 5, 25, 25, 20, 15, 10, 5, 5]  # maximum joint effort, assuming same force in
+JOINT_EFFORT_REV = [45, 35, 30, 25, 25, 25, 25, 45, 35, 30, 25, 25, 25, 25]  # maximum joint effort, assuming same force in
                                                                     # upper and lower, same order as jointNamesRevolute
 
 GRIPPER_EFFORT = 15  # set the grip force
@@ -180,6 +181,7 @@ def build_yumi(sim, init_joint_pos_):
     for i in range(len(JOINT_NAMES_REV)):
         yumi.getConstraint1DOF(JOINT_NAMES_REV[i]).getMotor1D().setEnable(True)
         yumi.getConstraint1DOF(JOINT_NAMES_REV[i]).getMotor1D().setForceRange(-JOINT_EFFORT_REV[i], JOINT_EFFORT_REV[i])
+        yumi.getConstraint1DOF(JOINT_NAMES_REV[i]).getMotor1D().setSpeed(float(0.0))
 
     # Enable Motor1D (speed controller) on all prismatic joints (grippers) and set effort limits
     for i in range(len(JOINT_NAME_GRIPPER)):
@@ -250,6 +252,7 @@ def build_yumi(sim, init_joint_pos_):
     collision_between_bodies(yumi_assembly_ref.getRigidBody('gripper_l_finger_r'),
                              yumi_assembly_ref.getRigidBody('gripper_l_finger_l'), False)
 
+    sim.getDynamicsSystem().setEnableContactWarmstarting(True)
 
 
 
@@ -277,13 +280,6 @@ def main(args):
         sim.setUniformGravity(g)
 
 
-    # gripper = sim.getRigidBody('gripper_right')
-    #prismatic_joint = sim.getConstraint1DOF('prismatic_joint_right')
-    # hinge_joint = sim.getConstraint1DOF('hinge_joint_right')
-    #prismatic_motor = prismatic_joint.getMotor1D()
-    # hinge_motor = hinge_joint.getMotor1D()
-    # hinge_joint_params = hinge_motor.getRegularizationParameters()
-
     n_seconds = 40
     n_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
 
@@ -296,16 +292,7 @@ def main(args):
         while t < t_0 + TIMESTEP * N_SUBSTEPS:
             sim.stepForward()
             t = sim.getTimeStamp()
-    '''
-    # Save goal simulation to file (but first make grippers static, disable collisions, remove clutter and rename)
-    cable = agxCable.Cable.find(sim, "DLO")
-    cable.setName("DLO_goal")
-    success = save_goal_simulation(sim, FILE_NAME, ['ground'])
-    if success:
-        logger.debug("Goal simulation saved!")
-    else:
-        logger.debug("Goal simulation not saved!")
-    '''
+
 
 if __name__ == '__main__':
     if agxPython.getContext() is None:

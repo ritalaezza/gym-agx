@@ -56,15 +56,15 @@ JOINT_NAMES_REV = ['yumi_joint_1_l', 'yumi_joint_2_l', 'yumi_joint_7_l', 'yumi_j
                       'yumi_joint_1_r', 'yumi_joint_2_r', 'yumi_joint_7_r', 'yumi_joint_3_r', 'yumi_joint_4_r',
                       'yumi_joint_5_r', 'yumi_joint_6_r']
 
-JOINT_INIT_POS = [1.1368918259774035, -2.2402857573326216, -1.124104175794654, 0.6809925673250303, -1.081411999152352,
-                  1.3495032182496915, -0.12787275723643968, 0.0, 0.0, -1.1406615175214208, -2.2399084451704114,
-                  1.124356847534356, 0.6809493971528793, 1.0810503812000616, 1.349087587171468, 0.12816659866109675,
+JOINT_INIT_POS = [1.1337268536042675, -2.246543977430432, -1.1273047151411808, 0.6881525511096728, -1.0852362526719888,
+                  1.34008651912562, -0.12599825139448026, 0.0, 0.0, -1.137484388263239, -2.2461763710541347,
+                  1.1275667545416974, 0.6881105310205529, 1.0848674626682937, 1.3396834221679512, 0.12631213866396865,
                   0.0, 0.0]
 
 
 def add_rendering(sim):
     camera_distance = 0.5
-    light_pos = agx.Vec4(LENGTH / 2, - camera_distance, camera_distance, 1.)
+    light_pos = agx.Vec4(10, 1, 10, 1.)
     light_dir = agx.Vec3(0., 0., -1.)
 
     app = agxOSG.ExampleApplication(sim)
@@ -132,7 +132,7 @@ def build_simulation():
 
     right_transform = agx.AffineMatrix4x4()
     right_transform.setTranslate(0, 0, YUMI_GRIPPER_OFFSET + SIZE_GRIPPER + RADIUS)
-    right_transform.setRotate(agx.Vec3.Z_AXIS(), agx.Vec3.X_AXIS())  # Rotation matrix which switches Z with -Y
+    right_transform.setRotate(agx.Vec3.Z_AXIS(), -agx.Vec3.X_AXIS())  # Rotation matrix which switches Z with -Y
     frame_right = agx.Frame(right_transform)
 
     # Cable nodes
@@ -233,9 +233,12 @@ def main(args):
         sim.setUniformGravity(g)
 
     yumi = sim.getAssembly('yumi')
-    yumi.getConstraint1DOF(JOINT_NAMES_REV[0]).getMotor1D().setSpeed(float(-0.01))
 
-    n_seconds = 20
+
+    yumi.getConstraint1DOF(JOINT_NAMES_REV[0]).getMotor1D().setSpeed(float(-0.01))
+    yumi.getConstraint1DOF(JOINT_NAMES_REV[7]).getMotor1D().setSpeed(float(0.01))
+
+    n_seconds = 10
     n_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
 
 
@@ -245,6 +248,13 @@ def main(args):
         app.executeOneStepWithGraphics()
 
         t = sim.getTimeStamp()
+        if t > 7 and t < 9:
+            yumi.getConstraint1DOF(JOINT_NAMES_REV[0]).getMotor1D().setSpeed(float(0.01))
+            yumi.getConstraint1DOF(JOINT_NAMES_REV[7]).getMotor1D().setSpeed(float(-0.01))
+        elif t > 9:
+            yumi.getConstraint1DOF(JOINT_NAMES_REV[0]).getMotor1D().setSpeed(float(0.0))
+            yumi.getConstraint1DOF(JOINT_NAMES_REV[7]).getMotor1D().setSpeed(float(-0.0))
+
         t_0 = t
         while t < t_0 + TIMESTEP * N_SUBSTEPS:
             sim.stepForward()

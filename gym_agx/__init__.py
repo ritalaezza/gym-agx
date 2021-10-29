@@ -45,7 +45,7 @@ register(
 register(
     id='BendWireYuMi-v0',
     entry_point='gym_agx.envs:BendWireYuMiEnv',
-    kwargs={'n_substeps': 8},
+    kwargs={'n_substeps': 10},
     max_episode_steps=int(1000),
 )
 
