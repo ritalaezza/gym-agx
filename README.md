@@ -18,7 +18,7 @@ BendWire                   |  BendWireObstacle         |  PushRope
 ### Implicit shape control
 
 
-PigInHole                   |  CableClosing         |  RubberBand
+PegInHole                   |  CableClosing         |  RubberBand
 :-------------------------:|:-------------------------:|:-------------------------:
 <img src="https://drive.google.com/uc?export=view&id=1oENntc7lSrSpt09vUci-xWGkyPGgRqIp" width="200"> | <img src="https://drive.google.com/uc?export=view&id=1ZEuetvAu7JIiFZ4qBMtKgsnQ9lqkyeAp" width="200"> | <img src="https://drive.google.com/uc?export=view&id=1-Yij-Fqg48IL3u4VgPVXUo5wuFyxfSVL" width="200">
 
