@@ -1,11 +1,11 @@
 import logging
+import numpy as np
 
-import agxIO
-import agxSDK
 import agxOSG
 import agxRender
 
 from gym_agx.envs import agx_goal_env
+from gym_agx.utils.agx_utils import add_goal_assembly_from_file
 
 logger = logging.getLogger('gym_agx.envs')
 
@@ -16,23 +16,23 @@ class DloEnv(agx_goal_env.AgxGoalEnv):
     def __init__(self, args, scene_path, n_substeps, end_effectors, observation_config, camera_config, reward_config,
                  randomized_goal, goal_scene_path, show_goal, osg_window=True, agx_only=False):
         """Initializes a Dlo object
-        :param list args: arguments for agxViewer.
+        :param list args: arguments for agxViewer
         :param str scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/
         folder
-        :param int n_substeps: number os simulation steps per call to step().
-        :param list end_effectors: list of EndEffector objects, defining controllable constraints.
+        :param int n_substeps: number os simulation steps per call to step()
+        :param list end_effectors: list of EndEffector objects, defining controllable constraints
         :param gym_agx.rl.observation.ObservationConfig observation_config: ObservationConfig object, defining the types
-        of observations.
+        of observations
         :param gym_agx.utils.agx_classes.CameraConfig camera_config: dictionary containing EYE, CENTER, UP information
-        for rendering, with lighting info.
+        for rendering, with lighting info
         :param gym_agx.rl.reward.RewardConfig reward_config: reward configuration object, defines success condition and
-        reward function.
-        :param bool randomized_goal: boolean deciding if a new goal is sampled for each episode.
-        :param str goal_scene_path: path to goal scene file.
-        :param bool show_goal: boolean determining whether goal is rendered or not.
-        :param bool osg_window: boolean which enables/disables window rendering (useful for training).
+        reward function
+        :param bool randomized_goal: boolean deciding if a new goal is sampled for each episode
+        :param str goal_scene_path: path to goal scene file
+        :param bool show_goal: boolean determining whether goal is rendered or not
+        :param bool osg_window: boolean which enables/disables window rendering (useful for training)
         :param bool agx_only: boolean which disables all rendering, including for observations of type RGB or depth
-        images.
+        images
         """
         self.goal_scene_path = goal_scene_path
         self.randomized_goal = randomized_goal
@@ -76,7 +76,7 @@ class DloEnv(agx_goal_env.AgxGoalEnv):
             name = rb.getName()
             node = agxOSG.createVisual(rb, self.root)
             if name == "ground":
-                agxOSG.setDiffuseColor(node, agxRender.Color.Gray())
+                agxOSG.setDiffuseColor(node, agxRender.Color.SlateGray())
             elif "gripper_left" in name and "base" not in name:
                 agxOSG.setDiffuseColor(node, agxRender.Color.Red())
             elif "gripper_right" in name and "base" not in name:
@@ -86,15 +86,13 @@ class DloEnv(agx_goal_env.AgxGoalEnv):
             elif "dlo" in name:
                 agxOSG.setDiffuseColor(node, agxRender.Color.Green())
             elif "obstacle" in name or "cylinder" in name:
-                agxOSG.setDiffuseColor(node, agxRender.Color.DimGray())
-            elif name == "bounding_box":
-                agxOSG.setDiffuseColor(node, agxRender.Color.White())
-                agxOSG.setAlpha(node, 0.2)
+                agxOSG.setDiffuseColor(node, agxRender.Color.SteelBlue())
+            elif "bounding_box" in name:
+                agxOSG.setDiffuseColor(node, agxRender.Color.Burlywood())
             else:
                 agxOSG.setAlpha(node, 0)
                 logger.info("No color set for {}.".format(name))
-
-            if "goal" in name:
+            if "goal" in name and "base" not in name:
                 agxOSG.setAlpha(node, 0.2)
         scene_decorator = self.app.getSceneDecorator()
         light_source_0 = scene_decorator.getLightSource(agxOSG.SceneDecorator.LIGHT0)
@@ -134,16 +132,10 @@ class DloEnv(agx_goal_env.AgxGoalEnv):
         return success, done
 
     def _sample_goal(self):
+        add_goal_assembly_from_file(self.sim, self.goal_scene_path)
         if self.randomized_goal:
-            raise NotImplementedError
-        else:
-            scene = agxSDK.Assembly()  # Create a new empty Assembly
-            scene.setName("goal_assembly")
+            self._sample_random_goal(self.sim)
 
-            if not agxIO.readFile(self.goal_scene_path, self.sim, scene, agxSDK.Simulation.READ_ALL):
-                raise RuntimeError("Unable to open goal file \'" + self.goal_scene_path + "\'")
-
-        self.sim.add(scene)
         goal = self.observation_config.get_observations(self.sim, self.render_to_image, self.end_effectors, cable="DLO",
                                                         goal_only=True)
 
@@ -153,3 +145,8 @@ class DloEnv(agx_goal_env.AgxGoalEnv):
             self._reset_sim()
 
         return goal
+
+    def _sample_random_goal(self, sim):
+        """Insert here random goal generation function
+        """
+        raise NotImplementedError()

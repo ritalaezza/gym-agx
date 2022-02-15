@@ -46,17 +46,17 @@ class EndEffector:
 
     def __init__(self, name, controllable, observable, max_velocity=1, max_angular_velocity=1, max_acceleration=1,
                  max_angular_acceleration=1, min_compliance=0, max_compliance=1e6):
-        """EndEffector class which keeps track of end-effector constraints and action indices.
-        :param str name: Name of the end-effector, should match name of rigid body in simulation.
-        :param bool controllable: Determines if the end-effector is controllable.
-        :param bool observable: Determines if the end-effector is observable.
-        :param float max_velocity: Maximum velocity sent to simulation.
-        :param float max_angular_velocity: Maximum angular velocity sent to simulation.
-        :param float max_acceleration: Maximum acceleration allowed. Affects velocity sent to simulation.
+        """EndEffector class which keeps track of end-effector constraints and action indices
+        :param str name: Name of the end-effector, should match name of rigid body in simulation
+        :param bool controllable: Determines if the end-effector is controllable
+        :param bool observable: Determines if the end-effector is observable
+        :param float max_velocity: Maximum velocity sent to simulation
+        :param float max_angular_velocity: Maximum angular velocity sent to simulation
+        :param float max_acceleration: Maximum acceleration allowed. Affects velocity sent to simulation
         :param float max_angular_acceleration: Maximum angular acceleration allowed. Affects angular velocity sent to
-        simulation.
-        :param float min_compliance: Minimum compliance of the end-effector grip.
-        :param float max_compliance: Maximum compliance of the end-effector grip.
+        simulation
+        :param float min_compliance: Minimum compliance of the end-effector grip
+        :param float max_compliance: Maximum compliance of the end-effector grip
         """
         self.name = name
         self.controllable = controllable
@@ -71,8 +71,8 @@ class EndEffector:
 
     def add_constraint(self, name, end_effector_dof, compute_forces_enabled=False, velocity_control=False,
                        compliance_control=False):
-        """Add constraints which make up the end-effector.
-        :param str name: Name of the constraint. Should be consistent with name of constraint in simulation.
+        """Add constraints which make up the end-effector
+        :param str name: Name of the constraint. Should be consistent with name of constraint in simulation
         :param EndEffectorConstraint.Dof end_effector_dof: DoF of end-effector that this constraint controls
         :param bool compute_forces_enabled: Force and torque can be measured (should be consistent with simulation)
         :param bool velocity_control: Is velocity controlled
@@ -98,10 +98,10 @@ class EndEffector:
         self.constraints.update({name: end_effector_constraint})
 
     def apply_control(self, sim, action, dt):
-        """Apply control to simulation.
-        :param agxSDK.Simulation sim: AGX simulation object.
-        :param np.ndarray action: Action from Gym interface.
-        :param float dt: Action time-step, needed to compute velocity and acceleration.
+        """Apply control to simulation
+        :param agxSDK.Simulation sim: AGX simulation object
+        :param np.ndarray action: Action from Gym interface
+        :param float dt: Action time-step, needed to compute velocity and acceleration
         :return: Applied actions
         """
         control_actions = []
@@ -126,10 +126,10 @@ class EndEffector:
         return control_actions
 
     def get_velocity(self, sim, constraint_dof):
-        """Get current velocity of end_effector.
-        :param agxSDK.Simulation sim: AGX simulation object.
-        :param EndEffectorConstraint.Dof constraint_dof: Degree of freedom to read velocity from.
-        :return: End-effector velocity and boolean indicating if it is linear or angular.
+        """Get current velocity of end_effector
+        :param agxSDK.Simulation sim: AGX simulation object
+        :param EndEffectorConstraint.Dof constraint_dof: Degree of freedom to read velocity from
+        :return: End-effector velocity and boolean indicating if it is linear or angular
         """
         end_effector = sim.getRigidBody(self.name)
         if constraint_dof == EndEffectorConstraint.Dof.X_TRANSLATION:
@@ -156,11 +156,11 @@ class EndEffector:
         return velocity, linear
 
     def rescale_velocity(self, velocity, current_velocity, dt, linear):
-        """Rescales velocity according to velocity and acceleration limits. Note that this is done DoF-wise only.
-        :param float velocity: Action from Gym interface.
-        :param float current_velocity: Current velocity of the end-effector.
-        :param float dt: Action time-step.
-        :param bool linear: Boolean to differentiate between linear and angular scaling.
+        """Rescales velocity according to velocity and acceleration limits. Note that this is done DoF-wise only
+        :param float velocity: Action from Gym interface
+        :param float current_velocity: Current velocity of the end-effector
+        :param float dt: Action time-step
+        :param bool linear: Boolean to differentiate between linear and angular scaling
         :return: Rescaled velocity
         """
         if linear:
@@ -185,9 +185,9 @@ class EndEffector:
         return velocity
 
     def rescale_compliance(self, compliance):
-        """Rescales compliance between limits defined at initialization of end-effector object.
-        :param float compliance: Action from Gym interface.
-        :return: Rescaled compliance.
+        """Rescales compliance between limits defined at initialization of end-effector object
+        :param float compliance: Action from Gym interface
+        :return: Rescaled compliance
         """
         # Assumes an action range between -1 and 1
         return (compliance + 1) / 2 * (self.max_compliance - self.min_compliance) + self.min_compliance

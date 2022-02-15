@@ -1,4 +1,4 @@
-"""Simulation for bend_wire with obstacle environment
+"""Simulation for BendWireObstacle environment
 
 This module creates the simulation files which will be used in bend_wire with obstacle environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).
@@ -7,24 +7,27 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
 import agx
 import agxPython
 import agxCollide
+import agxRender
 import agxSDK
 import agxCable
 import agxIO
 import agxOSG
-import agxRender
 
 # Python modules
-import sys
-import math
 import logging
+import numpy as np
+import math
+import sys
+import os
 
 # Local modules
-from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, save_goal_simulation
-from gym_agx.utils.agx_classes import KeyboardMotorHandler
+from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, to_numpy_array, \
+    add_goal_assembly_from_file
+from gym_agx.utils.utils import sample_sphere, polynomial_trajectory
 
 logger = logging.getLogger('gym_agx.sims')
 
-FILE_NAME = 'bend_wire_obstacle_planar'
+FILE_NAME = 'bend_wire_obstacle'
 # Simulation parameters
 N_SUBSTEPS = 2
 TIMESTEP = 1 / 100
@@ -33,7 +36,7 @@ RADIUS = 0.001
 LENGTH = 0.3  # meters
 LENGTH += 2 * RADIUS  # meters
 RESOLUTION = 300  # segments per meter
-CYLINDER_LENGTH = 0.1
+CYLINDER_LENGTH = 0.1  # meters
 CYLINDER_RADIUS = CYLINDER_LENGTH / 4
 
 # Aluminum Parameters
@@ -50,6 +53,9 @@ EYE = agx.Vec3(0, -1.0, 0)
 CENTER = agx.Vec3(0, 0, -2 * CYLINDER_RADIUS)
 UP = agx.Vec3(0., 0., 1.)
 
+# Control parameters
+FORCE_RANGE = 2.5  # N
+
 
 def add_rendering(sim):
     camera_distance = 0.5
@@ -65,24 +71,20 @@ def add_rendering(sim):
     root = app.getSceneRoot()
     rbs = sim.getRigidBodies()
     for rb in rbs:
-        if rb.getName() == "ground":
-            ground_node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(ground_node, agxRender.Color.Gray())
-        elif rb.getName() == "gripper_left":
-            gripper_left_node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(gripper_left_node, agxRender.Color(1.0, 0.0, 0.0, 1.0))
-        elif rb.getName() == "gripper_right":
-            gripper_right_node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(gripper_right_node, agxRender.Color(0.0, 0.0, 1.0, 1.0))
-        elif rb.getName() == "obstacle":
-            gripper_right_node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(gripper_right_node, agxRender.Color.Gray())
-        elif "dlo" in rb.getName():
-            cable_node = agxOSG.createVisual(rb, root)
-            agxOSG.setDiffuseColor(cable_node, agxRender.Color(0.0, 1.0, 0.0, 1.0))
+        name = rb.getName()
+        node = agxOSG.createVisual(rb, root)
+        if name == "ground":
+            agxOSG.setDiffuseColor(node, agxRender.Color.Gray())
+        elif "gripper_left" in name and "base" not in name:
+            agxOSG.setDiffuseColor(node, agxRender.Color.Red())
+        elif "gripper_right" in name and "base" not in name:
+            agxOSG.setDiffuseColor(node, agxRender.Color.Blue())
+        elif "dlo" in name:
+            agxOSG.setDiffuseColor(node, agxRender.Color.Green())
         else:
-            node = agxOSG.createVisual(rb, root)
             agxOSG.setDiffuseColor(node, agxRender.Color.Beige())
+            agxOSG.setAlpha(node, 0.5)
+        if "goal" in name:
             agxOSG.setAlpha(node, 0.2)
 
     scene_decorator = app.getSceneDecorator()
@@ -94,11 +96,131 @@ def add_rendering(sim):
     return app
 
 
-def build_simulation():
+def sample_random_goal(sim, app=None, dof_vector=np.ones(3)):
+    """Goal Randomization: Sample 2 points, and execute point-to-point trajectory
+    :param sim: AGX Dynamics simulation object
+    :param app: AGX Dynamics application object
+    :param np.array dof_vector: desired degrees of freedom of the gripper(s), [x, y, z]
+    """
+    assert np.sum(dof_vector) >= 1, "There must be at least one degree of freedom"
+    right_gripper = sim.getRigidBody("gripper_right_goal")
+    right_motor_x = sim.getConstraint1DOF("gripper_right_goal_joint_base_x").getMotor1D()
+    right_motor_y = sim.getConstraint1DOF("gripper_right_goal_joint_base_y").getMotor1D()
+    right_motor_z = sim.getConstraint1DOF("gripper_right_goal_joint_base_z").getMotor1D()
+
+    left_gripper = sim.getRigidBody("gripper_left_goal")
+    left_motor_x = sim.getConstraint1DOF("gripper_left_goal_joint_base_x").getMotor1D()
+    left_motor_y = sim.getConstraint1DOF("gripper_left_goal_joint_base_y").getMotor1D()
+    left_motor_z = sim.getConstraint1DOF("gripper_left_goal_joint_base_z").getMotor1D()
+
+    settling_time = 1
+    n_seconds = 10 + settling_time
+    center = np.array([0, 0, -CYLINDER_RADIUS])
+
+    # Define trajectory waypoints
+    waypoints_right = [to_numpy_array(right_gripper.getPosition()), np.array([LENGTH / 2, 0, -CYLINDER_RADIUS])]
+    scales_right = np.array([CYLINDER_RADIUS, 0])
+    goal_point_right, scales_right[1] = sample_sphere(center, [2 * CYLINDER_RADIUS, LENGTH / 2], [np.pi / 2,  np.pi],
+                                                      [-math.asin(CYLINDER_LENGTH / LENGTH),
+                                                       math.asin(CYLINDER_LENGTH / LENGTH)])
+    goal_point_right[0] = min(goal_point_right[0], CYLINDER_RADIUS)
+    waypoints_right.append(goal_point_right)
+    norm_scales_right = scales_right / sum(scales_right)
+    time_scales_right = norm_scales_right*n_seconds
+
+    scales_left = np.array([CYLINDER_RADIUS, 0])
+    waypoints_left = [to_numpy_array(left_gripper.getPosition()), np.array([-LENGTH / 2, 0, -CYLINDER_RADIUS])]
+    goal_point_left, scales_left[1] = sample_sphere(center, [2 * CYLINDER_RADIUS, LENGTH / 2], [np.pi,  3 * np.pi / 2],
+                                                    [0, 0])
+    goal_point_left[0] = max(goal_point_left[0], -CYLINDER_RADIUS)
+    waypoints_left.append(goal_point_left)
+    norm_scales_left = scales_left / sum(scales_left)
+    time_scales_left = norm_scales_left*n_seconds
+
+    t = sim.getTimeStamp()
+    start_time = t
+    while t < n_seconds:
+        if app:
+            app.executeOneStepWithGraphics()
+        right_velocity = polynomial_trajectory(t, start_time, waypoints_right, time_scales_right, degree=3)
+        right_velocity = right_velocity*dof_vector
+        right_motor_x.setSpeed(right_velocity[0])
+        right_motor_y.setSpeed(right_velocity[1])
+        right_motor_z.setSpeed(right_velocity[2])
+        left_velocity = polynomial_trajectory(t, start_time, waypoints_left, time_scales_left, degree=3)
+        left_velocity = left_velocity*dof_vector
+        left_motor_x.setSpeed(left_velocity[0])
+        left_motor_y.setSpeed(left_velocity[1])
+        left_motor_z.setSpeed(left_velocity[2])
+
+        t = sim.getTimeStamp()
+        t_0 = t
+        while t < t_0 + TIMESTEP * N_SUBSTEPS:
+            sim.stepForward()
+            t = sim.getTimeStamp()
+
+    # reset timestamp, after simulation
+    sim.setTimeStamp(0)
+
+
+def sample_fixed_goal(sim, app=None):
+    """Define the trajectory to generate fixed goal
+    :param sim: AGX Dynamics simulation object
+    :param app: AGX Dynamics application object
+    """
+    right_gripper = sim.getRigidBody("gripper_right_goal")
+    right_motor_x = sim.getConstraint1DOF("gripper_right_goal_joint_base_x").getMotor1D()
+    right_motor_y = sim.getConstraint1DOF("gripper_right_goal_joint_base_y").getMotor1D()
+    right_motor_z = sim.getConstraint1DOF("gripper_right_goal_joint_base_z").getMotor1D()
+
+    left_gripper = sim.getRigidBody("gripper_left_goal")
+    left_motor_x = sim.getConstraint1DOF("gripper_left_goal_joint_base_x").getMotor1D()
+    left_motor_y = sim.getConstraint1DOF("gripper_left_goal_joint_base_y").getMotor1D()
+    left_motor_z = sim.getConstraint1DOF("gripper_left_goal_joint_base_z").getMotor1D()
+
+    # Define trajectory waypoints
+    waypoints_right = [to_numpy_array(right_gripper.getPosition()), np.array([LENGTH / 2, 0, - LENGTH / 2])]
+    waypoints_left = [to_numpy_array(left_gripper.getPosition()), np.array([-CYLINDER_RADIUS, 0, - LENGTH / 2])]
+
+    n_seconds = 20
+    time_scale = np.array([n_seconds-1])
+
+    t = sim.getTimeStamp()
+    start_time = t
+    while t < n_seconds:
+        if app:
+            app.executeOneStepWithGraphics()
+        velocity_right = polynomial_trajectory(t, start_time, waypoints_right, time_scale, degree=3)
+        right_motor_x.setSpeed(velocity_right[0])
+        right_motor_y.setSpeed(velocity_right[1])
+        right_motor_z.setSpeed(velocity_right[2])
+        velocity_left = polynomial_trajectory(t, start_time, waypoints_left, time_scale, degree=3)
+        left_motor_x.setSpeed(velocity_left[0])
+        left_motor_y.setSpeed(velocity_left[1])
+        left_motor_z.setSpeed(velocity_left[2])
+
+        t = sim.getTimeStamp()
+        t_0 = t
+        while t < t_0 + TIMESTEP * N_SUBSTEPS:
+            sim.stepForward()
+            t = sim.getTimeStamp()
+
+
+def build_simulation(goal=False):
+    """Builds simulations for both start and goal configurations
+    :param bool goal: toggles between simulation definition of start and goal configurations
+    :return agxSDK.Simulation: simulation object
+    """
+    assembly_name = "start_"
+    goal_string = ""
+    if goal:
+        assembly_name = "goal_"
+        goal_string = "_goal"
+
     # Instantiate a simulation
     sim = agxSDK.Simulation()
 
-    # By default the gravity vector is 0,0,-9.81 with a uniform gravity field. (we CAN change that
+    # By default, the gravity vector is 0,0,-9.81 with a uniform gravity field. (we CAN change that
     # too by creating an agx.PointGravityField for example).
     # AGX uses a right-hand coordinate system (That is Z defines UP. X is right, and Y is into the screen)
     if not GRAVITY:
@@ -117,27 +239,47 @@ def build_simulation():
     dt = sim.getTimeStep()
     logger.debug("new dt = {}".format(dt))
 
-    # Create a ground plane for reference
-    ground = create_body(name="ground", shape=agxCollide.Box(LENGTH, LENGTH, GROUND_WIDTH),
-                         position=agx.Vec3(0, 0, -(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH)),
-                         motion_control=agx.RigidBody.STATIC)
-    sim.add(ground)
+    # Create a new empty Assembly
+    scene = agxSDK.Assembly()
+    scene.setName(assembly_name + "assembly")
 
-    # Create two grippers one static one kinematic
-    gripper_left = create_body(name="gripper_left",
+    # Add start assembly to simulation
+    sim.add(scene)
+
+    # Create a ground plane for reference and obstacle
+    if not goal:
+        ground = create_body(name="ground", shape=agxCollide.Box(LENGTH, LENGTH, GROUND_WIDTH),
+                             position=agx.Vec3(0, 0, -(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH)),
+                             motion_control=agx.RigidBody.STATIC)
+        sim.add(ground)
+
+    # Create two grippers
+    gripper_left = create_body(name="gripper_left" + goal_string,
                                shape=agxCollide.Box(SIZE_GRIPPER, SIZE_GRIPPER, SIZE_GRIPPER),
                                position=agx.Vec3(-LENGTH / 2, 0, 0),
                                motion_control=agx.RigidBody.DYNAMICS)
-    sim.add(gripper_left)
+    scene.add(gripper_left)
 
-    gripper_right = create_body(name="gripper_right",
+    gripper_right = create_body(name="gripper_right" + goal_string,
                                 shape=agxCollide.Box(SIZE_GRIPPER, SIZE_GRIPPER, SIZE_GRIPPER),
                                 position=agx.Vec3(LENGTH / 2, 0, 0),
                                 motion_control=agx.RigidBody.DYNAMICS)
-    sim.add(gripper_right)
+    scene.add(gripper_right)
 
-    gripper_left_body = gripper_left.getRigidBody("gripper_left")
-    gripper_right_body = gripper_right.getRigidBody("gripper_right")
+    gripper_left_body = gripper_left.getRigidBody("gripper_left" + goal_string)
+    gripper_right_body = gripper_right.getRigidBody("gripper_right" + goal_string)
+
+    # Create material
+    material_cylinder = agx.Material("cylinder_material")
+    bulk_material_cylinder = material_cylinder.getBulkMaterial()
+    bulk_material_cylinder.setPoissonsRatio(POISSON_RATIO)
+    bulk_material_cylinder.setYoungsModulus(YOUNG_MODULUS)
+
+    cylinder = create_body(name="obstacle" + goal_string,
+                           shape=agxCollide.Cylinder(CYLINDER_RADIUS, CYLINDER_LENGTH),
+                           position=agx.Vec3(0, 0, -2 * CYLINDER_RADIUS), motion_control=agx.RigidBody.STATIC,
+                           material=material_cylinder)
+    scene.add(cylinder)
 
     # Create cable
     cable = agxCable.Cable(RADIUS, RESOLUTION)
@@ -158,19 +300,8 @@ def build_simulation():
     cable.add(agxCable.FreeNode(agx.Vec3(-LENGTH / 2 + SIZE_GRIPPER + RADIUS, 0, 0)))  # Fix cable to gripper_left
     cable.add(agxCable.FreeNode(agx.Vec3(LENGTH / 2 - SIZE_GRIPPER - RADIUS, 0, 0)))  # Fix cable to gripper_right
 
-    material_cylinder = agx.Material("cylinder_material")
-    bulk_material_cylinder = material_cylinder.getBulkMaterial()
-    bulk_material_cylinder.setPoissonsRatio(POISSON_RATIO)
-    bulk_material_cylinder.setYoungsModulus(YOUNG_MODULUS)
-
-    cylinder = create_body(name="obstacle",
-                           shape=agxCollide.Cylinder(CYLINDER_RADIUS, CYLINDER_LENGTH),
-                           position=agx.Vec3(0, 0, -2 * CYLINDER_RADIUS), motion_control=agx.RigidBody.STATIC,
-                           material=material_cylinder)
-    sim.add(cylinder)
-
     # Set cable name and properties
-    cable.setName("DLO")
+    cable.setName("DLO" + goal_string)
     properties = cable.getCableProperties()
     properties.setYoungsModulus(YOUNG_MODULUS, agxCable.BEND)
     properties.setYoungsModulus(YOUNG_MODULUS, agxCable.TWIST)
@@ -201,27 +332,29 @@ def build_simulation():
     # Try to initialize cable
     report = cable.tryInitialize()
     if report.successful():
-        print("Successful cable initialization.")
+        logger.debug("Successful cable initialization.")
     else:
-        print(report.getActualError())
+        logger.error(report.getActualError())
 
     # Add cable to simulation
     sim.add(cable)
 
     # Add segment names and get first and last segment
-    count = 1
+    segment_count = 0
     iterator = cable.begin()
     segment_left = iterator.getRigidBody()
-    segment_left.setName('dlo_' + str(count))
+    segment_left.setName('dlo_' + str(segment_count + 1) + goal_string)
+    segment_right = None
+
     while not iterator.isEnd():
-        count += 1
+        segment_count += 1
         segment_right = iterator.getRigidBody()
-        segment_right.setName('dlo_' + str(count))
+        segment_right.setName('dlo_' + str(segment_count + 1) + goal_string)
         iterator.inc()
 
     # Add hinge constraints
-    hinge_joint_left = agx.Hinge(sim.getRigidBody("gripper_left"), frame_left, segment_left)
-    hinge_joint_left.setName('hinge_joint_left')
+    hinge_joint_left = agx.Hinge(sim.getRigidBody("gripper_left" + goal_string), frame_left, segment_left)
+    hinge_joint_left.setName('hinge_joint_left' + goal_string)
     motor_left = hinge_joint_left.getMotor1D()
     motor_left.setEnable(False)
     motor_left_param = motor_left.getRegularizationParameters()
@@ -234,8 +367,8 @@ def build_simulation():
     range_left.setRange(agx.RangeReal(-math.pi / 2, math.pi / 2))
     sim.add(hinge_joint_left)
 
-    hinge_joint_right = agx.Hinge(sim.getRigidBody("gripper_right"), frame_right, segment_right)
-    hinge_joint_right.setName('hinge_joint_right')
+    hinge_joint_right = agx.Hinge(sim.getRigidBody("gripper_right" + goal_string), frame_right, segment_right)
+    hinge_joint_right.setName('hinge_joint_right' + goal_string)
     motor_right = hinge_joint_right.getMotor1D()
     motor_right.setEnable(False)
     motor_right_param = motor_right.getRegularizationParameters()
@@ -249,57 +382,81 @@ def build_simulation():
     sim.add(hinge_joint_right)
 
     # Create bases for gripper motors
-    prismatic_base_left = create_locked_prismatic_base("gripper_left", gripper_left_body, compliance=0,
+    prismatic_base_left = create_locked_prismatic_base("gripper_left" + goal_string, gripper_left_body, compliance=0,
+                                                       motor_ranges=[(-FORCE_RANGE, FORCE_RANGE),
+                                                                     (-FORCE_RANGE, FORCE_RANGE),
+                                                                     (-FORCE_RANGE, FORCE_RANGE)],
                                                        position_ranges=[(-LENGTH / 2 + CYLINDER_RADIUS,
                                                                          LENGTH / 2 - CYLINDER_RADIUS),
                                                                         (-CYLINDER_LENGTH / 3, CYLINDER_LENGTH / 3),
                                                                         (-(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH),
                                                                          0)],
-                                                       lock_status=[False, True, False])
+                                                       lock_status=[False, False, False])
     sim.add(prismatic_base_left)
-    prismatic_base_right = create_locked_prismatic_base("gripper_right", gripper_right_body, compliance=0,
+    prismatic_base_right = create_locked_prismatic_base("gripper_right" + goal_string, gripper_right_body, compliance=0,
+                                                        motor_ranges=[(-FORCE_RANGE, FORCE_RANGE),
+                                                                      (-FORCE_RANGE, FORCE_RANGE),
+                                                                      (-FORCE_RANGE, FORCE_RANGE)],
                                                         position_ranges=[(-LENGTH / 2 + CYLINDER_RADIUS,
                                                                           LENGTH / 2 - CYLINDER_RADIUS),
                                                                          (-CYLINDER_LENGTH / 3, CYLINDER_LENGTH / 3),
                                                                          (-(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH),
                                                                           0)],
-                                                        lock_status=[False, True, False])
+                                                        lock_status=[False, False, False])
     sim.add(prismatic_base_right)
-
-    # Add keyboard listener
-    left_motor_x = sim.getConstraint1DOF("gripper_left_joint_base_x").getMotor1D()
-    left_motor_y = sim.getConstraint1DOF("gripper_left_joint_base_y").getMotor1D()
-    left_motor_z = sim.getConstraint1DOF("gripper_left_joint_base_z").getMotor1D()
-    right_motor_x = sim.getConstraint1DOF("gripper_right_joint_base_x").getMotor1D()
-    right_motor_y = sim.getConstraint1DOF("gripper_right_joint_base_y").getMotor1D()
-    right_motor_z = sim.getConstraint1DOF("gripper_right_joint_base_z").getMotor1D()
-    key_motor_map = {agxSDK.GuiEventListener.KEY_Right: (right_motor_x, 0.1),
-                     agxSDK.GuiEventListener.KEY_Left: (right_motor_x, -0.1),
-                     agxSDK.GuiEventListener.KEY_Up: (right_motor_y, 0.1),
-                     agxSDK.GuiEventListener.KEY_Down: (right_motor_y, -0.1),
-                     65365: (right_motor_z, 0.1),
-                     65366: (right_motor_z, -0.1),
-                     0x64: (left_motor_x, 0.1),
-                     0x61: (left_motor_x, -0.1),
-                     0x32: (left_motor_y, 0.1),  # 0x77
-                     0x73: (left_motor_y, -0.1),
-                     0x71: (left_motor_z, 0.1),
-                     0x65: (left_motor_z, -0.1)}
-    sim.add(KeyboardMotorHandler(key_motor_map))
 
     return sim
 
 
+# Build and save scene to file
 def main(args):
-    # Build simulation object
+    # 1) Build start simulation object
     sim = build_simulation()
 
-    # Save simulation to file
+    # Save start simulation to file
     success = save_simulation(sim, FILE_NAME)
-    if success:
-        logger.debug("Simulation saved!")
-    else:
+    if not success:
         logger.debug("Simulation not saved!")
+
+    # 2) Build goal simulation object
+    goal_sim = build_simulation(goal=True)
+
+    # Save simulation to file
+    success = save_simulation(goal_sim, FILE_NAME + "_goal_random")
+    if not success:
+        logger.debug("Goal simulation not saved!")
+
+    # Render simulation
+    app = add_rendering(goal_sim)
+    app.init(agxIO.ArgumentParser([sys.executable] + args))
+    app.setCameraHome(EYE, CENTER, UP)  # should only be added after app.init
+    app.initSimulation(goal_sim, True)  # This changes timestep and Gravity!
+    goal_sim.setTimeStep(TIMESTEP)
+    if not GRAVITY:
+        logger.info("Gravity off.")
+        g = agx.Vec3(0, 0, 0)  # remove gravity
+        goal_sim.setUniformGravity(g)
+
+    # 3) Sample fixed goal
+    sample_fixed_goal(goal_sim, app)
+
+    # Set goal objects to static
+    rbs = goal_sim.getRigidBodies()
+    for rb in rbs:
+        name = rb.getName()
+        if "_goal" in name:
+            rb.setMotionControl(agx.RigidBody.STATIC)
+
+    # Save fixed goal simulation to file
+    success = save_simulation(goal_sim, FILE_NAME + "_goal")
+    if not success:
+        logger.debug("Fixed goal simulation not saved!")
+
+    # 4) Test random goal generation
+    file_directory = os.path.dirname(os.path.abspath(__file__))
+    package_directory = os.path.split(file_directory)[0]
+    random_goal_file = os.path.join(package_directory, 'envs/assets',  FILE_NAME + "_goal_random.agx")
+    add_goal_assembly_from_file(sim, random_goal_file)
 
     # Render simulation
     app = add_rendering(sim)
@@ -312,26 +469,8 @@ def main(args):
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 
-    n_seconds = 30
-    n_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
-    for k in range(n_steps):
-        app.executeOneStepWithGraphics()
-
-        t = sim.getTimeStamp()
-        t_0 = t
-        while t < t_0 + TIMESTEP * N_SUBSTEPS:
-            sim.stepForward()
-            t = sim.getTimeStamp()
-
-    # Save goal simulation to file (but first make grippers static, remove clutter and rename)
-    cable = agxCable.Cable.find(sim, "DLO")
-    cable.setName("DLO_goal")
-    success = save_goal_simulation(sim, FILE_NAME, ['ground', 'obstacle', 'gripper_left_prismatic_base',
-                                                    'gripper_right_prismatic_base'])
-    if success:
-        logger.debug("Goal simulation saved!")
-    else:
-        logger.debug("Goal simulation not saved!")
+    # Test random goal generation
+    sample_random_goal(sim, app)
 
 
 if __name__ == '__main__':
