@@ -4,21 +4,20 @@ import agx
 import logging
 import numpy as np
 
-import agxIO
-import agxSDK
-
 from gym_agx.envs import dlo_env
 from gym_agx.rl.reward import RewardConfig
 from gym_agx.utils.agx_classes import CameraConfig
 from gym_agx.rl.end_effector import EndEffector, EndEffectorConstraint
 from gym_agx.rl.observation import ObservationConfig
 from gym_agx.utils.utils import goal_distance
-from gym_agx.sims import bend_wire_random_goal
+from gym_agx.sims import bend_wire
 
 FILE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 PACKAGE_DIRECTORY = os.path.split(FILE_DIRECTORY)[0]
-SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_hinge.agx')
-GOAL_SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_hinge_goal.agx')
+SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire.agx')
+GOAL_SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_goal.agx')
+RANDOM_GOAL_SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_goal_random.agx')
+
 
 logger = logging.getLogger('gym_agx.envs')
 
@@ -50,20 +49,21 @@ class BendWireEnv(dlo_env.DloEnv):
     """Subclass which inherits from DLO environment."""
 
     def __init__(self, n_substeps, observation_config=None, grippers=None, reward_type=None, reward_config=None,
-                 scene_path=None, goal_scene_path=None, **kwargs):
+                 scene_path=None, goal_scene_path=None, dof_vector=None, **kwargs):
         """Initializes BendWire environment
-        :param int n_substeps: number of simulation steps between each action step.
-        :param ObservationConfig: types of observations to be used.
-        :param list grippers: EndEffector objects.
-        :param RewardConfig.RewardType reward_type: type of reward.
-        :param RewardConfig reward_config: adds possibility to completely override reward definition.
-        :param str scene_path: possibility to overwrite default scene file.
-        :param str goal_scene_path: possibility to overwrite default goal scene file.
+        :param int n_substeps: number of simulation steps between each action step
+        :param ObservationConfig: types of observations to be used
+        :param list grippers: EndEffector objects
+        :param RewardConfig.RewardType reward_type: type of reward
+        :param RewardConfig reward_config: adds possibility to completely override reward definition
+        :param str scene_path: possibility to overwrite default scene file
+        :param str goal_scene_path: possibility to overwrite default goal scene file
+        :param np.array dof_vector: desired gripper(s) degrees of freedom for generating random goal , [x, y, z]
         """
         length = 0.1  # meters
         camera_distance = 0.5  # meters
         camera_config = CameraConfig(
-            eye=agx.Vec3(length / 2, -3 * length, 0),
+            eye=agx.Vec3(length / 2, -4 * length, 0),
             center=agx.Vec3(length / 2, 0, 0),
             up=agx.Vec3(0., 0., 1.),
             light_position=agx.Vec4(length / 2, - camera_distance, camera_distance, 1.),
@@ -86,33 +86,19 @@ class BendWireEnv(dlo_env.DloEnv):
             gripper_right.add_constraint(name='gripper_right_joint_base_y',
                                          end_effector_dof=EndEffectorConstraint.Dof.Y_TRANSLATION,
                                          compute_forces_enabled=False,
-                                         velocity_control=False,
+                                         velocity_control=True,
                                          compliance_control=False)
             gripper_right.add_constraint(name='gripper_right_joint_base_z',
                                          end_effector_dof=EndEffectorConstraint.Dof.Z_TRANSLATION,
                                          compute_forces_enabled=False,
-                                         velocity_control=False,
+                                         velocity_control=True,
                                          compliance_control=False)
             gripper_right.add_constraint(name='hinge_joint_right',
                                          end_effector_dof=EndEffectorConstraint.Dof.Y_ROTATION,
                                          compute_forces_enabled=False,
                                          velocity_control=False,
                                          compliance_control=False)
-
-            gripper_left = EndEffector(
-                name='gripper_left',
-                controllable=False,
-                observable=False,
-            )
-            gripper_left.add_constraint(name='prismatic_joint_left',
-                                        end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
-                                        compute_forces_enabled=False,
-                                        velocity_control=False)
-            gripper_left.add_constraint(name='hinge_joint_left',
-                                        end_effector_dof=EndEffectorConstraint.Dof.Y_ROTATION,
-                                        compute_forces_enabled=False,
-                                        velocity_control=False)
-            grippers = [gripper_right, gripper_left]
+            grippers = [gripper_right]
 
         if not observation_config:
             observation_config = ObservationConfig(goals=[ObservationConfig.ObservationType.DLO_CURVATURE,
@@ -135,9 +121,19 @@ class BendWireEnv(dlo_env.DloEnv):
         agx_only = kwargs['agx_only'] if 'agx_only' in kwargs else False
         randomized_goal = kwargs['randomized_goal'] if 'randomized_goal' in kwargs else False
 
+        # Overwrite goal_scene_path with starting point for random goals
+        if randomized_goal:
+            goal_scene_path = RANDOM_GOAL_SCENE_PATH
+
         if not os.path.exists(SCENE_PATH):
             raise IOError("File %s does not exist" % SCENE_PATH)
         logger.info("Fetching environment from {}".format(SCENE_PATH))
+
+        # Randomization of goal can be changed using dof_vector
+        if dof_vector:
+            self.dof_vector = dof_vector
+        else:
+            self.dof_vector = np.ones(3)
 
         super(BendWireEnv, self).__init__(args=args,
                                           scene_path=scene_path,
@@ -152,28 +148,5 @@ class BendWireEnv(dlo_env.DloEnv):
                                           osg_window=osg_window,
                                           agx_only=agx_only)
 
-    def _sample_goal(self):
-
-        if self.randomized_goal:
-            goal_cable_length, goal_cable_segments = bend_wire_random_goal.add_goal(self.sim, logger)
-            logger.info(f"Added goal cable consisting of {goal_cable_segments} segments "
-                        f"with a total length of {goal_cable_length}.")
-
-        else:
-            scene = agxSDK.Assembly()  # Create a new empty Assembly
-            scene.setName("goal_assembly")
-
-            if not agxIO.readFile(self.goal_scene_path, self.sim, scene, agxSDK.Simulation.READ_ALL):
-                raise RuntimeError("Unable to open goal file \'" + self.goal_scene_path + "\'")
-
-            self.sim.add(scene)
-
-        goal = self.observation_config.get_observations(self.sim, self.render_to_image, self.end_effectors, cable="DLO",
-                                                        goal_only=True)
-
-        if self.show_goal:
-            self._add_rendering()
-        else:
-            self._reset_sim()
-
-        return goal
+    def _sample_random_goal(self, sim):
+        bend_wire.sample_random_goal(self.sim, dof_vector=self.dof_vector)

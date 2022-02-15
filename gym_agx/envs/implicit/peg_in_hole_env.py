@@ -178,7 +178,7 @@ class PegInHoleEnv(agx_env.AgxEnv):
         for p in segment_pos:
             if (cylinder_pos[0]-0.015 <= p[0] <= cylinder_pos[0]+0.015 and
                     cylinder_pos[1]-0.015 <= p[1] <= cylinder_pos[1]+0.015 and
-                    -0.1 <= p[2] <=0.07):
+                    -0.1 <= p[2] <= 0.07):
                 n_inserted += 1
         return n_inserted
 

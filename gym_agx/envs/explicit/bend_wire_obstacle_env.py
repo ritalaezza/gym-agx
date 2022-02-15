@@ -4,22 +4,19 @@ import agx
 import logging
 import numpy as np
 
-import agxIO
-import agxSDK
-
 from gym_agx.envs import dlo_env
 from gym_agx.rl.observation import ObservationConfig
 from gym_agx.rl.reward import RewardConfig
 from gym_agx.utils.agx_classes import CameraConfig
 from gym_agx.rl.end_effector import EndEffector, EndEffectorConstraint
 from gym_agx.utils.utils import goal_distance
-from gym_agx.sims import bend_wire_obstacle_random_goal
+from gym_agx.sims import bend_wire_obstacle
 
 FILE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 PACKAGE_DIRECTORY = os.path.split(FILE_DIRECTORY)[0]
-SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_obstacle_planar.agx')
-GOAL_SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_obstacle_planar_goal.agx')
-# TODO: Make scene_path and goal_scene_path be passed in kwargs. Maybe just keep one as default.
+SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_obstacle.agx')
+GOAL_SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_obstacle_goal.agx')
+RANDOM_GOAL_SCENE_PATH = os.path.join(PACKAGE_DIRECTORY, 'assets', 'bend_wire_obstacle_goal_random.agx')
 
 logger = logging.getLogger('gym_agx.envs')
 
@@ -62,19 +59,22 @@ class BendWireObstacleEnv(dlo_env.DloEnv):
     """Subclass which inherits from DLO environment."""
 
     def __init__(self, n_substeps, observation_config=None, grippers=None, reward_type=None, reward_config=None,
-                 **kwargs):
+                 scene_path=None, goal_scene_path=None, dof_vector=None, **kwargs):
         """Initializes BendWireObstacle environment
-        :param int n_substeps: number of simulation steps between each action step.
-        :param ObservationConfig: types of observations to be used.
-        :param list grippers: EndEffector objects.
-        :param RewardConfig.RewardType reward_type: type of reward.
-        :param RewardConfig reward_config: adds possibility to completely override reward definition.
+        :param int n_substeps: number of simulation steps between each action step
+        :param ObservationConfig: types of observations to be used
+        :param list grippers: EndEffector objects
+        :param RewardConfig.RewardType reward_type: type of reward
+        :param RewardConfig reward_config: adds possibility to completely override reward definition
+        :param str scene_path: possibility to overwrite default scene file
+        :param str goal_scene_path: possibility to overwrite default goal scene file
+        :param np.array dof_vector: desired gripper(s) degrees of freedom for generating random goal , [x, y, z]
         """
         length = 0.3  # meters
-        camera_distance = 1  # meters
+        camera_distance = length * 3
         camera_config = CameraConfig(
             eye=agx.Vec3(0, -camera_distance, 0.01),
-            center=agx.Vec3(0, -length, -0.05),
+            center=agx.Vec3(0, 0, -0.05),
             up=agx.Vec3(0., 0., 1.),
             light_position=agx.Vec4(length / 2, - camera_distance, camera_distance, 1.),
             light_direction=agx.Vec3(0., 0., -1.)
@@ -151,51 +151,43 @@ class BendWireObstacleEnv(dlo_env.DloEnv):
             reward_config = Reward(reward_type=reward_type, reward_range=(-1.5, 1.5), set_done_on_success=False,
                                    dlo_curvature_threshold=0.12, ee_position_threshold=0.01)
 
+        if not scene_path:
+            scene_path = SCENE_PATH
+        if not goal_scene_path:
+            goal_scene_path = GOAL_SCENE_PATH
+
         args = kwargs['agxViewer'] if 'agxViewer' in kwargs else sys.argv
         show_goal = kwargs['show_goal'] if 'show_goal' in kwargs else False
         osg_window = kwargs['osg_window'] if 'osg_window' in kwargs else False
         agx_only = kwargs['agx_only'] if 'agx_only' in kwargs else False
         randomized_goal = kwargs['randomized_goal'] if 'randomized_goal' in kwargs else False
 
+        # Overwrite goal_scene_path with starting point for random goals
+        if randomized_goal:
+            goal_scene_path = RANDOM_GOAL_SCENE_PATH
+
         if not os.path.exists(SCENE_PATH):
             raise IOError("File %s does not exist" % SCENE_PATH)
         logger.info("Fetching environment from {}".format(SCENE_PATH))
 
+        # Randomization of goal can be changed using dof_vector
+        if dof_vector:
+            self.dof_vector = dof_vector
+        else:
+            self.dof_vector = np.array([1, 0, 1])
+
         super(BendWireObstacleEnv, self).__init__(args=args,
-                                                  scene_path=SCENE_PATH,
+                                                  scene_path=scene_path,
                                                   n_substeps=n_substeps,
                                                   end_effectors=grippers,
                                                   observation_config=observation_config,
                                                   camera_config=camera_config,
                                                   reward_config=reward_config,
                                                   randomized_goal=randomized_goal,
-                                                  goal_scene_path=GOAL_SCENE_PATH,
+                                                  goal_scene_path=goal_scene_path,
                                                   show_goal=show_goal,
                                                   osg_window=osg_window,
                                                   agx_only=agx_only)
 
-    def _sample_goal(self):
-
-        if self.randomized_goal:
-            goal_cable_length, goal_cable_segments = bend_wire_obstacle_random_goal.add_goal(self.sim, logger)
-            logger.info(f"Added goal cable consisting of {goal_cable_segments} segments "
-                        f"with a total length of {goal_cable_length}.")
-
-        else:
-            scene = agxSDK.Assembly()  # Create a new empty Assembly
-            scene.setName("goal_assembly")
-
-            if not agxIO.readFile(self.goal_scene_path, self.sim, scene, agxSDK.Simulation.READ_ALL):
-                raise RuntimeError("Unable to open goal file \'" + self.goal_scene_path + "\'")
-
-            self.sim.add(scene)
-
-        goal = self.observation_config.get_observations(self.sim, self.render_to_image, self.end_effectors, cable="DLO",
-                                                        goal_only=True)
-
-        if self.show_goal:
-            self._add_rendering()
-        else:
-            self._reset_sim()
-
-        return goal
+    def _sample_random_goal(self, sim):
+        bend_wire_obstacle.sample_random_goal(self.sim, dof_vector=self.dof_vector)

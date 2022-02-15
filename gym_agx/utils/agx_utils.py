@@ -1,4 +1,5 @@
 import agx
+import agxCable
 import agxIO
 import agxSDK
 import agxCollide
@@ -8,21 +9,25 @@ import math
 import logging
 import numpy as np
 
+import agxUtil
+
 logger = logging.getLogger('gym_agx.utils')
 
 
-def save_simulation(sim, file_name):
-    """Save AGX simulation object to file.
+def save_simulation(sim, file_name, aagx=False):
+    """Save AGX simulation object to file
     :param agxSDK.Simulation sim: AGX simulation object
     :param str file_name: name of the file
+    :param bool aagx: additionally saves human-readable markup file
     :return: Boolean for success/failure
     """
     file_directory = os.path.dirname(os.path.abspath(__file__))
     package_directory = os.path.split(file_directory)[0]
-    markup_file = os.path.join(package_directory, 'envs/assets', file_name + ".aagx")
-    if not agxIO.writeFile(markup_file, sim):
-        print("Unable to save simulation to markup file!")
-        return False
+    if aagx:
+        markup_file = os.path.join(package_directory, 'envs/assets', file_name + ".aagx")
+        if not agxIO.writeFile(markup_file, sim):
+            print("Unable to save simulation to markup file!")
+            return False
     binary_file = os.path.join(package_directory, 'envs/assets', file_name + ".agx")
     if not agxIO.writeFile(binary_file, sim):
         print("Unable to save simulation to binary file!")
@@ -30,12 +35,26 @@ def save_simulation(sim, file_name):
     return True
 
 
-def save_goal_simulation(sim, file_name, remove_assemblies=[]):
-    """Save AGX simulation object to file.
+def add_goal_assembly_from_file(sim, file_path):
+    """Adds goal_assembly to simulation, by loading file_name. It disables collisions between start_assembly and
+    goal_assembly
     :param agxSDK.Simulation sim: AGX simulation object
-    :param str file_name: name of the file
+    :param str file_path: path to file to load
+    """
+    # Read simulation file
+    if not agxIO.readFile(file_path, sim):
+        raise RuntimeError("Unable to open goal file \'" + file_path + "\'")
+
+    # Disable collisions between goal_assembly and start_assembly
+    start_scene = sim.getAssembly("start_assembly")
+    goal_scene = sim.getAssembly("goal_assembly")
+    agxUtil.setEnableCollisions(goal_scene, start_scene, False)
+
+
+def make_goal_simulation(sim, remove_assemblies=[]):
+    """Adds the suffix goal to all objects in the simulation and makes them static. Removes undesired assemblies
+    :param agxSDK.Simulation sim: AGX simulation object
     :param list remove_assemblies: string list of assemblies to remove
-    :return: Boolean for success/failure
     """
     # Remove assemblies
     for assembly in remove_assemblies:
@@ -55,6 +74,16 @@ def save_goal_simulation(sim, file_name, remove_assemblies=[]):
         name = constraint.getName()
         if name != '':
             constraint.setName(name + '_goal')
+
+
+def save_goal_simulation(sim, file_name, remove_assemblies=[]):
+    """Save AGX simulation object to file. THIS FUNCTION WILL BE DEPRECATED. CLEAN UP IS ENV DEPENDENT
+    :param agxSDK.Simulation sim: AGX simulation object
+    :param str file_name: name of the file
+    :param list remove_assemblies: string list of assemblies to remove
+    :return: Boolean for success/failure
+    """
+    make_goal_simulation(sim, remove_assemblies)
     file_directory = os.path.dirname(os.path.abspath(__file__))
     package_directory = os.path.split(file_directory)[0]
     markup_file = os.path.join(package_directory, 'envs/assets', file_name + "_goal.aagx")
@@ -69,7 +98,7 @@ def save_goal_simulation(sim, file_name, remove_assemblies=[]):
 
 
 def to_numpy_array(agx_list):
-    """Convert from AGX data structure to NumPy array.
+    """Convert from AGX data structure to NumPy array
     :param agx_list: AGX data structure
     :return: NumPy array
     """
@@ -95,7 +124,7 @@ def to_numpy_array(agx_list):
 
 
 def to_agx_list(np_array, agx_type):
-    """Convert from Numpy array to AGX data structure.
+    """Convert from Numpy array to AGX data structure
     :param numpy.ndarray np_array:  NumPy array
     :param agx_type: Target AGX data structure
     :return: AGX data object
@@ -116,7 +145,7 @@ def to_agx_list(np_array, agx_type):
 
 
 def get_cable_segment_edges(cable):
-    """Get AGX Cable segments' begin and end positions.
+    """Get AGX Cable segments' begin and end positions
     :param agxCable.Cable cable: AGX Cable object
     :return: NumPy array with segments' edge positions
     """
@@ -142,17 +171,17 @@ def create_body(shape, name="", position=agx.Vec3(0, 0, 0), rotation=agx.OrthoMa
                 geometry_transform=agx.AffineMatrix4x4(), motion_control=agx.RigidBody.DYNAMICS, material=None,
                 disable_collisions=False):
     """Helper function that creates a RigidBody according to the given definition.
-    Returns the body itself, it's geometry and the OSG node that was created for it.
-    :param agxCollide.Shape shape: shape of object.
-    :param string name: Optional. Defaults to "". The name of the new body.
-    :param agx.Vec3 position: Position of the object in world coordinates.
+    Returns the body itself, it's geometry and the OSG node that was created for it
+    :param agxCollide.Shape shape: shape of object
+    :param string name: Optional. Defaults to "". The name of the new body
+    :param agx.Vec3 position: Position of the object in world coordinates
     :param agx.OrthoMatrix3x3 rotation: Rotation of the object in world coordinate frames
     :param agx.AffineMatrix4x4 geometry_transform: Optional. Defaults to identity transformation. The local
-    transformation of the shape relative to the body.
-    :param agx.RigidBody.MotionControl motion_control: Optional. Defaults to DYNAMICS.
+    transformation of the shape relative to the body
+    :param agx.RigidBody.MotionControl motion_control: Optional. Defaults to DYNAMICS
     :param agx.Material material: Optional. Ignored if not given. Material assigned to the geometry created for the
-    body.
-    :param bool disable_collisions: Optional. Disable geometry collisions.
+    body
+    :param bool disable_collisions: Optional. Disable geometry collisions
     :return: assembly
     """
     assembly = agxSDK.Assembly()
@@ -182,15 +211,15 @@ def create_body(shape, name="", position=agx.Vec3(0, 0, 0), rotation=agx.OrthoMa
 
 def create_ring(name, radius, element_shape, num_elements, constraint_type=agx.LockJoint, rotation_shift=0,
                 translation_shift=0, compliance=None, material=None, center=agx.Vec3(), normal=agx.Vec3.Z_AXIS()):
-    """Creates a Ring object.
+    """Creates a Ring object
     :param string name: name of ring object as a string
     :param float radius: radius of the ring circumference, centered on the composing elements
     :param agxCollide.Shape element_shape: AGX shape type to be used as building block of ring
     :param int num_elements: number of elements of element_type which will be used to construct ring
     :param agx.Constraint constraint_type: type of constraint that should connect each element
     :param float rotation_shift: positive rotation around z axis of seed element (radians). Useful for shapes which are
-    initialized along axis other than x.
-    :param float translation_shift: translation of constraints, off the center of mass, along y axis of the object
+    initialized along axis other than x
+    :param float translation_shift: translation of constraints, off the center of mass, along y-axis of the object
     :param list compliance: compliance of constraints along 6DOF linking each element of the ring
     :param agx.Vec3 center: position in world coordinates of the center of the ring
     :param agx.Material material: material the ring elements are made of
@@ -267,7 +296,7 @@ def create_ring(name, radius, element_shape, num_elements, constraint_type=agx.L
 
 
 def create_ring_element(name, element_shape, material):
-    """Creates single ring element based on shape and material.
+    """Creates single ring element based on shape and material
     :param string name: name of ring element
     :param agxCollide.Shape element_shape: enum value of ring geometric shape
     :param agx.Material material: material of rigid body
@@ -289,7 +318,7 @@ def create_ring_element(name, element_shape, material):
 def create_locked_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, position_ranges=None, motor_ranges=None,
                                  locked_at_zero_speed=None, lock_status=None, compute_forces=False,
                                  radius=0.005, length=0.050):
-    """Creates a prismatic, collision free, base object and attaches a rigid body to it, via LockJoint.
+    """Creates a prismatic, collision free, base object and attaches a rigid body to it, via LockJoint
     :param string name: name of prismatic base object as a string
     :param agx.RigidBody rigid_body: AGX rigid body object which should be attached to prismatic base
     :param float compliance: compliance of the LockJoint which attaches the rigid body to the base
@@ -299,9 +328,9 @@ def create_locked_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, 
     :param list locked_at_zero_speed: a list containing three Booleans indicating zero speed behaviour each constraint
     (x,y,z)
     :param list lock_status: a list containing boolean values for whether to activate the constraint locks (x,y,z)
-    :param boolean compute_forces: set whether forces are computed for this base.
-    :param float radius: radius of the cylinders making up the base. For visualization purposes only.
-    :param float length: length of the cylinders making up the base. For visualization purposes only.
+    :param boolean compute_forces: set whether forces are computed for this base
+    :param float radius: radius of the cylinders making up the base. For visualization purposes only
+    :param float length: length of the cylinders making up the base. For visualization purposes only
     :return assembly
     """
     if position_ranges is None:
@@ -343,7 +372,7 @@ def create_locked_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, 
 def create_hinge_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, position_ranges=None,
                                 motor_ranges=None, locked_at_zero_speed=None, lock_status=None, axis=agx.Vec3(1, 0, 0),
                                 compute_forces=False, radius=0.005, length=0.050):
-    """Creates a prismatic, collision free, base object and attaches a rigid body to it, via Hinge.
+    """Creates a prismatic, collision free, base object and attaches a rigid body to it, via Hinge
     :param string name: name of prismatic base object as a string
     :param agx.RigidBody rigid_body: AGX rigid body object which should be attached to prismatic base
     :param float compliance: compliance of the Hinge which attaches the rigid body to the base
@@ -354,9 +383,9 @@ def create_hinge_prismatic_base(name, rigid_body, compliance=0, damping=1 / 3, p
     (x,y,z,rb)
     :param list lock_status: a list containing boolean values for whether to activate the constraint locks (x,y,z)
     :param agx.Vec3 axis: vector determining axis of rotation of rigid body
-    :param boolean compute_forces: set whether forces are computed for this base.
-    :param float radius: radius of the cylinders making up the base. For visualization purposes only.
-    :param float length: length of the cylinders making up the base. For visualization purposes only.
+    :param boolean compute_forces: set whether forces are computed for this base
+    :param float radius: radius of the cylinders making up the base. For visualization purposes only
+    :param float length: length of the cylinders making up the base. For visualization purposes only
     :return assembly
     """
     if locked_at_zero_speed is None:
@@ -411,19 +440,19 @@ def create_universal_prismatic_base(name, rigid_body, compliance=0, damping=1 / 
                                     motor_ranges=None, locked_at_zero_speed=None, lock_status=None,
                                     compute_forces=False, radius=0.005, length=0.050):
     """Creates a prismatic, collision free, base object and attaches a rigid body to it, via UniversalJoint. Note that
-    at this time, the UniversalJoint constraint has known issues. I should be avoided if possible.
+    at this time, the UniversalJoint constraint has known issues. I should be avoided if possible
     :param string name: name of prismatic base object as a string
     :param agx.RigidBody rigid_body: AGX rigid body object which should be attached to prismatic base
     :param float compliance: compliance of the UniversalJoint which attaches the rigid body to the base
     :param float damping: damping of the UniversalJoint which attaches the rigid body to the base
     :param list position_ranges: a list containing three tuples with the position range for each constraint (x,y,z,2rb)
-    :param list motor_ranges: a list containing three tuples with the position range for each constraint (x,y,z,2rb)
+    :param list motor_ranges: a list containing three tuples with the force range for each constraint (x,y,z,2rb)
     :param list locked_at_zero_speed: a list containing three Booleans indicating zero speed behaviour each constraint
     (x,y,z,2rb)
     :param list lock_status: a list containing boolean values for whether to activate the constraint locks (x,y,z)
-    :param boolean compute_forces: set whether forces are computed for this base.
-    :param float radius: radius of the cylinders making up the base. For visualization purposes only.
-    :param float length: length of the cylinders making up the base. For visualization purposes only.
+    :param boolean compute_forces: set whether forces are computed for this base
+    :param float radius: radius of the cylinders making up the base. For visualization purposes only
+    :param float length: length of the cylinders making up the base. For visualization purposes only
     :return assembly
     """
     if locked_at_zero_speed is None:

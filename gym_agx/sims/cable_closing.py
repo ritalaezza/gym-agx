@@ -83,7 +83,7 @@ def add_rendering(sim):
             agxOSG.setDiffuseColor(node, agxRender.Color.LightSteelBlue())
         elif rb.getName() == "gripper_0" or rb.getName() == "gripper_1":
             agxOSG.setDiffuseColor(node, agxRender.Color(0.1, 0.1, 0.1, 1.0))
-        elif "dlo" in  rb.getName():  # Cable segments
+        elif "dlo" in rb.getName():  # Cable segments
             agxOSG.setDiffuseColor(node, agxRender.Color(0.1, 0.5, 0.0, 1.0))
             agxOSG.setAmbientColor(node, agxRender.Color(0.2, 0.5, 0.0, 1.0))
         elif rb.getName() == "obstacle":

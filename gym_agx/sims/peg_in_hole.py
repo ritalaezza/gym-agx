@@ -227,7 +227,7 @@ def add_rendering(sim):
             agxOSG.setDiffuseColor(node, agxRender.Color(1.0, 1.0, 1.0, 1.0))
             agxOSG.setTexture(node, gripper_texture, False, agxOSG.DIFFUSE_TEXTURE)
             agxOSG.setShininess(node,2)
-        elif "dlo" in  rb.getName():  # Cable segments
+        elif "dlo" in rb.getName():  # Cable segments
             agxOSG.setDiffuseColor(node, agxRender.Color(0.0, 1.0, 0.0, 1.0))
         else:
             agxOSG.setDiffuseColor(node, agxRender.Color.Beige())
