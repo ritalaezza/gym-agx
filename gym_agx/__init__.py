@@ -5,14 +5,14 @@ from gym.envs.registration import register
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))  # Project Root
 LOG_DIR = os.path.join(ROOT_DIR, 'logging.conf')
-HEBBE_LOG_DIR = os.path.join(ROOT_DIR, 'logging_hebbe.conf')
+CLUSTER_LOG_DIR = os.path.join(ROOT_DIR, 'logging_cluster.conf')
 TMP_DIR = os.getenv('TMPDIR', default=None)
 if TMP_DIR is not None:
-    # Logging in the server.
+    # Logging in the cluster.
     try:
-        logging.config.fileConfig(HEBBE_LOG_DIR)
+        logging.config.fileConfig(CLUSTER_LOG_DIR)
     except Exception as e:
-        print("Problem setting hebbe log directory: {}".format(e))
+        print("Problem setting cluster log directory: {}".format(e))
 else:
     if os.path.exists(LOG_DIR):
         try:

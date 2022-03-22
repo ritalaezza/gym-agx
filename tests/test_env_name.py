@@ -3,7 +3,8 @@ import logging
 import re
 
 logger = logging.getLogger('gym_agx.tests')
-ENVIRONMENT_IDS = ['BendWire-v0', 'BendWireObstacle-v0', 'PushRope-v0']
+ENVIRONMENT_IDS = ['BendWire-v0', 'BendWireObstacle-v0', 'PushRope-v0',
+                   'PegInHole-v0', 'RubberBand-v0', 'CableClosing-v0']
 
 
 @pytest.mark.parametrize("environment_id", ENVIRONMENT_IDS)
