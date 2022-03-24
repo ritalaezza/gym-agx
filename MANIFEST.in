@@ -1,1 +1,2 @@
-recursive-include gym_agx/envs/assets *
+graft gym_agx
+global-exclude *.py[cod]
