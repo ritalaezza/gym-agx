@@ -21,7 +21,7 @@ class EndEffectorConstraint:
 
     def __init__(self, end_effector_dof, compute_forces_enabled, velocity_control, compliance_control, velocity_index,
                  compliance_index):
-        """EndEffectorConstraint class, defining important parameters of individual constraints.
+        """EndEffectorConstraint class, defining important parameters of individual constraints
         :param EndEffectorConstraint.Dof end_effector_dof: degree of freedom of end-effector controlled
         :param bool compute_forces_enabled: force and torque can be measured (should be consistent with simulation)
         :param bool velocity_control: is velocity controlled

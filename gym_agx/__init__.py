@@ -1,32 +1,23 @@
 import os
+import tempfile
 import logging.config
 import logging.handlers
 from gym.envs.registration import register
 
+TMP_DIR = tempfile.gettempdir()
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))  # Project Root
 LOG_DIR = os.path.join(ROOT_DIR, 'logging.conf')
-CLUSTER_LOG_DIR = os.path.join(ROOT_DIR, 'logging_cluster.conf')
-TMP_DIR = os.getenv('TMPDIR', default=None)
-if TMP_DIR is not None:
-    # Logging in the cluster.
+if 'TMPDIR' not in os.environ:
+    os.environ['TMPDIR'] = TMP_DIR
+
+if os.path.exists(LOG_DIR):
     try:
-        logging.config.fileConfig(CLUSTER_LOG_DIR)
+        logging.config.fileConfig(LOG_DIR)
     except Exception as e:
-        print("Problem setting cluster log directory: {}".format(e))
+        print("Problem setting log directory: {}".format(e))
 else:
-    if os.path.exists(LOG_DIR):
-        try:
-            # Quick directory fix: change working directory to Project root before setting log configuration
-            current_dir = os.getcwd()
-            os.chdir(ROOT_DIR)
-            logging.config.fileConfig(LOG_DIR)
-        except Exception as e:
-            print("Problem setting log directory: {}".format(e))
-        finally:
-            os.chdir(current_dir)
-    else:
-        logging.basicConfig(level=logging.DEBUG)
-        print('Failed to load logging configuration file. Using default configs.')
+    logging.basicConfig(level=logging.ERROR)
+    print('Failed to load logging configuration file. Using default configs.')
 
 
 def _merge(a, b):

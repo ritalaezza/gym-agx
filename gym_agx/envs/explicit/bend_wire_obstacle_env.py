@@ -7,9 +7,8 @@ import numpy as np
 from gym_agx.envs import dlo_env
 from gym_agx.rl.observation import ObservationConfig
 from gym_agx.rl.reward import RewardConfig
-from gym_agx.utils.agx_classes import CameraConfig
 from gym_agx.rl.end_effector import EndEffector, EndEffectorConstraint
-from gym_agx.utils.utils import goal_distance
+from gym_agx.utils.agx_classes import CameraConfig
 from gym_agx.sims import bend_wire_obstacle
 
 FILE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -24,7 +23,7 @@ logger = logging.getLogger('gym_agx.envs')
 class Reward(RewardConfig):
 
     def reward_function(self, achieved_goal, desired_goal, info):
-        distance = goal_distance(achieved_goal['dlo_curvature'], desired_goal['dlo_curvature'])
+        distance = np.linalg.norm(achieved_goal['dlo_curvature'] - desired_goal['dlo_curvature'])
         info['distance'] = distance
         if not self.is_success(achieved_goal, desired_goal):
             # penalize large distances to goal
@@ -45,12 +44,13 @@ class Reward(RewardConfig):
         for key, value in achieved_goal.items():
             # Achieve desired curvature
             if key is ObservationConfig.ObservationType.DLO_CURVATURE.value:
-                success.append(goal_distance(value, desired_goal[key]) < self.kwargs['dlo_curvature_threshold'])
+                distance = np.linalg.norm(value - desired_goal[key])
+                success.append(distance < self.kwargs['dlo_curvature_threshold'])
             # Achieve desired ee positions
             elif key is ObservationConfig.ObservationType.EE_POSITION.value:
                 for ee_key, ee_value in value.items():
-                    success.append(
-                        goal_distance(ee_value, desired_goal[key][ee_key]) < self.kwargs['ee_position_threshold'])
+                    distance = np.linalg.norm(ee_value - desired_goal[key][ee_key])
+                    success.append(distance < self.kwargs['ee_position_threshold'])
 
         return all(success)
 

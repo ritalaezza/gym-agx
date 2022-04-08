@@ -7,9 +7,8 @@ import numpy as np
 from gym_agx.envs import dlo_env
 from gym_agx.rl.observation import ObservationConfig
 from gym_agx.rl.reward import RewardConfig
-from gym_agx.utils.agx_classes import CameraConfig
 from gym_agx.rl.end_effector import EndEffector, EndEffectorConstraint
-from gym_agx.utils.utils import goal_distance
+from gym_agx.utils.agx_classes import CameraConfig
 from gym_agx.sims import push_rope
 
 FILE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -24,8 +23,7 @@ logger = logging.getLogger('gym_agx.envs')
 class Reward(RewardConfig):
 
     def reward_function(self, achieved_goal, desired_goal, info):
-        curvature_distance = goal_distance(achieved_goal['dlo_curvature'],
-                                           desired_goal['dlo_curvature'])
+        curvature_distance = np.linalg.norm(achieved_goal['dlo_curvature'] - desired_goal['dlo_curvature'])
         info['distance'] = curvature_distance
 
         if self.is_success(achieved_goal, desired_goal):
@@ -39,8 +37,7 @@ class Reward(RewardConfig):
         return np.clip(reward, self.reward_range[0], self.reward_range[1])
 
     def success_condition(self, achieved_goal, desired_goal):
-        curvature_distance = goal_distance(achieved_goal['dlo_curvature'],
-                                           desired_goal['dlo_curvature'])
+        curvature_distance = np.linalg.norm(achieved_goal['dlo_curvature'] - desired_goal['dlo_curvature'])
         return bool(curvature_distance < self.kwargs['dlo_curvature_threshold'])
 
 

@@ -25,26 +25,6 @@ def construct_space(observation, inc=0):
     return spaces.Dict(space_dict)
 
 
-def goal_distance(achieved_goal, desired_goal, norm="l2"):
-    """Computes distance between achieved goal and desired goal
-    :param achieved_goal: vector of achieved goal
-    :param desired_goal: vector of desired goal
-    :param norm: type of norm to be computed
-    :return:
-    """
-    assert achieved_goal.shape == desired_goal.shape
-    if norm == "l1":
-        return np.sum(abs(achieved_goal - desired_goal))
-    elif norm == "l2":
-        return np.linalg.norm(achieved_goal - desired_goal)
-    elif norm == 'inf':
-        return np.linalg.norm(achieved_goal - desired_goal, np.inf)
-    elif norm == '-inf':
-        return np.linalg.norm(achieved_goal - desired_goal, -np.inf)
-    else:
-        logger.error("Unexpected norm. Choose between: l1, l2, inf and -inf")
-
-
 def goal_area(achieved_goal, goal):
     """Computes area between desired goal and achieved goal
     :param achieved_goal: vector of achieved goal

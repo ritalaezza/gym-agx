@@ -27,11 +27,11 @@ class ObservationConfig:
         EE_ANGULAR_VELOCITY = "ee_angular_velocity"
 
     def __init__(self, goals, observations=None):
-        """Initialize observation configuration object with list of observations and goal type.
+        """Initialize observation configuration object with list of observations and goal type
         :param list goals: list of ObservationType which will be used to compute reward, based on achieved
-        goals and desired goals.
+        goals and desired goals
         :param list observations: list of ObservationType values that will be used as input to agent. Can be given as
-        input, or constructed by class methods.
+        input, or constructed by class methods
         """
         self.goals = set(dict.fromkeys(goals))
         if observations is None:
@@ -49,11 +49,11 @@ class ObservationConfig:
 
     def get_observations(self, sim, rti, end_effectors, cable=None, goal_only=False):
         """Main function which gets observations, based on configuration. To avoid repeated calls to same observation,
-        goals can be obtained at the same time, by taking the union of the two sets.
-        :param agx.Simulation sim: AGX Dynamics simulation object.
-        :param list rti: agxOSG.RenderToImage buffers to render image observations.
+        goals can be obtained at the same time, by taking the union of the two sets
+        :param agx.Simulation sim: AGX Dynamics simulation object
+        :param list rti: agxOSG.RenderToImage buffers to render image observations
         :param EndEffector end_effectors: List of EndEffector objects which are required to obtain observations of the
-        end-effectors in the simulation.
+        end-effectors in the simulation
         :param agx.Cable cable: If the simulation contains an AGX Cable structure, there are special functions to obtain
         its state
         :param goal_only: If set to True, only goals will be retrieved.
@@ -246,7 +246,7 @@ class ObservationConfig:
 
 
 def get_cable_segment_rotations(cable):
-    """Get AGX Cable segments' center of mass rotations.
+    """Get AGX Cable segments' center of mass rotations
     :param cable: AGX Cable object
     :return: NumPy array with segments' rotations
     """
@@ -265,7 +265,7 @@ def get_cable_segment_rotations(cable):
 
 
 def get_cable_segment_positions(cable):
-    """Get AGX Cable segments' center of mass positions.
+    """Get AGX Cable segments' center of mass positions
     :param cable: AGX Cable object
     :return: NumPy array with segments' positions
     """
@@ -282,8 +282,9 @@ def get_cable_segment_positions(cable):
 
     return cable_positions
 
+
 def get_cable_segment_positions_and_velocities(cable):
-    """Get AGX Cable segments' center of mass positions.
+    """Get AGX Cable segments' center of mass positions
     :param cable: AGX Cable object
     :return: NumPy array with segments' positions
     """
@@ -305,7 +306,7 @@ def get_cable_segment_positions_and_velocities(cable):
 
 
 def get_ring_segment_positions(sim, ring_name, num_segments=None):
-    """Get ring segments positions.
+    """Get ring segments positions
     :param sim: AGX Dynamics simulation object
     :param ring_name: name of ring object
     :param num_segments: number of segments making up the ring (possibly saves search time)
@@ -328,7 +329,7 @@ def get_ring_segment_positions(sim, ring_name, num_segments=None):
 
 
 def get_rigid_body_position(sim, key):
-    """Get position of AGX rigid body.
+    """Get position of AGX rigid body
     :param sim: AGX Dynamics simulation object
     :param key: name of rigid body
     :return: NumPy array with rigid body position
@@ -341,7 +342,7 @@ def get_rigid_body_position(sim, key):
 
 
 def get_rigid_body_rotation(sim, name):
-    """Get rotation of AGX rigid body.
+    """Get rotation of AGX rigid body
     :param sim: AGX Dynamics simulation object
     :param name: name of rigid body
     :return: NumPy array with rigid body rotation
@@ -354,7 +355,7 @@ def get_rigid_body_rotation(sim, name):
 
 
 def get_rigid_body_velocity(sim, name):
-    """Get velocity of AGX rigid body.
+    """Get velocity of AGX rigid body
     :param sim: AGX Dynamics simulation object
     :param name: name of rigid body
     :return: NumPy array with rigid body rotation
@@ -367,7 +368,7 @@ def get_rigid_body_velocity(sim, name):
 
 
 def get_rigid_body_angular_velocity(sim, name):
-    """Get rotation of AGX rigid body.
+    """Get rotation of AGX rigid body
     :param sim: AGX Dynamics simulation object
     :param name: name of rigid body
     :return: NumPy array with rigid body rotation
@@ -380,11 +381,11 @@ def get_rigid_body_angular_velocity(sim, name):
 
 
 def get_constraint_force_torque(sim, name, constraint_name):
-    """Gets force an torque on rigid object, computed by a constraint defined by 'constraint_name'.
+    """Gets force a torque on rigid object, computed by a constraint defined by 'constraint_name'
     :param sim: AGX Simulation object
     :param name: name of rigid body
     :param constraint_name: Name indicating which constraint contains force torque information for this object
-    :return: force an torque
+    :return: force a torque
     """
     rigid_body = sim.getRigidBody(name)
     constraint = sim.getConstraint(constraint_name)
