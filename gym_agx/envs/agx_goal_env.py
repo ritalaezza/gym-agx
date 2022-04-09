@@ -3,13 +3,14 @@ import logging
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt
+from abc import abstractmethod
 from agxPythonModules.utils.numpy_utils import create_numpy_array
 
 import gym
 from gym import error, spaces
-from gym.utils import seeding
 
 from gym_agx.utils.utils import construct_space
+
 
 try:
     import agx
@@ -27,7 +28,42 @@ except ImportError as e:
 logger = logging.getLogger('gym_agx.envs')
 
 
-class AgxGoalEnv(gym.GoalEnv):
+class GoalEnv(gym.Env):
+    """A goal-based environment. It functions just as any regular OpenAI Gym environment, but it
+    imposes a required structure on the observation_space. More concretely, the observation
+    space is required to contain at least three elements, namely `observation`, `desired_goal`, and
+    `achieved_goal`. Here, `desired_goal` specifies the goal that the agent should attempt to achieve.
+    `achieved_goal` is the goal that it currently achieved instead. `observation` contains the
+    actual observations of the environment as per usual.
+
+    The GoalEnv class was first added to Gym with the publication of HER:
+    https://openai.com/blog/ingredients-for-robotics-research/
+    but was later removed when OpenAI moved away from Robotics research:
+    https://github.com/openai/gym/commit/616b07115871588a5b63fa470d4f554d114d3e25
+    so a copy of the class is added here, inspired by:
+    https://github.com/Farama-Foundation/Gym-Robotics/blob/main/gym_robotics/core.py
+    """
+
+    @abstractmethod
+    def compute_reward(self, achieved_goal, desired_goal, info):
+        """Compute the step reward. This externalizes the reward function and makes
+        it dependent on a desired goal and the one that was achieved. If you wish to include
+        additional rewards that are independent of the goal, you can include the necessary values
+        to derive it in 'info' and compute it accordingly.
+        Args:
+            achieved_goal (object): the goal that was achieved during execution
+            desired_goal (object): the desired goal that we asked the agent to attempt to achieve
+            info (dict): an info dictionary with additional information
+        Returns:
+            float: The reward that corresponds to the provided achieved goal w.r.t. to the desired
+            goal. Note that the following should always hold true:
+                ob, reward, done, info = env.step()
+                assert reward == env.compute_reward(ob['achieved_goal'], ob['desired_goal'], info)
+        """
+        raise NotImplementedError
+
+
+class AgxGoalEnv(GoalEnv):
     """Superclass for all AGX Dynamics environments. Initializes AGX, loads scene from file and builds it."""
     metadata = {'render.modes': ['osg', 'debug', 'human', 'depth']}
 
@@ -126,11 +162,6 @@ class AgxGoalEnv(gym.GoalEnv):
     # Env methods
     # ----------------------------
 
-    def seed(self, seed=None):
-        logger.info("seed")
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
-
     def step(self, action):
         logger.info("step")
         action = np.clip(action, self.action_space.low, self.action_space.high)
@@ -142,12 +173,11 @@ class AgxGoalEnv(gym.GoalEnv):
 
         obs = self._get_observation()
         info['is_success'], done = self._is_success(obs['achieved_goal'], self.goal)
-        reward, info = self.compute_reward(obs['achieved_goal'], self.goal, info)
+        reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
         return obs, reward, done, info
 
     def reset(self):
         logger.info("reset")
-        super(AgxGoalEnv, self).reset()
         did_reset_sim = False
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()

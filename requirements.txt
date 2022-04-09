@@ -1,4 +1,4 @@
-gym>=0.15.0
+gym==0.21
 numpy>=1.17.0
 matplotlib~=2.0.2
 pytest~=5.0.1

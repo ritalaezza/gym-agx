@@ -33,7 +33,7 @@ class RewardConfig(ABC):
         :param dict desired_goal: dictionary of observations of desired state
         :param dict info: information dictionary, which should be updated, and can be used to include more information
         needed for reward computations
-        :return: reward, info
+        :return: float reward
         """
         if self.reward_type == self.RewardType.SPARSE:
             success = self.is_success(achieved_goal, desired_goal)
@@ -47,7 +47,7 @@ class RewardConfig(ABC):
         else:
             raise Exception("Reward type must be either SPARSE or DENSE!")
 
-        return reward, info
+        return reward
 
     def is_success(self, achieved_goal, desired_goal):
         """This function should return a boolean based on the achieved_goal and desired_goal dictionaries
