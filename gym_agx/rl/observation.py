@@ -11,20 +11,22 @@ from gym_agx.utils.utils import get_cable_torsion, get_cable_curvature, get_cabl
 logger = logging.getLogger('gym_agx.rl')
 
 
+class ObservationType(Enum):
+    DLO_POSITIONS = "dlo_positions"
+    DLO_ROTATIONS = "dlo_rotations"
+    DLO_ANGLES = "dlo_angles"
+    DLO_CURVATURE = "dlo_curvature"
+    DLO_TORSION = "dlo_torsion"
+    IMG_RGB = "img_rgb"
+    IMG_DEPTH = "img_depth"
+    EE_FORCE_TORQUE = "ee_force_torque"
+    EE_POSITION = "ee_position"
+    EE_ROTATION = "ee_rotation"
+    EE_VELOCITY = "ee_velocity"
+    EE_ANGULAR_VELOCITY = "ee_angular_velocity"
+    
+
 class ObservationConfig:
-    class ObservationType(Enum):
-        DLO_POSITIONS = "dlo_positions"
-        DLO_ROTATIONS = "dlo_rotations"
-        DLO_ANGLES = "dlo_angles"
-        DLO_CURVATURE = "dlo_curvature"
-        DLO_TORSION = "dlo_torsion"
-        IMG_RGB = "img_rgb"
-        IMG_DEPTH = "img_depth"
-        EE_FORCE_TORQUE = "ee_force_torque"
-        EE_POSITION = "ee_position"
-        EE_ROTATION = "ee_rotation"
-        EE_VELOCITY = "ee_velocity"
-        EE_ANGULAR_VELOCITY = "ee_angular_velocity"
 
     def __init__(self, goals, observations=None):
         """Initialize observation configuration object with list of observations and goal type
@@ -42,9 +44,9 @@ class ObservationConfig:
         self.rgb_in_obs = False
         self.depth_in_obs = False
         self.image_size = (256, 256)  # (default) all image data will have same first two dimensions.
-        if self.ObservationType.IMG_RGB in (self.observations | self.goals):
+        if ObservationType.IMG_RGB in (self.observations | self.goals):
             self.rgb_in_obs = True
-        if self.ObservationType.IMG_DEPTH in (self.observations | self.goals):
+        if ObservationType.IMG_DEPTH in (self.observations | self.goals):
             self.depth_in_obs = True
 
     def get_observations(self, sim, rti, end_effectors, cable=None, goal_only=False):
@@ -83,31 +85,31 @@ class ObservationConfig:
 
         goal_obs = dict()
         for gobs in observation_set:
-            if gobs == self.ObservationType.DLO_POSITIONS:
+            if gobs == ObservationType.DLO_POSITIONS:
                 goal_obs[gobs.value] = get_cable_segment_positions(cable_object)
-            elif gobs == self.ObservationType.DLO_ROTATIONS:
+            elif gobs == ObservationType.DLO_ROTATIONS:
                 goal_obs[gobs.value] = get_cable_segment_rotations(cable_object)
-            elif gobs == self.ObservationType.DLO_ANGLES:
+            elif gobs == ObservationType.DLO_ANGLES:
                 goal_obs[gobs.value] = get_cable_angles(cable_segment_edges)
-            elif gobs == self.ObservationType.DLO_CURVATURE:
+            elif gobs == ObservationType.DLO_CURVATURE:
                 goal_obs[gobs.value] = get_cable_curvature(cable_segment_edges)
-            elif gobs == self.ObservationType.DLO_TORSION:
+            elif gobs == ObservationType.DLO_TORSION:
                 goal_obs[gobs.value] = get_cable_torsion(cable_segment_edges)
-            elif gobs == self.ObservationType.IMG_RGB:
+            elif gobs == ObservationType.IMG_RGB:
                 if rgb_buffer:
                     image_ptr = rgb_buffer.getImageData()
                     image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1], 3), np.uint8)
                     goal_obs[gobs.value] = np.flipud(image_data)
                 else:
                     goal_obs[gobs.value] = np.zeros(shape=(self.image_size[0], self.image_size[1], 3))
-            elif gobs == self.ObservationType.IMG_DEPTH:
+            elif gobs == ObservationType.IMG_DEPTH:
                 if depth_buffer:
                     image_ptr = depth_buffer.getImageData()
                     image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1]), np.float32)
                     goal_obs[gobs.value] = np.flipud(image_data)
                 else:
                     goal_obs[gobs.value] = np.zeros(shape=self.image_size)
-            elif gobs == self.ObservationType.EE_FORCE_TORQUE:
+            elif gobs == ObservationType.EE_FORCE_TORQUE:
                 ee_force_torque = dict()
                 for ee in end_effectors:
                     if ee.observable:
@@ -120,14 +122,14 @@ class ObservationConfig:
                         ee_force_torque[ee.name] = force_torque
                 assert ee_force_torque, "At least one of the end-effectors must be observable to obtain force-torque."
                 goal_obs[gobs.value] = ee_force_torque
-            elif gobs == self.ObservationType.EE_VELOCITY:
+            elif gobs == ObservationType.EE_VELOCITY:
                 ee_velocity = dict()
                 for ee in end_effectors:
                     if ee.observable:
                         ee_velocity[ee.name] = get_rigid_body_velocity(sim, ee.name + goal_string)
                 assert ee_velocity, "At least one of the end-effectors must be observable to obtain velocity."
                 goal_obs[gobs.value] = ee_velocity
-            elif gobs == self.ObservationType.EE_ANGULAR_VELOCITY:
+            elif gobs == ObservationType.EE_ANGULAR_VELOCITY:
                 ee_angular_velocity = dict()
                 for ee in end_effectors:
                     if ee.observable:
@@ -135,14 +137,14 @@ class ObservationConfig:
                 assert ee_angular_velocity, "At least one of the end-effectors must be observable to obtain angular " \
                                             "velocity."
                 goal_obs[gobs.value] = ee_angular_velocity
-            elif gobs == self.ObservationType.EE_POSITION:
+            elif gobs == ObservationType.EE_POSITION:
                 ee_position = dict()
                 for ee in end_effectors:
                     if ee.observable:
                         ee_position[ee.name] = get_rigid_body_position(sim, ee.name + goal_string)
                 assert ee_position, "At least one of the end-effectors must be observable to obtain position."
                 goal_obs[gobs.value] = ee_position
-            elif gobs == self.ObservationType.EE_ROTATION:
+            elif gobs == ObservationType.EE_ROTATION:
                 ee_rotation = dict()
                 for ee in end_effectors:
                     if ee.observable:
@@ -165,26 +167,26 @@ class ObservationConfig:
 
     def set_dlo_positions(self):
         """3D coordinates of DLO segments"""
-        self.observations.add(self.ObservationType.DLO_POSITIONS)
+        self.observations.add(ObservationType.DLO_POSITIONS)
 
     def set_dlo_rotations(self):
         """Quaternions of DLO segments"""
-        self.observations.add(self.ObservationType.DLO_ROTATIONS)
+        self.observations.add(ObservationType.DLO_ROTATIONS)
 
     def set_dlo_poses(self):
         """3D coordinates and quaternions of DLO segments"""
-        self.observations.add(self.ObservationType.DLO_POSITIONS)
-        self.observations.add(self.ObservationType.DLO_ROTATIONS)
+        self.observations.add(ObservationType.DLO_POSITIONS)
+        self.observations.add(ObservationType.DLO_ROTATIONS)
 
     def set_dlo_angles(self):
         """Inner angles of DLO segments"""
-        self.observations.add(self.ObservationType.DLO_ANGLES)
+        self.observations.add(ObservationType.DLO_ANGLES)
 
     def set_img_rgb(self, image_size=None):
         """RGB image of scene containing DLO and end-effector(s)
         :param tuple image_size: tuple with dimensions of image
         """
-        self.observations.add(self.ObservationType.IMG_RGB)
+        self.observations.add(ObservationType.IMG_RGB)
         self.rgb_in_obs = True
         if image_size:
             self.image_size = image_size
@@ -193,56 +195,56 @@ class ObservationConfig:
         """Depth image of scene containing DLO and end-effector(s)
         :param tuple image_size: tuple with dimensions of image
         """
-        self.observations.add(self.ObservationType.IMG_DEPTH)
+        self.observations.add(ObservationType.IMG_DEPTH)
         self.depth_in_obs = True
         if image_size:
             self.image_size = image_size
 
     def set_dlo_frenet_curvature(self):
         """Discrete Frenet curvature of DLO"""
-        self.observations.add(self.ObservationType.DLO_CURVATURE)
+        self.observations.add(ObservationType.DLO_CURVATURE)
 
     def set_dlo_frenet_torsion(self):
         """Discrete Frenet torsion of DLO"""
-        self.observations.add(self.ObservationType.DLO_TORSION)
+        self.observations.add(ObservationType.DLO_TORSION)
 
     def set_dlo_frenet_values(self):
         """Discrete Frenet curvature and torsion of DLO"""
-        self.observations.add(self.ObservationType.DLO_CURVATURE)
-        self.observations.add(self.ObservationType.DLO_TORSION)
+        self.observations.add(ObservationType.DLO_CURVATURE)
+        self.observations.add(ObservationType.DLO_TORSION)
 
     def set_ee_position(self):
         """3D coordinates of edd-effector(s)"""
-        self.observations.add(self.ObservationType.EE_POSITION)
+        self.observations.add(ObservationType.EE_POSITION)
 
     def set_ee_rotation(self):
         """Quaternions of edd-effector(s)"""
-        self.observations.add(self.ObservationType.EE_ROTATION)
+        self.observations.add(ObservationType.EE_ROTATION)
 
     def set_ee_velocity(self):
         """Linear velocity of edd-effector(s)"""
-        self.observations.add(self.ObservationType.EE_VELOCITY)
+        self.observations.add(ObservationType.EE_VELOCITY)
 
     def set_ee_angular_velocity(self):
         """Angular velocity of edd-effector(s)"""
-        self.observations.add(self.ObservationType.EE_ANGULAR_VELOCITY)
+        self.observations.add(ObservationType.EE_ANGULAR_VELOCITY)
 
     def set_ee_pose(self):
         """3D coordinates and quaternions of edd-effector(s)"""
-        self.observations.add(self.ObservationType.EE_POSITION)
-        self.observations.add(self.ObservationType.EE_ROTATION)
+        self.observations.add(ObservationType.EE_POSITION)
+        self.observations.add(ObservationType.EE_ROTATION)
 
     def set_ee_force_torque(self):
         """Forces and torques sensed by edd-effector(s)"""
-        self.observations.add(self.ObservationType.EE_FORCE_TORQUE)
+        self.observations.add(ObservationType.EE_FORCE_TORQUE)
 
     def set_all_ee(self):
         """Pose, velocities and force-torques sensed by edd-effector(s)"""
-        self.observations.add(self.ObservationType.EE_POSITION)
-        self.observations.add(self.ObservationType.EE_ROTATION)
-        self.observations.add(self.ObservationType.EE_VELOCITY)
-        self.observations.add(self.ObservationType.EE_ANGULAR_VELOCITY)
-        self.observations.add(self.ObservationType.EE_FORCE_TORQUE)
+        self.observations.add(ObservationType.EE_POSITION)
+        self.observations.add(ObservationType.EE_ROTATION)
+        self.observations.add(ObservationType.EE_VELOCITY)
+        self.observations.add(ObservationType.EE_ANGULAR_VELOCITY)
+        self.observations.add(ObservationType.EE_FORCE_TORQUE)
 
 
 def get_cable_segment_rotations(cable):

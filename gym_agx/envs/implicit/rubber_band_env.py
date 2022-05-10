@@ -3,7 +3,6 @@ import logging
 import os
 import numpy as np
 
-import agxSDK
 import agx
 import agxCable
 import agxOSG
@@ -36,13 +35,13 @@ class RubberBandEnv(agx_env.AgxEnv):
     def __init__(self, n_substeps=1, reward_type="dense", observation_type="state", headless=False,
                  image_size=[64, 64], **kwargs):
         """Initializes a RubberBandEnv object
-        :param args: arguments for agxViewer.
+        :param args: arguments for agxViewer
         :param scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/ folder
-        :param n_substeps: number os simulation steps per call to step().
-        :param end_effectors: list of EndEffector objects, defining controllable constraints.
-        :param observation_config: ObservationConfig object, defining the types of observations.
-        :param camera_config: dictionary containing EYE, CENTER, UP information for rendering, with lighting info.
-        :param reward_config: reward configuration object, defines success condition and reward function.
+        :param n_substeps: number os simulation steps per call to step()
+        :param end_effectors: list of EndEffector objects, defining controllable constraints
+        :param observation_config: ObservationConfig object, defining the types of observations
+        :param camera_config: dictionary containing EYE, CENTER, UP information for rendering, with lighting info
+        :param reward_config: reward configuration object, defines success condition and reward function
         """
 
         self.reward_type = reward_type
@@ -148,13 +147,13 @@ class RubberBandEnv(agx_env.AgxEnv):
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
 
-        # Wait several steps after initalization
-        n_inital_wait = 10
-        for k in range(n_inital_wait):
+        # Wait several steps after initialization
+        n_initial_wait = 10
+        for k in range(n_initial_wait):
             self.sim.stepForward()
 
-        n_inital_random = 10
-        for k in range(n_inital_random):
+        n_initial_random = 10
+        for k in range(n_initial_random):
             self._set_action(self.action_space.sample())
             self.sim.stepForward()
 
@@ -169,7 +168,6 @@ class RubberBandEnv(agx_env.AgxEnv):
         return obs
 
     def _set_obstacle_center(self, center_pos):
-
         ground = self.sim.getRigidBody("ground")
         ground.setPosition(agx.Vec3(center_pos[0], center_pos[1], -0.005))
 
@@ -200,14 +198,13 @@ class RubberBandEnv(agx_env.AgxEnv):
         return segments_pos
 
     def _get_poles_enclosed(self, segments_pos):
-        """
-        Check how many poles the rubber band encloses
+        """Check how many poles the rubber band encloses
         :param segments_pos:
         :return:
         """
         poles_enclosed = np.zeros(3)
         ground_pos = self.sim.getRigidBody("ground").getPosition()
-        pole_pos = np.array( [ground_pos[0], ground_pos[1]]) + POLE_OFFSET
+        pole_pos = np.array([ground_pos[0], ground_pos[1]]) + POLE_OFFSET
         for i in range(0, 3):
             segments_xy = np.array(segments_pos)[:, 0:2]
             is_within_polygon = point_inside_polygon(segments_xy, pole_pos[i])
@@ -216,8 +213,7 @@ class RubberBandEnv(agx_env.AgxEnv):
         return poles_enclosed
 
     def _compute_dense_reward_and_check_goal(self, segments_pos_0, segments_pos_1):
-        """
-        Compute reward for transition between two timesteps and check goal condition
+        """Compute reward for transition between two timesteps and check goal condition
         :return:
         """
         poles_enclosed_0 = self._get_poles_enclosed(segments_pos_0)
@@ -232,8 +228,7 @@ class RubberBandEnv(agx_env.AgxEnv):
         return np.sum(poles_enclosed_diff) + 5 * float(final_goal_reached), final_goal_reached
 
     def _is_goal_reached(self, segments_pos):
-        """
-        Goal is reached if the centers of all three poles are contained in the dlo polygon and the segments
+        """Goal is reached if the centers of all three poles are contained in the dlo polygon and the segments
         are below a certain height.
         :return:
         """
@@ -253,17 +248,18 @@ class RubberBandEnv(agx_env.AgxEnv):
         rbs = self.sim.getRigidBodies()
         for rb in rbs:
             node = agxOSG.createVisual(rb, root)
-            if rb.getName() == "ground":
+            name = rb.getName()
+            if name == "ground":
                 agxOSG.setDiffuseColor(node, agxRender.Color.SlateGray())
-            elif rb.getName() == "cylinder_top_0" or rb.getName() == "cylinder_top_1" or rb.getName() == "cylinder_top_2":
+            elif name == "cylinder_top_0" or name == "cylinder_top_1" or name == "cylinder_top_2":
                 agxOSG.setDiffuseColor(node, agxRender.Color.DarkGray())
-            elif rb.getName() == "cylinder_inner_0" or rb.getName() == "cylinder_inner_1" or rb.getName() == "cylinder_inner_2":
+            elif name == "cylinder_inner_0" or name == "cylinder_inner_1" or name == "cylinder_inner_2":
                 agxOSG.setDiffuseColor(node, agxRender.Color.LightSteelBlue())
-            elif rb.getName() == "cylinder_low_0" or rb.getName() == "cylinder_low_1" or rb.getName() == "cylinder_low_2":
+            elif name == "cylinder_low_0" or name == "cylinder_low_1" or name == "cylinder_low_2":
                 agxOSG.setDiffuseColor(node, agxRender.Color.DarkGray())
-            elif rb.getName() == "gripper":
+            elif name == "gripper":
                 agxOSG.setDiffuseColor(node, agxRender.Color.DarkBlue())
-            elif "dlo" in rb.getName():  # Cable segments
+            elif "dlo" in name:  # Cable segments
                 agxOSG.setDiffuseColor(node, agxRender.Color(0.8, 0.2, 0.2, 1.0))
             else:
                 agxOSG.setDiffuseColor(node, agxRender.Color.Beige())
@@ -295,7 +291,6 @@ class RubberBandEnv(agx_env.AgxEnv):
             image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1]), np.float32)
             obs = np.flipud(image_data)
         elif self.observation_type == "rgb_and_depth":
-
             obs = np.zeros((self.image_size[0], self.image_size[1], 4), dtype=np.float32)
 
             image_ptr = rgb_buffer.getImageData()
@@ -306,7 +301,6 @@ class RubberBandEnv(agx_env.AgxEnv):
             image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1]), np.float32)
             obs[:, :, 3] = np.flipud(image_data)
         elif self.observation_type == "pos":
-
             goal_pos  = to_numpy_array(self.sim.getRigidBody("ground").getPosition())[0:2]
             seg_pos = get_cable_segment_positions(cable=agxCable.Cable.find(self.sim, "DLO")).flatten()
             gripper = self.sim.getRigidBody("gripper")

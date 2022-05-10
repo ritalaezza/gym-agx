@@ -5,7 +5,7 @@ import logging
 import numpy as np
 
 from gym_agx.envs import dlo_env
-from gym_agx.rl.observation import ObservationConfig
+from gym_agx.rl.observation import ObservationConfig, ObservationType
 from gym_agx.rl.reward import RewardConfig
 from gym_agx.rl.end_effector import EndEffector, EndEffectorConstraint
 from gym_agx.utils.agx_classes import CameraConfig
@@ -43,11 +43,11 @@ class Reward(RewardConfig):
         success = []
         for key, value in achieved_goal.items():
             # Achieve desired curvature
-            if key is ObservationConfig.ObservationType.DLO_CURVATURE.value:
+            if key is ObservationType.DLO_CURVATURE.value:
                 distance = np.linalg.norm(value - desired_goal[key])
                 success.append(distance < self.kwargs['dlo_curvature_threshold'])
             # Achieve desired ee positions
-            elif key is ObservationConfig.ObservationType.EE_POSITION.value:
+            elif key is ObservationType.EE_POSITION.value:
                 for ee_key, ee_value in value.items():
                     distance = np.linalg.norm(ee_value - desired_goal[key][ee_key])
                     success.append(distance < self.kwargs['ee_position_threshold'])
@@ -139,9 +139,9 @@ class BendWireObstacleEnv(dlo_env.DloEnv):
             grippers = [gripper_right, gripper_left]
 
         if not observation_config:
-            observation_config = ObservationConfig(goals=[ObservationConfig.ObservationType.DLO_CURVATURE,
-                                                          ObservationConfig.ObservationType.EE_POSITION,
-                                                          ObservationConfig.ObservationType.EE_VELOCITY])
+            observation_config = ObservationConfig(goals=[ObservationType.DLO_CURVATURE,
+                                                          ObservationType.EE_POSITION,
+                                                          ObservationType.EE_VELOCITY])
             observation_config.set_dlo_frenet_curvature()
             observation_config.set_ee_position()
 

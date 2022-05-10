@@ -7,7 +7,7 @@ import numpy as np
 from gym_agx.envs import dlo_env
 from gym_agx.rl.reward import RewardConfig
 from gym_agx.rl.end_effector import EndEffector, EndEffectorConstraint
-from gym_agx.rl.observation import ObservationConfig
+from gym_agx.rl.observation import ObservationConfig, ObservationType
 from gym_agx.utils.agx_classes import CameraConfig
 from gym_agx.sims import bend_wire
 
@@ -100,8 +100,8 @@ class BendWireEnv(dlo_env.DloEnv):
             grippers = [gripper_right]
 
         if not observation_config:
-            observation_config = ObservationConfig(goals=[ObservationConfig.ObservationType.DLO_CURVATURE,
-                                                          ObservationConfig.ObservationType.EE_VELOCITY])
+            observation_config = ObservationConfig(goals=[ObservationType.DLO_CURVATURE,
+                                                          ObservationType.EE_VELOCITY])
             observation_config.set_dlo_frenet_curvature()
 
         if not reward_config:

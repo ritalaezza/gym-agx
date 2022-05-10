@@ -67,7 +67,7 @@ class AgxEnv(gym.Env):
             self._render_callback()
 
         obs = self._get_observation()
-        self.observation_space = spaces.Box(low=-1, high=1, shape=(obs.shape), dtype=np.float32)
+        self.observation_space = spaces.Box(low=-1, high=1, shape=obs.shape, dtype=np.float32)
         self.action_space = spaces.Box(-1., 1., shape=(self.n_actions,), dtype='float32')
 
     @property
@@ -136,9 +136,9 @@ class AgxEnv(gym.Env):
         self.render_to_image.append(rti)
 
     def _init_app(self):
-        """Initialize OSG Example Application. Needed for rendering graphics.
-        :param bool add_background_rgb: flag to determine if type of background rendering is RGB.
-        :param bool add_background_depth: flag to determine if type of background rendering is depth.
+        """Initialize OSG Example Application. Needed for rendering graphics
+        :param bool add_background_rgb: flag to determine if type of background rendering is RGB
+        :param bool add_background_depth: flag to determine if type of background rendering is depth
         """
         logger.info("init app")
         self.app.init(agxIO.ArgumentParser([sys.executable] + self.args))
@@ -162,7 +162,6 @@ class AgxEnv(gym.Env):
         Implement this in each subclass
         """
         raise NotImplementedError()
-
 
     # Extension methods
     # ----------------------------
@@ -198,9 +197,9 @@ class AgxEnv(gym.Env):
                 logger.error("Unexpected error:", sys.exc_info()[0])
 
     def _render_callback(self):
-        """Executes one step with graphics rendering.
-        :param bool add_background_rgb: flag to determine if type of background rendering is RGB.
-        :param bool add_background_depth: flag to determine if type of background rendering is depth.
+        """Executes one step with graphics rendering
+        :param bool add_background_rgb: flag to determine if type of background rendering is RGB
+        :param bool add_background_depth: flag to determine if type of background rendering is depth
         """
         # assert not self.agx_only, "Rendering is disabled when agx_only is True. No image observations are possible."
         if self.app.breakRequested():

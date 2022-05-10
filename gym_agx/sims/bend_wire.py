@@ -142,7 +142,7 @@ def sample_random_goal(sim, app=None, dof_vector=np.ones(3)):
 
 
 def sample_fixed_goal(sim, app=None):
-    """Define the trajectory to generate fixed goal.
+    """Define the trajectory to generate fixed goal
     :param sim: AGX Dynamics simulation object
     :param app: AGX Dynamics application object
     """
@@ -173,6 +173,9 @@ def sample_fixed_goal(sim, app=None):
         while t < t_0 + TIMESTEP * N_SUBSTEPS:
             sim.stepForward()
             t = sim.getTimeStamp()
+
+    # reset timestamp, after simulation
+    sim.setTimeStamp(0)
 
 
 def build_simulation(goal=False):

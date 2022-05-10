@@ -33,13 +33,13 @@ class PegInHoleEnv(agx_env.AgxEnv):
     def __init__(self, n_substeps=1, reward_type="dense", observation_type="state", headless=False, image_size=[64, 64],
                  **kwargs):
         """Initializes a PegInHoleEnv object
-        :param args: arguments for agxViewer.
+        :param args: arguments for agxViewer
         :param scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/ folder
-        :param n_substeps: number os simulation steps per call to step().
-        :param end_effectors: list of EndEffector objects, defining controllable constraints.
-        :param observation_config: ObservationConfig object, defining the types of observations.
-        :param camera_config: dictionary containing EYE, CENTER, UP information for rendering, with lighting info.
-        :param reward_config: reward configuration object, defines success condition and reward function.
+        :param n_substeps: number os simulation steps per call to step()
+        :param end_effectors: list of EndEffector objects, defining controllable constraints
+        :param observation_config: ObservationConfig object, defining the types of observations
+        :param camera_config: dictionary containing EYE, CENTER, UP information for rendering, with lighting info
+        :param reward_config: reward configuration object, defines success condition and reward function
         """
 
         self.reward_type = reward_type
@@ -70,7 +70,6 @@ class PegInHoleEnv(agx_env.AgxEnv):
             args.extend(["--osgWindow", "0"])
 
         if headless and observation_type == "gt":
-            # args.extend(["--osgWindow", "0"])
             args.extend(["--agxOnly", "1", "--osgWindow", "0"])
 
         super(PegInHoleEnv, self).__init__(scene_path=SCENE_PATH,
@@ -88,8 +87,8 @@ class PegInHoleEnv(agx_env.AgxEnv):
     def step(self, action):
         logger.info("step")
         action = np.clip(action, self.action_space.low, self.action_space.high)
-        action_mutliplier = np.array([0.2, 0.2, 0.4, 3])
-        action *= action_mutliplier
+        action_multiplier = np.array([0.2, 0.2, 0.4, 3])
+        action *= action_multiplier
         info = self._set_action(action)
 
         self._step_callback()
@@ -123,14 +122,14 @@ class PegInHoleEnv(agx_env.AgxEnv):
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
 
-        # Wait several steps after initalization
-        n_inital_wait = 10
-        for k in range(n_inital_wait):
+        # Wait several steps after initialization
+        n_initial_wait = 10
+        for k in range(n_initial_wait):
             self.sim.stepForward()
 
         # Randomly initialize cylinder position
         cylinder_pos_new = np.random.uniform([-0.1, -0.05], [0.1, 0.05])
-        self.sim.getRigidBody("hollow_cylinder").setPosition(agx.Vec3(cylinder_pos_new[0], cylinder_pos_new[1] ,0.0))
+        self.sim.getRigidBody("hollow_cylinder").setPosition(agx.Vec3(cylinder_pos_new[0], cylinder_pos_new[1], 0.0))
 
         cable = agxCable.Cable.find(self.sim, "DLO")
         self.n_segments = cable.getNumSegments()
@@ -153,8 +152,7 @@ class PegInHoleEnv(agx_env.AgxEnv):
         return segments_pos
 
     def _is_goal_reached(self, segment_pos):
-        """
-        Checks if positions of cable segments on lower end are within goal region. Returns True if cable is partially
+        """Checks if positions of cable segments on lower end are within goal region. Returns True if cable is partially
         inserted and False otherwise.
         """
 
@@ -169,8 +167,7 @@ class PegInHoleEnv(agx_env.AgxEnv):
         return True
 
     def _determine_n_segments_inserted(self, segment_pos, cylinder_pos):
-        """
-        Determine number of segments that are inserted into the hole.
+        """Determine number of segments that are inserted into the hole.
         :param segment_pos:
         :return:
         """
@@ -208,14 +205,15 @@ class PegInHoleEnv(agx_env.AgxEnv):
         rbs = self.sim.getRigidBodies()
         for rb in rbs:
             node = agxOSG.createVisual(rb, root)
-            if rb.getName() == "hollow_cylinder":
+            name = rb.getName()
+            if name == "hollow_cylinder":
                 agxOSG.setDiffuseColor(node, agxRender.Color_SteelBlue())
                 agxOSG.setShininess(node, 15)
-            elif rb.getName() == "gripper_body":
+            elif name == "gripper_body":
                 agxOSG.setDiffuseColor(node, agxRender.Color(1.0, 1.0, 1.0, 1.0))
                 agxOSG.setTexture(node, gripper_texture, False, agxOSG.DIFFUSE_TEXTURE)
                 agxOSG.setShininess(node, 2)
-            elif "dlo" in rb.getName():  # Cable segments
+            elif "dlo" in name:  # Cable segments
                 agxOSG.setDiffuseColor(node, agxRender.Color(0.0, 1.0, 0.0, 1.0))
             else:
                 agxOSG.setDiffuseColor(node, agxRender.Color.Beige())
@@ -247,7 +245,6 @@ class PegInHoleEnv(agx_env.AgxEnv):
             image_data = create_numpy_array(image_ptr, (self.image_size[0], self.image_size[1]), np.float32)
             obs = np.flipud(image_data)
         elif self.observation_type == "rgb_and_depth":
-
             obs = np.zeros((self.image_size[0], self.image_size[1], 4), dtype=np.float32)
 
             image_ptr = rgb_buffer.getImageData()
@@ -268,7 +265,7 @@ class PegInHoleEnv(agx_env.AgxEnv):
 
             obs = np.concatenate([gripper_pos, [gripper_rot], seg_pos, [cylinder_pos[0], cylinder_pos[1]]])
 
-        elif  self.observation_type == "pos_and_vel":
+        elif self.observation_type == "pos_and_vel":
             seg_pos, seg_vel = get_cable_segment_positions_and_velocities(cable=agxCable.Cable.find(self.sim, "DLO"))
             seg_pos = seg_pos.flatten()
             seg_vel = seg_vel.flatten()
@@ -281,7 +278,8 @@ class PegInHoleEnv(agx_env.AgxEnv):
             ea = agx.EulerAngles().set(gripper.getRotation())
             gripper_rot = ea.y()
 
-            obs = np.concatenate([gripper_pos, [gripper_rot], gripper_vel, [gripper_vel_rot], seg_pos, seg_vel, [cylinder_pos[0], cylinder_pos[1]]])
+            obs = np.concatenate([gripper_pos, [gripper_rot], gripper_vel, [gripper_vel_rot], seg_pos, seg_vel,
+                                  [cylinder_pos[0], cylinder_pos[1]]])
 
         return obs
 

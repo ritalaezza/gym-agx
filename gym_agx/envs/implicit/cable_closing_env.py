@@ -32,13 +32,13 @@ class CableClosingEnv(agx_env.AgxEnv):
 
     def __init__(self, n_substeps=1, reward_type="dense", observation_type="gt", headless=False, **kwargs):
         """Initializes a CableClosingEnv object
-        :param args: arguments for agxViewer.
+        :param args: arguments for agxViewer
         :param scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/ folder
-        :param n_substeps: number os simulation steps per call to step().
-        :param end_effectors: list of EndEffector objects, defining controllable constraints.
-        :param observation_config: ObservationConfig object, defining the types of observations.
-        :param camera_config: dictionary containing EYE, CENTER, UP information for rendering, with lighting info.
-        :param reward_config: reward configuration object, defines success condition and reward function.
+        :param n_substeps: number os simulation steps per call to step()
+        :param end_effectors: list of EndEffector objects, defining controllable constraints
+        :param observation_config: ObservationConfig object, defining the types of observations
+        :param camera_config: dictionary containing EYE, CENTER, UP information for rendering, with lighting info
+        :param reward_config: reward configuration object, defines success condition and reward function
         """
 
         self.reward_type = reward_type
@@ -76,7 +76,7 @@ class CableClosingEnv(agx_env.AgxEnv):
             controllable=True,
             observable=True,
             max_velocity=3,  # m/s
-            max_acceleration=3 # m/s^2
+            max_acceleration=3  # m/s^2
         )
         gripper_1.add_constraint(name='gripper_1_joint_base_x',
                                  end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
@@ -106,7 +106,6 @@ class CableClosingEnv(agx_env.AgxEnv):
             args.extend(["--osgWindow", "0"])
 
         if headless and observation_type == "gt":
-            # args.extend(["--osgWindow", "0"])
             args.extend(["--agxOnly", "1", "--osgWindow", "0"])
 
         super(CableClosingEnv, self).__init__(scene_path=SCENE_PATH,
@@ -169,9 +168,9 @@ class CableClosingEnv(agx_env.AgxEnv):
             self._set_action(action)
             self.sim.stepForward()
 
-        # Wait several steps after initalization
-        n_inital_wait = 10
-        for k in range(n_inital_wait):
+        # Wait several steps after initialization
+        n_initial_wait = 10
+        for k in range(n_initial_wait):
             self.sim.stepForward()
 
         self.segment_pos_old = self._compute_segments_pos()
@@ -193,8 +192,7 @@ class CableClosingEnv(agx_env.AgxEnv):
         return segments_pos
 
     def _is_goal_reached(self, segment_pos):
-        """
-        Goal is reached if the cable is closed around the center obstacle. This is the case if the segments
+        """Goal is reached if the cable is closed around the center obstacle. This is the case if the segments
         are on the ground, the grippers are close to each other and the center pole is within the
         dlo polygon.
         :return:
@@ -250,22 +248,23 @@ class CableClosingEnv(agx_env.AgxEnv):
         rbs = self.sim.getRigidBodies()
         for rb in rbs:
             node = agxOSG.createVisual(rb, root)
-            if rb.getName() == "ground":
+            name = rb.getName()
+            if name == "ground":
                 agxOSG.setDiffuseColor(node, agxRender.Color(0.8, 0.8, 0.8, 1.0))
-            elif rb.getName() == "walls":
+            elif name == "walls":
                 agxOSG.setDiffuseColor(node, agxRender.Color.Burlywood())
-            elif rb.getName() == "cylinder":
+            elif name == "cylinder":
                 agxOSG.setDiffuseColor(node, agxRender.Color.DarkGray())
-            elif rb.getName() == "cylinder_inner":
+            elif name == "cylinder_inner":
                 agxOSG.setDiffuseColor(node, agxRender.Color.LightSteelBlue())
-            elif rb.getName() == "gripper_0" or rb.getName() == "gripper_1":
+            elif name == "gripper_0" or name == "gripper_1":
                 agxOSG.setDiffuseColor(node, agxRender.Color(0.1, 0.1, 0.1, 1.0))
-            elif "dlo" in rb.getName():  # Cable segments
+            elif "dlo" in name:  # Cable segments
                 agxOSG.setDiffuseColor(node, agxRender.Color(0.1, 0.5, 0.0, 1.0))
                 agxOSG.setAmbientColor(node, agxRender.Color(0.2, 0.5, 0.0, 1.0))
-            elif rb.getName() == "obstacle":
+            elif name == "obstacle":
                 agxOSG.setDiffuseColor(node, agxRender.Color(0.5, 0.5, 0.5, 1.0))
-            elif rb.getName() == "obstacle_goal":
+            elif name == "obstacle_goal":
                 agxOSG.setDiffuseColor(node, agxRender.Color(0.0, 0.0, 1.0, 1.0))
             else:
                 agxOSG.setDiffuseColor(node, agxRender.Color.Beige())
