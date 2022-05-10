@@ -38,3 +38,19 @@ from gym_agx import envs
 
 env = gym.make('BendWire-v0')
 ```
+
+
+## Citing this work
+
+To cite ReForm in publications:
+
+```bibtex
+@INPROCEEDINGS{reform,  
+  author={Laezza, Rita and Gieselmann, Robert and Pokorny, Florian T. and Karayiannidis, Yiannis},  
+  booktitle={2021 IEEE International Conference on Robotics and Automation (ICRA)},   
+  title={ReForm: A Robot Learning Sandbox for Deformable Linear Object Manipulation},   
+  year={2021},  
+  pages={4717-4723},  
+  doi={10.1109/ICRA48506.2021.9561766}
+}
+```
