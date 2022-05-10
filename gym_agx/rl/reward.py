@@ -5,10 +5,12 @@ from abc import ABC, abstractmethod
 logger = logging.getLogger('gym_agx.rl')
 
 
+class RewardType(Enum):
+    SPARSE = "sparse"
+    DENSE = "dense"
+    
+
 class RewardConfig(ABC):
-    class RewardType(Enum):
-        SPARSE = "sparse"
-        DENSE = "dense"
 
     def __init__(self, reward_type, reward_range, set_done_on_success=True, **kwargs):
         """Initialize RewardConfig object. Defines reward type, limit and function
@@ -35,13 +37,13 @@ class RewardConfig(ABC):
         needed for reward computations
         :return: float reward
         """
-        if self.reward_type == self.RewardType.SPARSE:
+        if self.reward_type == RewardType.SPARSE:
             success = self.is_success(achieved_goal, desired_goal)
             if success:
                 reward = self.reward_range[1]
             else:
                 reward = self.reward_range[0]
-        elif self.reward_type == self.RewardType.DENSE:
+        elif self.reward_type == RewardType.DENSE:
             reward, info = self.reward_function(achieved_goal, desired_goal, info)
             reward = self.scale_reward(reward)
         else:

@@ -6,8 +6,8 @@ import numpy as np
 
 from gym_agx.envs import dlo_env
 from gym_agx.rl.observation import ObservationConfig, ObservationType
-from gym_agx.rl.reward import RewardConfig
 from gym_agx.rl.end_effector import EndEffector, EndEffectorConstraint
+from gym_agx.rl.reward import RewardConfig, RewardType
 from gym_agx.utils.agx_classes import CameraConfig
 from gym_agx.sims import push_rope
 
@@ -50,7 +50,7 @@ class PushRopeEnv(dlo_env.DloEnv):
         :param int n_substeps: number of simulation steps between each action step
         :param ObservationConfig: types of observations to be used
         :param list pushers: EndEffector objects
-        :param RewardConfig.RewardType reward_type: type of reward
+        :param RewardType reward_type: type of reward
         :param RewardConfig reward_config: adds possibility to completely override reward definition
         :param str scene_path: possibility to overwrite default scene file
         :param str goal_scene_path: possibility to overwrite default goal scene file
@@ -95,7 +95,7 @@ class PushRopeEnv(dlo_env.DloEnv):
             observation_config.set_ee_position()
 
         if not reward_type:
-            reward_type = RewardConfig.RewardType.DENSE
+            reward_type = RewardType.DENSE
         if not reward_config:
             reward_config = Reward(reward_type=reward_type, reward_range=(-1.5, 1.5), dlo_curvature_threshold=0.1)
 
