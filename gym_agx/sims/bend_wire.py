@@ -112,8 +112,12 @@ def sample_random_goal(sim, app=None, dof_vector=np.ones(3)):
     waypoints = [to_numpy_array(right_gripper.getPosition())]
     scales = np.zeros(n_waypoints)
     for i in range(0, n_waypoints):
-        waypoint, length = sample_sphere(center, [2 * (2 * RADIUS + SIZE_GRIPPER) + 4 * SIZE_GRIPPER,
-                                                  LENGTH - 4 * SIZE_GRIPPER], [0, np.pi], [-np.pi / 2, np.pi / 2])
+        waypoint, length = sample_sphere(center,
+                                         [2 * (2 * RADIUS + SIZE_GRIPPER) + 4 * SIZE_GRIPPER,
+                                          LENGTH - 4 * SIZE_GRIPPER],
+                                         [0, np.pi],
+                                         [0, np.pi],
+                                         [-math.pi / 2, 0, 0])
         waypoints.append(waypoint)
         scales[i] = length
 

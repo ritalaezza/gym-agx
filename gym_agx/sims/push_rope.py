@@ -22,7 +22,7 @@ import logging
 
 # Local modules
 import agxUtil
-from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, save_goal_simulation, \
+from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, \
     add_goal_assembly_from_file
 from gym_agx.utils.agx_classes import KeyboardMotorHandler
 

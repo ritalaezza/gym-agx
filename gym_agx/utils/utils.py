@@ -35,21 +35,67 @@ def goal_area(achieved_goal, goal):
     return abs(np.trapz(achieved_goal) - np.trapz(goal))
 
 
-def sample_sphere(center, radius_range, theta_range, phi_range):
-    """Uniform sampling bounded by sphere
+def rotate_rpy(input_vector, phi, theta, psi, transpose=False):
+    """Apply rotation to vector using Roll-Pitch-Yaw (RPY) or ZYX angles
+    :param numpy.ndarray input_vector: input vector
+    :param phi: roll angle around z
+    :param theta: pitch angle around y
+    :param psi: yaw angle around x
+    :param bool transpose: Boolean variable that toggles transpose rotation
+    :return numpy.ndarray
+    """
+    rotation_matrix = np.array([[math.cos(phi) * math.cos(theta),
+                                 math.cos(phi) * math.sin(theta) * math.sin(psi) - math.sin(phi) * math.cos(psi),
+                                 math.cos(phi) * math.sin(theta) * math.cos(psi) + math.sin(phi) * math.sin(psi)],
+                                [math.sin(phi) * math.cos(theta),
+                                 math.sin(phi) * math.sin(theta) * math.sin(psi) + math.cos(phi) * math.cos(psi),
+                                 math.sin(phi) * math.sin(theta) * math.cos(psi) - math.cos(phi) * math.sin(psi)],
+                                [-math.sin(theta), math.cos(theta) * math.sin(psi), math.cos(theta) * math.cos(psi)]])
+    if transpose:
+        output_vector = np.matmul(rotation_matrix.T, input_vector)
+    else:
+        output_vector = np.matmul(rotation_matrix, input_vector)
+    return output_vector
+
+
+def sample_sphere(center, radius_range, polar_range, azimuthal_range, rpy_angles=None):
+    """Uniform sampling bounded by sphere. Default spherical coordinate frame is same as AGX Dynamics base frame and the
+    Roll-Pitch-Yaw (RPY) or ZYX angles are used to rotate the points generated in this frame
     :param center: center position of the sphere
-    :param radius_range: range of acceptable radius values
-    :param theta_range: range of acceptable values for xy-z angle, theta=0 aligned with z-axis
-    :param phi_range: range of acceptable values for xy plane angle, phi=0 aligned with x-axis
+    :param radius_range: range of acceptable radius values [min, max]
+    :param polar_range: range of values for polar angle (xy-z) in [0, pi], angle=0 aligned with z-axis
+    :param azimuthal_range: range of values for azimuthal angle (xy plane) in [0, 2*pi], angle=0 aligned with x-axis
+    :param rpy_angles: RPY angles (phi - roll around z, theta - pitch around y, psi - yaw around x)
+    :return position, radius
     """
     position = np.zeros(3)
-    radius = np.random.uniform(radius_range[0], radius_range[1])
-    theta = np.random.uniform(theta_range[0], theta_range[1])
-    phi = np.random.uniform(phi_range[0], phi_range[1])
-    position[0] = radius * np.cos(phi) * np.sin(theta)
-    position[1] = radius * np.sin(phi) * np.sin(theta)
-    position[2] = radius * np.cos(theta)
-    return center + position, np.linalg.norm(position)
+    if rpy_angles is None:
+        rpy_angles = [0, 0, 0]
+
+    # sanity checks
+    assert radius_range[1] >= radius_range[0] >= 0, "radius_range, 0 <= min <= max"
+    assert math.pi >= polar_range[1] >= polar_range[0] >= 0, "polar_range, 0 <= min <= max <= pi"
+    assert 2 * math.pi >= azimuthal_range[1] >= azimuthal_range[0] >= 0, "azimuthal_range, 0 <= min <= max <= 2*pi"
+
+    # Uniform sampling of a solid sphere (adapted from https://mathworld.wolfram.com/SpherePointPicking.html)
+    radius_seed = np.sqrt(np.random.uniform(0, 1))  # sqrt needed for uniform sampling
+    radius = radius_range[0] + radius_seed * (radius_range[1] - radius_range[0])  # rescaling to desired range
+    polar_seed = np.random.uniform(polar_range[0] / math.pi, polar_range[1] / math.pi)  # value between 0 and 1
+    polar_angle = math.acos(1 - 2 * polar_seed)
+    azimuthal_angle = np.random.uniform(azimuthal_range[0], azimuthal_range[1])
+
+    # Convert to Cartesian coordinates
+    position[0] = radius * np.cos(azimuthal_angle) * np.sin(polar_angle)
+    position[1] = radius * np.sin(azimuthal_angle) * np.sin(polar_angle)
+    position[2] = radius * np.cos(polar_angle)
+
+    # Translate
+    position = center + position
+
+    # Rotate
+    position = rotate_rpy(position, *rpy_angles)
+
+    return position, radius
 
 
 def harmonic_trajectory(amplitude, w, t, phase=0):
@@ -108,7 +154,7 @@ def polynomial_trajectory(current_time, start_time, waypoints, time_scales, degr
             current_start_time = start_time + np.sum(time_scales[:i])
             time_scale = time_scales[i]
             start_position = waypoints[i]
-            end_position = waypoints[i+1]
+            end_position = waypoints[i + 1]
     t = current_time - current_start_time
     instant_velocity = point_to_point_trajectory(t, time_scale, start_position, end_position, degree)
     return instant_velocity
@@ -241,8 +287,7 @@ def get_cable_torsion(cable_state, segment_length=1):
 
 
 def point_inside_polygon(polygon, point):
-    """
-    Point in polygon algorithm (Jordan theorem)
+    """Point in polygon algorithm (Jordan theorem)
     :param polygon:
     :param point:
     :return:

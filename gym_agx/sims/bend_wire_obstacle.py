@@ -116,13 +116,16 @@ def sample_random_goal(sim, app=None, dof_vector=np.ones(3)):
     settling_time = 1
     n_seconds = 10 + settling_time
     center = np.array([0, 0, -CYLINDER_RADIUS])
+    azimuth_deviation = math.asin(CYLINDER_LENGTH / LENGTH)  # needed for 3D shapes
 
     # Define trajectory waypoints
     waypoints_right = [to_numpy_array(right_gripper.getPosition()), np.array([LENGTH / 2, 0, -CYLINDER_RADIUS])]
     scales_right = np.array([CYLINDER_RADIUS, 0])
-    goal_point_right, scales_right[1] = sample_sphere(center, [2 * CYLINDER_RADIUS, LENGTH / 2], [np.pi / 2,  np.pi],
-                                                      [-math.asin(CYLINDER_LENGTH / LENGTH),
-                                                       math.asin(CYLINDER_LENGTH / LENGTH)])
+    goal_point_right, scales_right[1] = sample_sphere(center,
+                                                      [2 * CYLINDER_RADIUS, LENGTH / 2],
+                                                      [np.pi / 2,  np.pi],
+                                                      [math.pi - azimuth_deviation, math.pi + azimuth_deviation],
+                                                      [-math.pi, 0, 0])
     goal_point_right[0] = min(goal_point_right[0], CYLINDER_RADIUS)
     waypoints_right.append(goal_point_right)
     norm_scales_right = scales_right / sum(scales_right)
@@ -130,8 +133,11 @@ def sample_random_goal(sim, app=None, dof_vector=np.ones(3)):
 
     scales_left = np.array([CYLINDER_RADIUS, 0])
     waypoints_left = [to_numpy_array(left_gripper.getPosition()), np.array([-LENGTH / 2, 0, -CYLINDER_RADIUS])]
-    goal_point_left, scales_left[1] = sample_sphere(center, [2 * CYLINDER_RADIUS, LENGTH / 2], [np.pi,  3 * np.pi / 2],
-                                                    [0, 0])
+    goal_point_left, scales_left[1] = sample_sphere(center,
+                                                    [2 * CYLINDER_RADIUS, LENGTH / 2],
+                                                    [np.pi / 2,  np.pi],
+                                                    [math.pi - azimuth_deviation, math.pi + azimuth_deviation]
+                                                    )
     goal_point_left[0] = max(goal_point_left[0], -CYLINDER_RADIUS)
     waypoints_left.append(goal_point_left)
     norm_scales_left = scales_left / sum(scales_left)
@@ -142,11 +148,13 @@ def sample_random_goal(sim, app=None, dof_vector=np.ones(3)):
     while t < n_seconds:
         if app:
             app.executeOneStepWithGraphics()
+
         right_velocity = polynomial_trajectory(t, start_time, waypoints_right, time_scales_right, degree=3)
         right_velocity = right_velocity*dof_vector
         right_motor_x.setSpeed(right_velocity[0])
         right_motor_y.setSpeed(right_velocity[1])
         right_motor_z.setSpeed(right_velocity[2])
+
         left_velocity = polynomial_trajectory(t, start_time, waypoints_left, time_scales_left, degree=3)
         left_velocity = left_velocity*dof_vector
         left_motor_x.setSpeed(left_velocity[0])
