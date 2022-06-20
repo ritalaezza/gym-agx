@@ -7,7 +7,6 @@ Bend Wire
 .. automodule:: gym_agx.sims.bend_wire
    :members:
    :undoc-members:
-   :show-inheritance:
 
 Bend Wire with Obstacle
 -----------------------
@@ -15,7 +14,6 @@ Bend Wire with Obstacle
 .. automodule:: gym_agx.sims.bend_wire_obstacle
    :members:
    :undoc-members:
-   :show-inheritance:
 
 Push Rope
 ---------
@@ -23,13 +21,25 @@ Push Rope
 .. automodule:: gym_agx.sims.push_rope
    :members:
    :undoc-members:
-   :show-inheritance:
 
-Insert O-Ring
+Peg In Hole
+-----------
+
+.. automodule:: gym_agx.sims.peg_in_hole
+  :members:
+  :undoc-members:
+
+
+Rubber Band
 -------------
 
-.. automodule:: gym_agx.sims.insert_o_ring
+.. automodule:: gym_agx.sims.rubber_band
+  :members:
+  :undoc-members:
+
+Cable Closing
+-------------
+
+.. automodule:: gym_agx.sims.cable_closing
    :members:
    :undoc-members:
-   :show-inheritance:
-

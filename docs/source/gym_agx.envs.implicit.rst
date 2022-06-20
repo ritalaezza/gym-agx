@@ -1,7 +1,6 @@
 Implicit Shape Control Environments
 ===================================
 
-
 PegInHoleEnv
 ------------
 
@@ -17,5 +16,5 @@ RubberBandEnv
 CableClosingEnv
 ---------------
 
-.. autoclass:: gym_agx.implicit.cable_closing_env.CableClosingEnv
+.. autoclass:: gym_agx.envs.implicit.cable_closing_env.CableClosingEnv
    :members:

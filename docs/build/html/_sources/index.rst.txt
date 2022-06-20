@@ -15,5 +15,4 @@ Most of the documentation is auto-generated using `Sphinx <https://www.sphinx-do
 
    gym_agx.envs
    gym_agx.sims
-   gym_agx.tests
    gym_agx.utils

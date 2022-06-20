@@ -129,6 +129,11 @@ html_static_path = ['static']
 #
 # html_sidebars = {}
 
+autodoc_default_options = {
+    'members': 'var1, var2',
+    'member-order': 'bysource',
+    'undoc-members': True,
+}
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
@@ -182,7 +187,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'gym-agx', u'gym-agx Documentation',
-     author, 'gym-agx', 'One line description of project.',
+     author, 'gym-agx', 'Deformable Linear Object Manipulation Sandbox.',
      'Miscellaneous'),
 ]
 

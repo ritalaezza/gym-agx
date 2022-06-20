@@ -16,7 +16,5 @@ BendWireObstacleEnv
 PushRopeEnv
 -----------
 
-.. autoclass:: gym_agx.explicit.push_rope_env.PushRopeEnv
+.. autoclass:: gym_agx.envs.explicit.push_rope_env.PushRopeEnv
    :members:
-
-
