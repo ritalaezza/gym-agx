@@ -98,18 +98,6 @@ def sample_sphere(center, radius_range, polar_range, azimuthal_range, rpy_angles
     return position, radius
 
 
-def harmonic_trajectory(amplitude, w, t, phase=0):
-    """Assuming a position trajectory of the type: x(t) = A cos(w*t) , the velocity trajectory becomes:
-    x'(t) = - amplitude*w sin(w*t)
-    :param amplitude: Amplitude in meters
-    :param w: frequency in radians per second
-    :param t: current timestamp in seconds
-    :param phase: phase shift of sinusoid
-    :return: instant velocity, x'
-    """
-    return -amplitude * w * math.sin(w * t + phase)
-
-
 def point_to_point_trajectory(t, time_limit, start_position, end_position, degree=3):
     """Assuming a third/fifth order polynomial trajectory: x(s) = x_start + s(x_end - x_start) , s in [0, 1]
     with time scaling: s(t) = a_0 + a_1 t + a_2 t^2 + a_3 t^3 , t in [0, T]

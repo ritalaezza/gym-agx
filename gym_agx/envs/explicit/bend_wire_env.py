@@ -103,6 +103,7 @@ class BendWireEnv(dlo_env.DloEnv):
             observation_config = ObservationConfig(goals=[ObservationType.DLO_CURVATURE,
                                                           ObservationType.EE_VELOCITY])
             observation_config.set_dlo_frenet_curvature()
+            observation_config.set_ee_position()
 
         if not reward_config:
             if not reward_type:

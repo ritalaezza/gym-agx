@@ -23,7 +23,7 @@ import os
 # Local modules
 from gym_agx.utils.agx_utils import create_body, save_simulation, to_numpy_array, create_locked_prismatic_base, \
     add_goal_assembly_from_file
-from gym_agx.utils.utils import harmonic_trajectory, polynomial_trajectory, sample_sphere
+from gym_agx.utils.utils import polynomial_trajectory, sample_sphere
 
 logger = logging.getLogger('gym_agx.sims')
 
@@ -151,26 +151,25 @@ def sample_fixed_goal(sim, app=None):
     :param app: AGX Dynamics application object
     """
     right_motor_x = sim.getConstraint1DOF("gripper_right_goal_joint_base_x").getMotor1D()
+    right_gripper = sim.getRigidBody("gripper_right_goal")
 
-    n_seconds = 20
-    n_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
-    period = 12  # seconds
-    amplitude = LENGTH / 4
-    rad_frequency = 2 * math.pi * (1 / period)
-    count = 0
-    previous_velocity = 0
-    for k in range(n_steps):
+
+    middle_point = np.array([2 * (2 * RADIUS + SIZE_GRIPPER) + LENGTH / 2, 0, 0])
+    quarter_point = np.array([2 * (2 * RADIUS + SIZE_GRIPPER) + LENGTH / 4, 0, 0])
+    waypoints = [to_numpy_array(right_gripper.getPosition()), quarter_point, middle_point]
+    time_scales = np.array([10, 5])
+
+    n_seconds = np.sum(time_scales)
+    n_time_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
+    t = sim.getTimeStamp()
+    start_time = t
+    velocities = np.zeros([n_time_steps, 3])
+    for i in range(n_time_steps):
         if app:
             app.executeOneStepWithGraphics()
-        velocity_x = harmonic_trajectory(amplitude, rad_frequency, k * TIMESTEP * N_SUBSTEPS)
-        if velocity_x * previous_velocity < 0:
-            if count == 0:
-                amplitude /= 2
-            else:
-                amplitude = 0
-            count += 1
-        previous_velocity = velocity_x
-        right_motor_x.setSpeed(velocity_x)
+        velocity = polynomial_trajectory(t, start_time, waypoints, time_scales, degree=5)
+        velocities[i, :] = velocity
+        right_motor_x.setSpeed(velocity[0])
 
         t = sim.getTimeStamp()
         t_0 = t
@@ -180,6 +179,13 @@ def sample_fixed_goal(sim, app=None):
 
     # reset timestamp, after simulation
     sim.setTimeStamp(0)
+
+    # Trajectory limits:
+    max_velocity = np.max(np.max(velocities))
+    accelerations = np.gradient(velocities, axis=0)
+    max_acceleration = np.max(np.max(accelerations))
+    print('Max velocity: ' + str(max_velocity))
+    print('Max acceleration: ' + str(max_acceleration))
 
 
 def build_simulation(goal=False):
