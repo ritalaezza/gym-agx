@@ -153,11 +153,10 @@ def sample_fixed_goal(sim, app=None):
     right_motor_x = sim.getConstraint1DOF("gripper_right_goal_joint_base_x").getMotor1D()
     right_gripper = sim.getRigidBody("gripper_right_goal")
 
-
     middle_point = np.array([2 * (2 * RADIUS + SIZE_GRIPPER) + LENGTH / 2, 0, 0])
     quarter_point = np.array([2 * (2 * RADIUS + SIZE_GRIPPER) + LENGTH / 4, 0, 0])
     waypoints = [to_numpy_array(right_gripper.getPosition()), quarter_point, middle_point]
-    time_scales = np.array([10, 5])
+    time_scales = np.array([15, 5])
 
     n_seconds = np.sum(time_scales)
     n_time_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
@@ -179,11 +178,12 @@ def sample_fixed_goal(sim, app=None):
 
     # reset timestamp, after simulation
     sim.setTimeStamp(0)
+    print(right_gripper.getPosition())
 
     # Trajectory limits:
-    max_velocity = np.max(np.max(velocities))
+    max_velocity = np.max(np.max(abs(velocities)))
     accelerations = np.gradient(velocities, axis=0)
-    max_acceleration = np.max(np.max(accelerations))
+    max_acceleration = np.max(np.max(abs(accelerations)))
     print('Max velocity: ' + str(max_velocity))
     print('Max acceleration: ' + str(max_acceleration))
 
