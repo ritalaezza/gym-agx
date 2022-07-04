@@ -15,7 +15,6 @@ import agxRender
 
 # Python modules
 import sys
-import logging
 import numpy as np
 
 # Local modules
@@ -23,7 +22,6 @@ from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, s
 from gym_agx.utils.utils import point_inside_polygon, all_points_below_z
 from gym_agx.utils.agx_classes import KeyboardMotorHandler
 
-logger = logging.getLogger('gym_agx.sims')
 
 FILE_NAME = "rubber_band"
 # Simulation parameters
@@ -71,7 +69,6 @@ GRIPPER_MAX_Z = 0.007
 
 
 def create_pole(id, sim, position, material):
-
     x = position[0]
     y = position[1]
 
@@ -88,7 +85,7 @@ def create_pole(id, sim, position, material):
     # Middle part
     rotation_cylinder = agx.OrthoMatrix3x3()
     rotation_cylinder.setRotate(agx.Vec3.Y_AXIS(), agx.Vec3.Z_AXIS())
-    cylinder = create_body(name="cylinder_inner_" + str(id), shape=agxCollide.Cylinder(POLE_RADIUS-0.0007, 0.005),
+    cylinder = create_body(name="cylinder_inner_" + str(id), shape=agxCollide.Cylinder(POLE_RADIUS - 0.0007, 0.005),
                            position=agx.Vec3(x, y, 0.005),
                            rotation=rotation_cylinder,
                            motion_control=agx.RigidBody.KINEMATICS,
@@ -151,20 +148,20 @@ def build_simulation():
     # too by creating an agx.PointGravityField for example).
     # AGX uses a right-hand coordinate system (That is Z defines UP. X is right, and Y is into the screen)
     if not GRAVITY:
-        logger.info("Gravity off.")
+        print("Gravity off.")
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 
     # Get current delta-t (timestep) that is used in the simulation?
     dt = sim.getTimeStep()
-    logger.debug("default dt = {}".format(dt))
+    print("default dt = {}".format(dt))
 
     # Change the timestep
     sim.setTimeStep(TIMESTEP)
 
     # Confirm timestep changed
     dt = sim.getTimeStep()
-    logger.debug("new dt = {}".format(dt))
+    print("new dt = {}".format(dt))
 
     # Define materials
     material_hard = agx.Material("Aluminum")
@@ -187,7 +184,7 @@ def build_simulation():
     # Create gripper
     gripper = create_body(name="gripper",
                           shape=agxCollide.Sphere(0.002),
-                          position=agx.Vec3(0.0, 0.0, GRIPPER_HEIGHT+DIAMETER/2.0),
+                          position=agx.Vec3(0.0, 0.0, GRIPPER_HEIGHT + DIAMETER / 2.0),
                           motion_control=agx.RigidBody.DYNAMICS,
                           material=material_hard)
     gripper.getRigidBody("gripper").getGeometry("gripper").setEnableCollisions(False)
@@ -217,10 +214,10 @@ def build_simulation():
 
     # Initialize dlo on circle
     steps = DLO_CIRCLE_STEPS
-    for a in np.linspace(-np.pi/2, (3.0/2.0)*np.pi - 2*np.pi/steps, steps):
+    for a in np.linspace(-np.pi / 2, (3.0 / 2.0) * np.pi - 2 * np.pi / steps, steps):
         x = np.cos(a) * DIAMETER / 2.0
         z = np.sin(a) * DIAMETER / 2.0
-        rubber_band.add(agxCable.FreeNode(x, 0, GRIPPER_HEIGHT+z))
+        rubber_band.add(agxCable.FreeNode(x, 0, GRIPPER_HEIGHT + z))
 
     sim.add(rubber_band)
 
@@ -233,24 +230,24 @@ def build_simulation():
             seg = segment_iterator.getRigidBody()
             seg.setAngularVelocityDamping(1e4)
             mass_props = seg.getMassProperties()
-            mass_props.setMass(1.25*mass_props.getMass())
+            mass_props.setMass(1.25 * mass_props.getMass())
             segments_cable.append(seg)
             segment_iterator.inc()
 
     # Get segments at ends and middle
     s0 = segments_cable[0]
-    s1 = segments_cable[int(n_segments/2)]
+    s1 = segments_cable[int(n_segments / 2)]
     s2 = segments_cable[-1]
 
     # Add ball joint between gripper and rubber band
     f0 = agx.Frame()
     f1 = agx.Frame()
-    ball_joint = agx.BallJoint(gripper.getRigidBody("gripper"), f0, s1,  f1)
+    ball_joint = agx.BallJoint(gripper.getRigidBody("gripper"), f0, s1, f1)
     sim.add(ball_joint)
 
     # Connect ends of rubber band
     f0 = agx.Frame()
-    f0.setLocalTranslate(0.0, 0.0, -1*np.pi*DIAMETER/cable.getNumSegments())
+    f0.setLocalTranslate(0.0, 0.0, -1 * np.pi * DIAMETER / cable.getNumSegments())
     f1 = agx.Frame()
     lock = agx.LockJoint(s0, f0, s2, f1)
     lock.setCompliance(1.0e-4)
@@ -290,13 +287,12 @@ def build_simulation():
 
     rbs = rubber_band.getRigidBodies()
     for i in range(len(rbs)):
-        rbs[i].setName('dlo_' + str(i+1))
+        rbs[i].setName('dlo_' + str(i + 1))
 
     return sim
 
 
 def set_center_obstacle(sim, center_pos):
-
     ground = sim.getRigidBody("ground")
     ground.setPosition(agx.Vec3(center_pos[0], center_pos[1], -0.005))
 
@@ -347,7 +343,6 @@ def is_goal_reached(center_pos, segment_pos):
 
 
 def compute_dense_reward_and_check_goal(center_pos, segment_pos_0, segment_pos_1):
-
     pole_pos = center_pos + POLE_POSITION_OFFSETS
 
     poles_enclosed_0 = get_poles_enclosed(segment_pos_0, pole_pos)
@@ -359,7 +354,7 @@ def compute_dense_reward_and_check_goal(center_pos, segment_pos_0, segment_pos_1
     n_enclosed_0 = np.sum(poles_enclosed_0)
     final_goal_reached = n_enclosed_0 >= 3 and is_correct_height
 
-    return np.sum(poles_enclosed_diff) + 5*float(final_goal_reached), final_goal_reached
+    return np.sum(poles_enclosed_diff) + 5 * float(final_goal_reached), final_goal_reached
 
 
 def main(args):
@@ -369,9 +364,9 @@ def main(args):
     # Save simulation to file
     success = save_simulation(sim, FILE_NAME)
     if success:
-        logger.debug("Simulation saved!")
+        print("Simulation saved!")
     else:
-        logger.debug("Simulation not saved!")
+        print("Simulation not saved!")
 
     # Add app
     app = add_rendering(sim)

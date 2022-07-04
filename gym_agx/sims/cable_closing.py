@@ -15,7 +15,6 @@ import agxRender
 
 # Python modules
 import sys
-import logging
 import numpy as np
 
 # Local modules
@@ -23,7 +22,6 @@ from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, s
 from gym_agx.utils.utils import all_points_below_z, point_inside_polygon
 from gym_agx.utils.agx_classes import KeyboardMotorHandler
 
-logger = logging.getLogger('gym_agx.sims')
 
 FILE_NAME = "cable_closing"
 # Simulation parameters
@@ -50,12 +48,10 @@ EYE = agx.Vec3(0, 0, 0.65)
 CENTER = agx.Vec3(0, 0, 0)
 UP = agx.Vec3(0., 1., 0.0)
 
-
 # Control parameters
 MAX_MOTOR_FORCE = 2
 GOAL_MAX_Z = 0.05
-OBSTACLE_POSITIONS = [[0.0,0.05], [-0.075,0.05], [0.075, 0.05]]
-# OBSTACLE_POSITIONS = [ [0.0,0.05], [0.06,0.05], [-0.06,0.05],  [0.12,0.05], [-0.12,0.05]]
+OBSTACLE_POSITIONS = [[0.0, 0.05], [-0.075, 0.05], [0.075, 0.05]]
 R_GOAL_OBSTACLE = 0.005
 OFFSET_Y = 0.1
 
@@ -97,7 +93,7 @@ def add_rendering(sim):
     # Set rendering options
     scene_decorator = app.getSceneDecorator()
     scene_decorator.setEnableLogo(False)
-    scene_decorator.setBackgroundColor(agxRender.Color(1.0, 1.0,1.0, 1.0))
+    scene_decorator.setBackgroundColor(agxRender.Color(1.0, 1.0, 1.0, 1.0))
 
     return app
 
@@ -110,20 +106,20 @@ def build_simulation():
     # too by creating an agx.PointGravityField for example).
     # AGX uses a right-hand coordinate system (That is Z defines UP. X is right, and Y is into the screen)
     if not GRAVITY:
-        logger.info("Gravity off.")
+        print("Gravity off.")
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 
     # Get current delta-t (timestep) that is used in the simulation?
     dt = sim.getTimeStep()
-    logger.debug("default dt = {}".format(dt))
+    print("default dt = {}".format(dt))
 
     # Change the timestep
     sim.setTimeStep(TIMESTEP)
 
     # Confirm timestep changed
     dt = sim.getTimeStep()
-    logger.debug("new dt = {}".format(dt))
+    print("new dt = {}".format(dt))
 
     # Define materials
     material_hard = agx.Material("Aluminum")
@@ -170,7 +166,7 @@ def build_simulation():
     # Create gripper 0
     gripper_0 = create_body(name="gripper_0",
                             shape=agxCollide.Sphere(0.005),
-                            position=agx.Vec3(-(LENGTH/2), OFFSET_Y, 0.0025),
+                            position=agx.Vec3(-(LENGTH / 2), OFFSET_Y, 0.0025),
                             motion_control=agx.RigidBody.DYNAMICS,
                             material=material_hard)
     gripper_0.getRigidBody("gripper_0").getGeometry("gripper_0").setEnableCollisions(False)
@@ -178,8 +174,8 @@ def build_simulation():
 
     # Create base for gripper motors
     prismatic_base_0 = create_locked_prismatic_base("gripper_0", gripper_0.getRigidBody("gripper_0"),
-                                                    position_ranges=[(-side_length*2, side_length*2),
-                                                                     (-side_length*2, side_length*2),
+                                                    position_ranges=[(-side_length * 2, side_length * 2),
+                                                                     (-side_length * 2, side_length * 2),
                                                                      (-0.1, 0.01)],
                                                     motor_ranges=[(-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE),
                                                                   (-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE),
@@ -191,7 +187,7 @@ def build_simulation():
     # Create gripper
     gripper_1 = create_body(name="gripper_1",
                             shape=agxCollide.Sphere(0.005),
-                            position=agx.Vec3((LENGTH/2), OFFSET_Y, 0.0025),
+                            position=agx.Vec3((LENGTH / 2), OFFSET_Y, 0.0025),
                             motion_control=agx.RigidBody.DYNAMICS,
                             material=material_hard)
     gripper_1.getRigidBody("gripper_1").getGeometry("gripper_1").setEnableCollisions(False)
@@ -199,21 +195,21 @@ def build_simulation():
 
     # Create base for gripper motors
     prismatic_base_0 = create_locked_prismatic_base("gripper_1", gripper_1.getRigidBody("gripper_1"),
-                                                    position_ranges=[(-side_length*2, side_length*2),
-                                                                     (-side_length*2, side_length*2),
+                                                    position_ranges=[(-side_length * 2, side_length * 2),
+                                                                     (-side_length * 2, side_length * 2),
                                                                      (-0.1, 0.01)],
                                                     motor_ranges=[(-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE),
                                                                   (-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE),
                                                                   (-MAX_MOTOR_FORCE, MAX_MOTOR_FORCE)],
                                                     lock_status=[False, False, False])
     sim.add(prismatic_base_0)
-    
+
     # Create goal obstacle
     goal_obstacle = create_body(name="obstacle_goal",
-                           shape=agxCollide.Cylinder(2 * R_GOAL_OBSTACLE, 0.1),
-                           position=agx.Vec3(0.0,0.-0.075, 0.005),
-                           motion_control=agx.RigidBody.STATIC,
-                           material=material_hard)
+                                shape=agxCollide.Cylinder(2 * R_GOAL_OBSTACLE, 0.1),
+                                position=agx.Vec3(0.0, 0. - 0.075, 0.005),
+                                motion_control=agx.RigidBody.STATIC,
+                                material=material_hard)
     sim.add(goal_obstacle)
     rotation_cylinder = agx.OrthoMatrix3x3()
     rotation_cylinder.setRotate(agx.Vec3.Y_AXIS(), agx.Vec3.Z_AXIS())
@@ -232,7 +228,7 @@ def build_simulation():
     # Create rope and set name + properties
     dlo = agxCable.Cable(RADIUS, RESOLUTION)
     dlo.setName("DLO")
-    material_rubber_band= dlo.getMaterial()
+    material_rubber_band = dlo.getMaterial()
     rubber_band_material = material_rubber_band.getBulkMaterial()
     rubber_band_material.setPoissonsRatio(PEG_POISSON_RATIO)
     properties = dlo.getCableProperties()
@@ -242,13 +238,12 @@ def build_simulation():
 
     dlo.add(agxCable.FreeNode(gripper_0.getRigidBody("gripper_0").getPosition()))
     dlo.add(agxCable.FreeNode(gripper_1.getRigidBody("gripper_1").getPosition()))
-    #
+
     # hf = agx.HingeFrame()
     # hf.setCenter(gripper_0.getRigidBody("gripper_0").getPosition())
     # hf.setAxis(agx.Vec3(0,1,0))
     # hinge_0 = agx.Hinge(hf, base_z, rot_y)
     # agx.Hinge()
-
 
     # dlo.add(agxCable.BodyFixedNode(gripper_0.getRigidBody("gripper_0"), agx.Vec3()))
     # dlo.add(agxCable.BodyFixedNode(gripper_1.getRigidBody("gripper_1"),  agx.Vec3()))
@@ -265,22 +260,21 @@ def build_simulation():
             seg.setAngularVelocityDamping(2e4)
             segment_iterator.inc()
             mass_props = seg.getMassProperties()
-            mass_props.setMass(1.25*mass_props.getMass())
-
+            mass_props.setMass(1.25 * mass_props.getMass())
 
     s0 = segments[0]
     s1 = segments[-1]
 
     h0 = agx.HingeFrame()
     h0.setCenter(gripper_0.getRigidBody("gripper_0").getPosition())
-    h0.setAxis(agx.Vec3(0,0,1))
-    l0 = agx.Hinge(h0, s0, gripper_0.getRigidBody("gripper_0") )
+    h0.setAxis(agx.Vec3(0, 0, 1))
+    l0 = agx.Hinge(h0, s0, gripper_0.getRigidBody("gripper_0"))
     sim.add(l0)
 
     h1 = agx.HingeFrame()
     h1.setCenter(gripper_1.getRigidBody("gripper_1").getPosition())
-    h1.setAxis(agx.Vec3(0,0,1))
-    l1 = agx.Hinge(h1, s1, gripper_1.getRigidBody("gripper_1") )
+    h1.setAxis(agx.Vec3(0, 0, 1))
+    l1 = agx.Hinge(h1, s1, gripper_1.getRigidBody("gripper_1"))
     sim.add(l1)
 
     # f0 = agx.Frame()
@@ -327,7 +321,7 @@ def build_simulation():
 
     rbs = dlo.getRigidBodies()
     for i in range(len(rbs)):
-        rbs[i].setName('dlo_' + str(i+1))
+        rbs[i].setName('dlo_' + str(i + 1))
 
     return sim
 
@@ -347,12 +341,11 @@ def compute_segments_pos(sim):
 
 
 def is_goal_reached(sim, segments_pos):
-
     # Get position of goal
     goal_pos = sim.getRigidBody("obstacle_goal").getPosition()
 
     # Check if goal obstacle in enclosed by dlo
-    is_within_polygon = point_inside_polygon(np.array(segments_pos)[:,0:2], goal_pos)
+    is_within_polygon = point_inside_polygon(np.array(segments_pos)[:, 0:2], goal_pos)
 
     # Check if cable has correct height
     is_correct_height = all_points_below_z(segments_pos, max_z=GOAL_MAX_Z)
@@ -360,7 +353,7 @@ def is_goal_reached(sim, segments_pos):
     # Check if grippers are close enough to each other
     position_g0 = to_numpy_array(sim.getRigidBody("gripper_0").getPosition())
     position_g1 = to_numpy_array(sim.getRigidBody("gripper_1").getPosition())
-    is_grippers_close = np.linalg.norm(position_g1-position_g0) < 0.02
+    is_grippers_close = np.linalg.norm(position_g1 - position_g0) < 0.02
 
     if is_within_polygon and is_correct_height and is_grippers_close:
         return True
@@ -368,11 +361,10 @@ def is_goal_reached(sim, segments_pos):
 
 
 def compute_dense_reward_and_check_goal(sim, segments_pos_0, segments_pos_1):
-
     goal_pos = sim.getRigidBody("obstacle_goal").getPosition()
 
-    pole_enclosed_0 = point_inside_polygon(np.array(segments_pos_0)[:,0:2], goal_pos)
-    pole_enclosed_1 = point_inside_polygon(np.array(segments_pos_1)[:,0:2], goal_pos)
+    pole_enclosed_0 = point_inside_polygon(np.array(segments_pos_0)[:, 0:2], goal_pos)
+    pole_enclosed_1 = point_inside_polygon(np.array(segments_pos_1)[:, 0:2], goal_pos)
     poles_enclosed_diff = pole_enclosed_0 - pole_enclosed_1
 
     # Check if final goal is reached
@@ -381,11 +373,11 @@ def compute_dense_reward_and_check_goal(sim, segments_pos_0, segments_pos_1):
     # Check if grippers are close enough to each other
     position_g0 = to_numpy_array(sim.getRigidBody("gripper_0").getPosition())
     position_g1 = to_numpy_array(sim.getRigidBody("gripper_1").getPosition())
-    is_grippers_close = np.linalg.norm(position_g1-position_g0) < 0.01
+    is_grippers_close = np.linalg.norm(position_g1 - position_g0) < 0.01
 
     final_goal_reached = pole_enclosed_0 and is_correct_height and is_grippers_close
 
-    return poles_enclosed_diff + 5*float(final_goal_reached), final_goal_reached
+    return poles_enclosed_diff + 5 * float(final_goal_reached), final_goal_reached
 
 
 def main(args):
@@ -395,9 +387,9 @@ def main(args):
     # Save simulation to file
     success = save_simulation(sim, FILE_NAME)
     if success:
-        logger.debug("Simulation saved!")
+        print("Simulation saved!")
     else:
-        logger.debug("Simulation not saved!")
+        print("Simulation not saved!")
 
     # Add app
     app = add_rendering(sim)
@@ -408,7 +400,7 @@ def main(args):
 
     # Randomize goal position
     goal_pos_new = np.random.uniform([-0.1, -0.1], [0.1, -0.025])
-    sim.getRigidBody("obstacle_goal").setPosition(agx.Vec3(goal_pos_new[0], goal_pos_new[1] ,0.005))
+    sim.getRigidBody("obstacle_goal").setPosition(agx.Vec3(goal_pos_new[0], goal_pos_new[1], 0.005))
 
     reward_type = "sparse"
     segment_pos_old = compute_segments_pos(sim)
@@ -428,7 +420,7 @@ def main(args):
 
         segment_pos_old = segment_pos
 
-        if reward !=0:
+        if reward != 0:
             print("reward: ", reward)
 
         if goal_reached:

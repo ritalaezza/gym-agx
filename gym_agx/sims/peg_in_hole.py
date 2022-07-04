@@ -11,21 +11,18 @@ import agxSDK
 import agxCable
 import agxIO
 import agxOSG
+import agxUtil
 import agxRender
 
 # Python modules
-import sys
-import logging
-import numpy as np
 import os
-
-import agxUtil
+import sys
+import numpy as np
 
 # Local modules
 from gym_agx.utils.agx_utils import create_body, save_simulation, to_numpy_array
 from gym_agx.utils.agx_classes import KeyboardMotorHandler
 
-logger = logging.getLogger('gym_agx.sims')
 
 FILE_NAME = "peg_in_hole"
 # Simulation parameters
@@ -44,23 +41,25 @@ YOUNG_MODULUS_STRETCH = 1e8  # Pascals
 ALUMINUM_POISSON_RATIO = 0.35  # no unit
 ALUMINUM_YOUNG_MODULUS = 69e9  # Pascals
 ALUMINUM_YIELD_POINT = 5e7  # Pascals
+
 # Meshes and textures
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 PACKAGE_DIR = os.path.split(FILE_DIR)[0]
 TEXTURE_GRIPPER_FILE = os.path.join(PACKAGE_DIR, "envs/assets/textures/texture_gripper.png")
 MESH_GRIPPER_FILE = os.path.join(PACKAGE_DIR, "envs/assets/meshes/mesh_gripper.obj")
 MESH_HOLLOW_CYLINDER_FILE = os.path.join(PACKAGE_DIR, "envs/assets/meshes/mesh_hollow_cylinder.obj")
+
 # Ground Parameters
 EYE = agx.Vec3(0, -1, 0.2)
 CENTER = agx.Vec3(0, 0, 0.2)
 UP = agx.Vec3(0., 0., 1.0)
 
 # Control parameters
-JOINT_RANGES = {"t_x": [-0.1,0.1],
-                "t_y": [-0.05,0.05],
-                "t_z": [-0.15,0.05],
-                "r_y": [(-1/4)*np.pi,(1/4)*np.pi]}
-FORCE_RANGES = {"t_x": [-5,5], "t_y": [-5,5], "t_z": [-5,5], "r_y": [-5,5]}
+JOINT_RANGES = {"t_x": [-0.1, 0.1],
+                "t_y": [-0.05, 0.05],
+                "t_z": [-0.15, 0.05],
+                "r_y": [(-1 / 4) * np.pi, (1 / 4) * np.pi]}
+FORCE_RANGES = {"t_x": [-5, 5], "t_y": [-5, 5], "t_z": [-5, 5], "r_y": [-5, 5]}
 
 
 def create_gripper_peg_in_hole(sim=None,
@@ -71,15 +70,15 @@ def create_gripper_peg_in_hole(sim=None,
                                geometry_scaling=agx.Matrix3x3(agx.Vec3(0.045)),
                                joint_ranges=None,
                                force_ranges=None):
-
     # Create gripper object
-    gripper_mesh = agxUtil.createTrimeshFromWavefrontOBJ(MESH_GRIPPER_FILE, agxCollide.Trimesh.NO_WARNINGS, geometry_scaling)
-    gripper_geom = agxCollide.Geometry(gripper_mesh,  agx.AffineMatrix4x4.rotate(agx.Vec3(0,1,0),agx.Vec3(0,0,1)))
+    gripper_mesh = agxUtil.createTrimeshFromWavefrontOBJ(MESH_GRIPPER_FILE, agxCollide.Trimesh.NO_WARNINGS,
+                                                         geometry_scaling)
+    gripper_geom = agxCollide.Geometry(gripper_mesh, agx.AffineMatrix4x4.rotate(agx.Vec3(0, 1, 0), agx.Vec3(0, 0, 1)))
     gripper_body = agx.RigidBody(name + "_body")
     gripper_body.add(gripper_geom)
     gripper_body.setMotionControl(agx.RigidBody.DYNAMICS)
     gripper_body.setPosition(position)
-    gripper_body.setCmRotation(agx.EulerAngles(0.0,np.pi,0.0))
+    gripper_body.setCmRotation(agx.EulerAngles(0.0, np.pi, 0.0))
     if material is not None:
         gripper_geom.setMaterial(material)
     sim.add(gripper_body)
@@ -128,7 +127,7 @@ def create_gripper_peg_in_hole(sim=None,
     joint_base_x.setName(name + "_joint_base_x")
     sim.add(joint_base_x)
 
-    joint_base_y = agx.Prismatic(agx.Vec3(0, 1, 0),base_x_body, base_y_body)
+    joint_base_y = agx.Prismatic(agx.Vec3(0, 1, 0), base_x_body, base_y_body)
     joint_base_y.setEnableComputeForces(True)
     joint_base_y.setEnable(True)
     joint_base_y.setName(name + "_joint_base_y")
@@ -143,7 +142,7 @@ def create_gripper_peg_in_hole(sim=None,
     # Hinge joint to rotate gripper around y axis
     hf = agx.HingeFrame()
     hf.setCenter(position)
-    hf.setAxis(agx.Vec3(0,1,0))
+    hf.setAxis(agx.Vec3(0, 1, 0))
     joint_rot_y = agx.Hinge(hf, base_z_body, gripper_body)
     joint_rot_y.setEnableComputeForces(True)
     joint_rot_y.setName(name + "_joint_rot_y")
@@ -153,22 +152,22 @@ def create_gripper_peg_in_hole(sim=None,
     if joint_ranges is not None:
         # x range
         joint_base_x_range_controller = joint_base_x.getRange1D()
-        joint_base_x_range_controller.setRange(joint_ranges["t_x"][0],joint_ranges["t_x"][1])
+        joint_base_x_range_controller.setRange(joint_ranges["t_x"][0], joint_ranges["t_x"][1])
         joint_base_x_range_controller.setEnable(True)
 
         # y range
         joint_base_y_range_controller = joint_base_y.getRange1D()
-        joint_base_y_range_controller.setRange(joint_ranges["t_y"][0],joint_ranges["t_y"][1])
+        joint_base_y_range_controller.setRange(joint_ranges["t_y"][0], joint_ranges["t_y"][1])
         joint_base_y_range_controller.setEnable(True)
 
         # z range
         joint_base_z_range_controller = joint_base_z.getRange1D()
-        joint_base_z_range_controller.setRange(joint_ranges["t_z"][0],joint_ranges["t_z"][1])
+        joint_base_z_range_controller.setRange(joint_ranges["t_z"][0], joint_ranges["t_z"][1])
         joint_base_z_range_controller.setEnable(True)
 
         # rot y
         joint_rot_y_range_controller = joint_rot_y.getRange1D()
-        joint_rot_y_range_controller.setRange(joint_ranges["r_y"][0],joint_ranges["r_y"][1])
+        joint_rot_y_range_controller.setRange(joint_ranges["r_y"][0], joint_ranges["r_y"][1])
         joint_rot_y_range_controller.setEnable(True)
 
     # Enable motors
@@ -221,12 +220,12 @@ def add_rendering(sim):
     for rb in rbs:
         node = agxOSG.createVisual(rb, root)
         if rb.getName() == "hollow_cylinder":
-            agxOSG.setDiffuseColor(node,agxRender.Color_SteelBlue())
+            agxOSG.setDiffuseColor(node, agxRender.Color_SteelBlue())
             agxOSG.setShininess(node, 15)
         elif rb.getName() == "gripper_body":
             agxOSG.setDiffuseColor(node, agxRender.Color(1.0, 1.0, 1.0, 1.0))
             agxOSG.setTexture(node, gripper_texture, False, agxOSG.DIFFUSE_TEXTURE)
-            agxOSG.setShininess(node,2)
+            agxOSG.setShininess(node, 2)
         elif "dlo" in rb.getName():  # Cable segments
             agxOSG.setDiffuseColor(node, agxRender.Color(0.0, 1.0, 0.0, 1.0))
         else:
@@ -236,7 +235,7 @@ def add_rendering(sim):
     # Set rendering options
     scene_decorator = app.getSceneDecorator()
     scene_decorator.setEnableLogo(False)
-    scene_decorator.setBackgroundColor(agxRender.Color(1.0, 1.0,1.0, 1.0))
+    scene_decorator.setBackgroundColor(agxRender.Color(1.0, 1.0, 1.0, 1.0))
 
     return app
 
@@ -249,20 +248,20 @@ def build_simulation():
     # too by creating an agx.PointGravityField for example).
     # AGX uses a right-hand coordinate system (That is Z defines UP. X is right, and Y is into the screen)
     if not GRAVITY:
-        logger.info("Gravity off.")
+        print("Gravity off.")
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 
     # Get current delta-t (timestep) that is used in the simulation?
     dt = sim.getTimeStep()
-    logger.debug("default dt = {}".format(dt))
+    print("default dt = {}".format(dt))
 
     # Change the timestep
     sim.setTimeStep(TIMESTEP)
 
     # Confirm timestep changed
     dt = sim.getTimeStep()
-    logger.debug("new dt = {}".format(dt))
+    print("new dt = {}".format(dt))
 
     # Define materials
     material_hard = agx.Material("Aluminum")
@@ -280,10 +279,10 @@ def build_simulation():
                                force_ranges=FORCE_RANGES
                                )
 
-    # Create hollow cylinde with hole
+    # Create hollow cylinder with hole
     scaling_cylinder = agx.Matrix3x3(agx.Vec3(0.0275))
-    hullMesh = agxUtil.createTrimeshFromWavefrontOBJ(MESH_HOLLOW_CYLINDER_FILE,0, scaling_cylinder)
-    hullGeom = agxCollide.Geometry(hullMesh,  agx.AffineMatrix4x4.rotate(agx.Vec3(0,1,0),agx.Vec3(0,0,1)))
+    hullMesh = agxUtil.createTrimeshFromWavefrontOBJ(MESH_HOLLOW_CYLINDER_FILE, 0, scaling_cylinder)
+    hullGeom = agxCollide.Geometry(hullMesh, agx.AffineMatrix4x4.rotate(agx.Vec3(0, 1, 0), agx.Vec3(0, 0, 1)))
     hollow_cylinder = agx.RigidBody("hollow_cylinder")
     hollow_cylinder.add(hullGeom)
     hollow_cylinder.setMotionControl(agx.RigidBody.STATIC)
@@ -303,9 +302,9 @@ def build_simulation():
 
     # Add connection between cable and gripper
     tf_0 = agx.AffineMatrix4x4()
-    tf_0.setTranslate(0.0 ,0, 0.075)
-    peg.add(agxCable.BodyFixedNode(sim.getRigidBody("gripper_body"),tf_0))
-    peg.add(agxCable.FreeNode(0.0,0.0,0.1))
+    tf_0.setTranslate(0.0, 0, 0.075)
+    peg.add(agxCable.BodyFixedNode(sim.getRigidBody("gripper_body"), tf_0))
+    peg.add(agxCable.FreeNode(0.0, 0.0, 0.1))
 
     sim.add(peg)
 
@@ -316,7 +315,6 @@ def build_simulation():
             seg = segment_iterator.getRigidBody()
             seg.setAngularVelocityDamping(1e3)
             segment_iterator.inc()
-
 
     # Try to initialize rope
     report = peg.tryInitialize()
@@ -355,7 +353,7 @@ def build_simulation():
 
     rbs = peg.getRigidBodies()
     for i in range(len(rbs)):
-        rbs[i].setName('dlo_' + str(i+1))
+        rbs[i].setName('dlo_' + str(i + 1))
 
     return sim
 
@@ -389,11 +387,11 @@ def is_goal_reached(sim):
             p = segment_iterator.getGeometry().getPosition()
             segment_iterator.inc()
 
-            if i >= n_segments/2:
-                # Return False if segment is ouside bounds
-                if not (cylinder_pos[0]-0.015 <= p[0] <= cylinder_pos[0]+0.015 and
-                        cylinder_pos[1]-0.015 <= p[1] <= cylinder_pos[1]+0.015 and
-                        -0.1 <= p[2] <=0.07):
+            if i >= n_segments / 2:
+                # Return False if segment is outside bounds
+                if not (cylinder_pos[0] - 0.015 <= p[0] <= cylinder_pos[0] + 0.015 and
+                        cylinder_pos[1] - 0.015 <= p[1] <= cylinder_pos[1] + 0.015 and
+                        -0.1 <= p[2] <= 0.07):
                     return False
 
     return True
@@ -408,11 +406,11 @@ def determine_n_segments_inserted(segment_pos, cylinder_pos):
 
     n_inserted = 0
     for p in segment_pos:
-        # Return False if segment is ouside bounds
-        if cylinder_pos[0]-0.015 <= p[0] <= cylinder_pos[0]+0.015 and \
-            cylinder_pos[1]-0.015 <= p[1] <= cylinder_pos[1]+ 0.015 and \
-                -0.1 <= p[2] <=0.07:
-            n_inserted +=1
+        # Return False if segment is outside bounds
+        if cylinder_pos[0] - 0.015 <= p[0] <= cylinder_pos[0] + 0.015 and \
+                cylinder_pos[1] - 0.015 <= p[1] <= cylinder_pos[1] + 0.015 and \
+                -0.1 <= p[2] <= 0.07:
+            n_inserted += 1
     return n_inserted
 
 
@@ -426,9 +424,9 @@ def compute_dense_reward_and_check_goal(sim, segment_pos_0, segment_pos_1):
     n_segments = cable.getNumSegments()
 
     # Check if final goal is reached
-    final_goal_reached = n_segs_inserted_0 >= n_segments/2
+    final_goal_reached = n_segs_inserted_0 >= n_segments / 2
 
-    return np.sum(n_segs_inserted_diff) + 5*float(final_goal_reached), final_goal_reached
+    return np.sum(n_segs_inserted_diff) + 5 * float(final_goal_reached), final_goal_reached
 
 
 def main(args):
@@ -438,9 +436,9 @@ def main(args):
     # Save simulation to file
     success = save_simulation(sim, FILE_NAME)
     if success:
-        logger.debug("Simulation saved!")
+        print("Simulation saved!")
     else:
-        logger.debug("Simulation not saved!")
+        print("Simulation not saved!")
 
     # Add app
     app = add_rendering(sim)
@@ -474,7 +472,7 @@ def main(args):
 
         segment_pos_old = segment_pos
 
-        if reward !=0:
+        if reward != 0:
             print("reward: ", reward)
 
         if goal_reached:

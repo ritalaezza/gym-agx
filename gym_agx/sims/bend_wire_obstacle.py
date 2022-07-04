@@ -14,7 +14,6 @@ import agxIO
 import agxOSG
 
 # Python modules
-import logging
 import numpy as np
 import math
 import sys
@@ -25,7 +24,6 @@ from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, s
     add_goal_assembly_from_file
 from gym_agx.utils.utils import sample_sphere, polynomial_trajectory
 
-logger = logging.getLogger('gym_agx.sims')
 
 FILE_NAME = 'bend_wire_obstacle'
 # Simulation parameters
@@ -123,25 +121,25 @@ def sample_random_goal(sim, app=None, dof_vector=np.ones(3)):
     scales_right = np.array([CYLINDER_RADIUS, 0])
     goal_point_right, scales_right[1] = sample_sphere(center,
                                                       [2 * CYLINDER_RADIUS, LENGTH / 2],
-                                                      [np.pi / 2,  np.pi],
+                                                      [np.pi / 2, np.pi],
                                                       [math.pi - azimuth_deviation, math.pi + azimuth_deviation],
                                                       [-math.pi, 0, 0])
     goal_point_right[0] = min(goal_point_right[0], CYLINDER_RADIUS)
     waypoints_right.append(goal_point_right)
     norm_scales_right = scales_right / sum(scales_right)
-    time_scales_right = norm_scales_right*n_seconds
+    time_scales_right = norm_scales_right * n_seconds
 
     scales_left = np.array([CYLINDER_RADIUS, 0])
     waypoints_left = [to_numpy_array(left_gripper.getPosition()), np.array([-LENGTH / 2, 0, -CYLINDER_RADIUS])]
     goal_point_left, scales_left[1] = sample_sphere(center,
                                                     [2 * CYLINDER_RADIUS, LENGTH / 2],
-                                                    [np.pi / 2,  np.pi],
+                                                    [np.pi / 2, np.pi],
                                                     [math.pi - azimuth_deviation, math.pi + azimuth_deviation]
                                                     )
     goal_point_left[0] = max(goal_point_left[0], -CYLINDER_RADIUS)
     waypoints_left.append(goal_point_left)
     norm_scales_left = scales_left / sum(scales_left)
-    time_scales_left = norm_scales_left*n_seconds
+    time_scales_left = norm_scales_left * n_seconds
 
     t = sim.getTimeStamp()
     start_time = t
@@ -150,13 +148,13 @@ def sample_random_goal(sim, app=None, dof_vector=np.ones(3)):
             app.executeOneStepWithGraphics()
 
         right_velocity = polynomial_trajectory(t, start_time, waypoints_right, time_scales_right, degree=3)
-        right_velocity = right_velocity*dof_vector
+        right_velocity = right_velocity * dof_vector
         right_motor_x.setSpeed(right_velocity[0])
         right_motor_y.setSpeed(right_velocity[1])
         right_motor_z.setSpeed(right_velocity[2])
 
         left_velocity = polynomial_trajectory(t, start_time, waypoints_left, time_scales_left, degree=3)
-        left_velocity = left_velocity*dof_vector
+        left_velocity = left_velocity * dof_vector
         left_motor_x.setSpeed(left_velocity[0])
         left_motor_y.setSpeed(left_velocity[1])
         left_motor_z.setSpeed(left_velocity[2])
@@ -191,7 +189,7 @@ def sample_fixed_goal(sim, app=None):
     waypoints_left = [to_numpy_array(left_gripper.getPosition()), np.array([-CYLINDER_RADIUS, 0, - LENGTH / 2])]
 
     n_seconds = 20
-    time_scale = np.array([n_seconds-1])
+    time_scale = np.array([n_seconds - 1])
 
     t = sim.getTimeStamp()
     start_time = t
@@ -232,20 +230,20 @@ def build_simulation(goal=False):
     # too by creating an agx.PointGravityField for example).
     # AGX uses a right-hand coordinate system (That is Z defines UP. X is right, and Y is into the screen)
     if not GRAVITY:
-        logger.info("Gravity off.")
+        print("Gravity off.")
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 
     # Get current delta-t (timestep) that is used in the simulation?
     dt = sim.getTimeStep()
-    logger.debug("default dt = {}".format(dt))
+    print("default dt = {}".format(dt))
 
     # Change the timestep
     sim.setTimeStep(TIMESTEP)
 
     # Confirm timestep changed
     dt = sim.getTimeStep()
-    logger.debug("new dt = {}".format(dt))
+    print("new dt = {}".format(dt))
 
     # Create a new empty Assembly
     scene = agxSDK.Assembly()
@@ -340,9 +338,9 @@ def build_simulation(goal=False):
     # Try to initialize cable
     report = cable.tryInitialize()
     if report.successful():
-        logger.debug("Successful cable initialization.")
+        print("Successful cable initialization.")
     else:
-        logger.error(report.getActualError())
+        print(report.getActualError())
 
     # Add cable to simulation
     sim.add(cable)
@@ -424,7 +422,7 @@ def main(args):
     # Save start simulation to file
     success = save_simulation(sim, FILE_NAME)
     if not success:
-        logger.debug("Simulation not saved!")
+        print("Simulation not saved!")
 
     # 2) Build goal simulation object
     goal_sim = build_simulation(goal=True)
@@ -432,7 +430,7 @@ def main(args):
     # Save simulation to file
     success = save_simulation(goal_sim, FILE_NAME + "_goal_random")
     if not success:
-        logger.debug("Goal simulation not saved!")
+        print("Goal simulation not saved!")
 
     # Render simulation
     app = add_rendering(goal_sim)
@@ -441,7 +439,7 @@ def main(args):
     app.initSimulation(goal_sim, True)  # This changes timestep and Gravity!
     goal_sim.setTimeStep(TIMESTEP)
     if not GRAVITY:
-        logger.info("Gravity off.")
+        print("Gravity off.")
         g = agx.Vec3(0, 0, 0)  # remove gravity
         goal_sim.setUniformGravity(g)
 
@@ -458,12 +456,12 @@ def main(args):
     # Save fixed goal simulation to file
     success = save_simulation(goal_sim, FILE_NAME + "_goal")
     if not success:
-        logger.debug("Fixed goal simulation not saved!")
+        print("Fixed goal simulation not saved!")
 
     # 4) Test random goal generation
     file_directory = os.path.dirname(os.path.abspath(__file__))
     package_directory = os.path.split(file_directory)[0]
-    random_goal_file = os.path.join(package_directory, 'envs/assets',  FILE_NAME + "_goal_random.agx")
+    random_goal_file = os.path.join(package_directory, 'envs/assets', FILE_NAME + "_goal_random.agx")
     add_goal_assembly_from_file(sim, random_goal_file)
 
     # Render simulation
@@ -473,7 +471,7 @@ def main(args):
     app.initSimulation(sim, True)  # This changes timestep and Gravity!
     sim.setTimeStep(TIMESTEP)
     if not GRAVITY:
-        logger.info("Gravity off.")
+        print("Gravity off.")
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 

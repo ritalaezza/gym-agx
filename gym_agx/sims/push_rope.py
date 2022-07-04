@@ -11,6 +11,7 @@ import agxSDK
 import agxCable
 import agxIO
 import agxOSG
+import agxUtil
 import agxRender
 
 # Python modules
@@ -18,15 +19,12 @@ import os
 import sys
 import math
 import random
-import logging
 
 # Local modules
-import agxUtil
 from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, \
     add_goal_assembly_from_file
 from gym_agx.utils.agx_classes import KeyboardMotorHandler
 
-logger = logging.getLogger('gym_agx.sims')
 
 FILE_NAME = "push_rope"
 
@@ -153,9 +151,9 @@ def sample_random_goal(sim, render=False):
     rope.add(agxCable.FreeNode(new_node_x, new_node_y, rope_z))
 
     # compute length of routing sections
-    section_length = LENGTH / (NODE_AMOUNT-1)
+    section_length = LENGTH / (NODE_AMOUNT - 1)
 
-    for i in range(NODE_AMOUNT-1):
+    for i in range(NODE_AMOUNT - 1):
         # modify previous angle and calculate new node coordinates
         rope_angle += random.gauss(0, math.pi / 4)
 
@@ -186,7 +184,7 @@ def sample_random_goal(sim, render=False):
     # Try to initialize rope
     report = rope.tryInitialize()
     if report.successful():
-        logger.info("Successful rope initialization.")
+        print("Successful rope initialization.")
     else:
         print(report.getActualError())
 
@@ -237,7 +235,7 @@ def sample_random_goal(sim, render=False):
         app.initSimulation(sim, True)  # This changes timestep and Gravity!
         sim.setTimeStep(TIMESTEP)
         if not GRAVITY:
-            logger.info("Gravity off.")
+            print("Gravity off.")
             g = agx.Vec3(0, 0, 0)  # remove gravity
             sim.setUniformGravity(g)
 
@@ -303,20 +301,20 @@ def build_simulation(goal=False, rope=True):
     # too by creating an agx.PointGravityField for example).
     # AGX uses a right-hand coordinate system (That is Z defines UP. X is right, and Y is into the screen)
     if not GRAVITY:
-        logger.info("Gravity off.")
+        print("Gravity off.")
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 
     # Get current delta-t (timestep) that is used in the simulation?
     dt = sim.getTimeStep()
-    logger.debug("default dt = {}".format(dt))
+    print("default dt = {}".format(dt))
 
     # Change the timestep
     sim.setTimeStep(TIMESTEP)
 
     # Confirm timestep changed
     dt = sim.getTimeStep()
-    logger.debug("new dt = {}".format(dt))
+    print("new dt = {}".format(dt))
 
     # Create a new empty Assembly
     scene = agxSDK.Assembly()
@@ -401,7 +399,7 @@ def build_simulation(goal=False, rope=True):
 
         rbs = rope.getRigidBodies()
         for i in range(len(rbs)):
-            rbs[i].setName('dlo_' + str(i+1) + goal_string)
+            rbs[i].setName('dlo_' + str(i + 1) + goal_string)
 
         # Set rope material
         material_rope = rope.getMaterial()
@@ -458,7 +456,7 @@ def main(args):
     # Save start simulation to file
     success = save_simulation(sim, FILE_NAME)
     if not success:
-        logger.debug("Simulation not saved!")
+        print("Simulation not saved!")
 
     # 2) Build goal simulation object
     goal_sim = build_simulation(goal=True)
@@ -470,7 +468,7 @@ def main(args):
     app.initSimulation(goal_sim, True)  # This changes timestep and Gravity!
     goal_sim.setTimeStep(TIMESTEP)
     if not GRAVITY:
-        logger.info("Gravity off.")
+        print("Gravity off.")
         g = agx.Vec3(0, 0, 0)  # remove gravity
         goal_sim.setUniformGravity(g)
 
@@ -487,18 +485,18 @@ def main(args):
     # Save fixed goal simulation to file
     success = save_simulation(goal_sim, FILE_NAME + "_goal")
     if not success:
-        logger.debug("Fixed goal simulation not saved!")
+        print("Fixed goal simulation not saved!")
 
     # 4) Build random goal simulation object (without DLO)
     random_goal_sim = build_simulation(goal=True, rope=False)
 
     success = save_simulation(random_goal_sim, FILE_NAME + "_goal_random", aagx=True)
     if not success:
-        logger.debug("Goal simulation not saved!")
+        print("Goal simulation not saved!")
 
     file_directory = os.path.dirname(os.path.abspath(__file__))
     package_directory = os.path.split(file_directory)[0]
-    random_goal_file = os.path.join(package_directory, 'envs/assets',  FILE_NAME + "_goal_random.agx")
+    random_goal_file = os.path.join(package_directory, 'envs/assets', FILE_NAME + "_goal_random.agx")
     add_goal_assembly_from_file(sim, random_goal_file)
 
     # Test random goal generation

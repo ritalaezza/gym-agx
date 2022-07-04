@@ -14,7 +14,6 @@ import agxIO
 import agxOSG
 
 # Python modules
-import logging
 import numpy as np
 import math
 import sys
@@ -25,9 +24,13 @@ from gym_agx.utils.agx_utils import create_body, save_simulation, to_numpy_array
     add_goal_assembly_from_file
 from gym_agx.utils.utils import polynomial_trajectory, sample_sphere
 
-logger = logging.getLogger('gym_agx.sims')
 
-FILE_NAME = 'bend_wire'
+PURELY_ELASTIC = True
+
+suffix = ""
+if PURELY_ELASTIC:
+    suffix = "_elastic"
+FILE_NAME = 'bend_wire' + suffix
 # Simulation Parameters
 N_SUBSTEPS = 2
 TIMESTEP = 1 / 100  # seconds (eq. 100 Hz)
@@ -38,9 +41,16 @@ RESOLUTION = 1000  # segments per meter
 GRAVITY = True
 
 # Aluminum Parameters
+MATERIAL_STRING = "Aluminum"
 POISSON_RATIO = 0.35  # no unit
 YOUNG_MODULUS = 69e9  # Pascals
 YIELD_POINT = 5e7  # Pascals
+
+if PURELY_ELASTIC:
+    # Rubber Band Parameters
+    MATERIAL_STRING = "Rubber"
+    POISSON_RATIO = 0.4999  # no unit
+    YOUNG_MODULUS = 0.1e9  # Pascals
 
 # Rendering Parameters
 GROUND_WIDTH = 0.0001  # meters
@@ -206,20 +216,20 @@ def build_simulation(goal=False):
     # too by creating an agx.PointGravityField for example).
     # AGX uses a right-hand coordinate system (That is Z defines UP. X is right, and Y is into the screen)
     if not GRAVITY:
-        logger.info("Gravity off.")
+        print("Gravity off.")
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 
     # Get current delta-t (timestep) that is used in the simulation?
     dt = sim.getTimeStep()
-    logger.debug("default dt = {}".format(dt))
+    print("default dt = {}".format(dt))
 
     # Change the timestep
     sim.setTimeStep(TIMESTEP)
 
     # Confirm timestep changed
     dt = sim.getTimeStep()
-    logger.debug("new dt = {}".format(dt))
+    print("new dt = {}".format(dt))
 
     # Create a new empty Assembly
     scene = agxSDK.Assembly()
@@ -256,7 +266,7 @@ def build_simulation(goal=False):
     gripper_right_body = scene.getRigidBody("gripper_right" + goal_string)
     gripper_right_body.getGeometry("gripper_right" + goal_string).setEnableCollisions(False)
 
-    logger.info("Mass of grippers: {}".format(scene.getRigidBody("gripper_right" + goal_string).calculateMass()))
+    print("Mass of grippers: {}".format(scene.getRigidBody("gripper_right" + goal_string).calculateMass()))
 
     # Create Frames for each gripper:
     # Cables are attached passing through the attachment point along the Z axis of the body's coordinate frame.
@@ -277,20 +287,21 @@ def build_simulation(goal=False):
     # Try to initialize cable
     report = cable.tryInitialize()
     if report.successful():
-        logger.debug("Successful cable initialization.")
+        print("Successful cable initialization.")
     else:
-        logger.error(report.getActualError())
+        print(report.getActualError())
 
     actual_length = report.getLength()
-    logger.info("Actual length: " + str(actual_length))
+    print("Actual length: " + str(actual_length))
 
-    # Add cable plasticity
-    plasticity = agxCable.CablePlasticity()
-    plasticity.setYieldPoint(YIELD_POINT, agxCable.BEND)  # set torque required for permanent deformation
-    cable.addComponent(plasticity)  # NOTE: Stretch direction is always elastic
+    if not PURELY_ELASTIC:
+        # Add cable plasticity
+        plasticity = agxCable.CablePlasticity()
+        plasticity.setYieldPoint(YIELD_POINT, agxCable.BEND)  # set torque required for permanent deformation
+        cable.addComponent(plasticity)  # NOTE: Stretch direction is always elastic
 
     # Define material
-    material = agx.Material("Aluminum")
+    material = agx.Material(MATERIAL_STRING)
     bulk_material = material.getBulkMaterial()
     bulk_material.setPoissonsRatio(POISSON_RATIO)
     bulk_material.setYoungsModulus(YOUNG_MODULUS)
@@ -369,7 +380,7 @@ def main(args):
     # Save start simulation to file
     success = save_simulation(sim, FILE_NAME)
     if not success:
-        logger.debug("Simulation not saved!")
+        print("Simulation not saved!")
 
     # 2) Build goal simulation object
     goal_sim = build_simulation(goal=True)
@@ -377,7 +388,7 @@ def main(args):
     # Save simulation to file
     success = save_simulation(goal_sim, FILE_NAME + "_goal_random")
     if not success:
-        logger.debug("Goal simulation not saved!")
+        print("Goal simulation not saved!")
 
     # Render simulation
     app = add_rendering(goal_sim)
@@ -386,7 +397,7 @@ def main(args):
     app.initSimulation(goal_sim, True)  # This changes timestep and Gravity!
     goal_sim.setTimeStep(TIMESTEP)
     if not GRAVITY:
-        logger.info("Gravity off.")
+        print("Gravity off.")
         g = agx.Vec3(0, 0, 0)  # remove gravity
         goal_sim.setUniformGravity(g)
 
@@ -403,7 +414,7 @@ def main(args):
     # Save fixed goal simulation to file
     success = save_simulation(goal_sim, FILE_NAME + "_goal")
     if not success:
-        logger.debug("Fixed goal simulation not saved!")
+        print("Fixed goal simulation not saved!")
 
     # 4) Test random goal generation
     file_directory = os.path.dirname(os.path.abspath(__file__))
@@ -418,7 +429,7 @@ def main(args):
     app.initSimulation(sim, True)  # This changes timestep and Gravity!
     sim.setTimeStep(TIMESTEP)
     if not GRAVITY:
-        logger.info("Gravity off.")
+        print("Gravity off.")
         g = agx.Vec3(0, 0, 0)  # remove gravity
         sim.setUniformGravity(g)
 

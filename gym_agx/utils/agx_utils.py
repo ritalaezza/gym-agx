@@ -26,11 +26,11 @@ def save_simulation(sim, file_name, aagx=False):
     if aagx:
         markup_file = os.path.join(package_directory, 'envs/assets', file_name + ".aagx")
         if not agxIO.writeFile(markup_file, sim):
-            print("Unable to save simulation to markup file!")
+            logger.error("Unable to save simulation to markup file!")
             return False
     binary_file = os.path.join(package_directory, 'envs/assets', file_name + ".agx")
     if not agxIO.writeFile(binary_file, sim):
-        print("Unable to save simulation to binary file!")
+        logger.error("Unable to save simulation to binary file!")
         return False
     return True
 
@@ -74,27 +74,6 @@ def make_goal_simulation(sim, remove_assemblies=[]):
         name = constraint.getName()
         if name != '':
             constraint.setName(name + '_goal')
-
-
-def save_goal_simulation(sim, file_name, remove_assemblies=[]):
-    """Save AGX simulation object to file. THIS FUNCTION WILL BE DEPRECATED. CLEAN UP IS ENV DEPENDENT
-    :param agxSDK.Simulation sim: AGX simulation object
-    :param str file_name: name of the file
-    :param list remove_assemblies: string list of assemblies to remove
-    :return: Boolean for success/failure
-    """
-    make_goal_simulation(sim, remove_assemblies)
-    file_directory = os.path.dirname(os.path.abspath(__file__))
-    package_directory = os.path.split(file_directory)[0]
-    markup_file = os.path.join(package_directory, 'envs/assets', file_name + "_goal.aagx")
-    if not agxIO.writeFile(markup_file, sim):
-        print("Unable to save simulation to markup file!")
-        return False
-    binary_file = os.path.join(package_directory, 'envs/assets', file_name + "_goal.agx")
-    if not agxIO.writeFile(binary_file, sim):
-        print("Unable to save simulation to binary file!")
-        return False
-    return True
 
 
 def to_numpy_array(agx_list):
