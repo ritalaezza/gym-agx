@@ -8,7 +8,7 @@ TMP_DIR = tempfile.gettempdir()
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))  # Project Root
 LOG_DIR = os.path.join(ROOT_DIR, 'logging.conf')
 if 'TMPDIR' not in os.environ:
-    os.environ['TMPDIR'] = TMP_DIR
+    os.environ['TMPDIR'] = TMP_DIR  # To avoid cluttering your tmp/ directory set the TMPDIR environment variable
 
 if os.path.exists(LOG_DIR):
     try:

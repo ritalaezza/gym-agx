@@ -45,7 +45,7 @@ class PushRopeEnv(dlo_env.DloEnv):
     """Subclass which inherits from DLO environment."""
 
     def __init__(self, n_substeps, observation_config=None, pushers=None, reward_type=None, reward_config=None,
-                 scene_path=None, goal_scene_path=None, **kwargs):
+                 scene_path=None, goal_scene_path=None, random_goal_scene_path=None, **kwargs):
         """Initializes PushRope environment
         :param int n_substeps: number of simulation steps between each action step
         :param ObservationConfig: types of observations to be used
@@ -54,6 +54,7 @@ class PushRopeEnv(dlo_env.DloEnv):
         :param RewardConfig reward_config: adds possibility to completely override reward definition
         :param str scene_path: possibility to overwrite default scene file
         :param str goal_scene_path: possibility to overwrite default goal scene file
+        :param str random_goal_scene_path: possibility to overwrite default random goal scene file
         """
         camera_distance = 0.21  # meters
         camera_config = CameraConfig(
@@ -103,6 +104,8 @@ class PushRopeEnv(dlo_env.DloEnv):
             scene_path = SCENE_PATH
         if not goal_scene_path:
             goal_scene_path = GOAL_SCENE_PATH
+        if not random_goal_scene_path:
+            random_goal_scene_path = RANDOM_GOAL_SCENE_PATH
 
         args = kwargs['agxViewer'] if 'agxViewer' in kwargs else sys.argv
         show_goal = kwargs['show_goal'] if 'show_goal' in kwargs else False
@@ -112,7 +115,7 @@ class PushRopeEnv(dlo_env.DloEnv):
 
         # Overwrite goal_scene_path with starting point for random goals
         if randomized_goal:
-            goal_scene_path = RANDOM_GOAL_SCENE_PATH
+            goal_scene_path = random_goal_scene_path
 
         if not os.path.exists(SCENE_PATH):
             raise IOError("File %s does not exist" % SCENE_PATH)
