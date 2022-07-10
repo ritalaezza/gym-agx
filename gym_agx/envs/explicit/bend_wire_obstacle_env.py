@@ -87,7 +87,7 @@ class BendWireObstacleEnv(dlo_env.DloEnv):
                 controllable=True,
                 observable=True,
                 max_velocity=10 / 100,  # m/s
-                max_acceleration=10 / 100,  # m/s^2
+                max_acceleration=1,  # m/s^2
             )
             gripper_right.add_constraint(name='gripper_right_joint_base_x',
                                          end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
@@ -115,7 +115,7 @@ class BendWireObstacleEnv(dlo_env.DloEnv):
                 controllable=True,
                 observable=True,
                 max_velocity=10 / 100,  # m/s
-                max_acceleration=10 / 100,  # m/s^2
+                max_acceleration=1,  # m/s^2
             )
             gripper_left.add_constraint(name='gripper_left_joint_base_x',
                                         end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,

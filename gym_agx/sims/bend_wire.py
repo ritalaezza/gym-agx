@@ -24,8 +24,7 @@ from gym_agx.utils.agx_utils import create_body, save_simulation, to_numpy_array
     add_goal_assembly_from_file
 from gym_agx.utils.utils import polynomial_trajectory, sample_sphere
 
-
-PURELY_ELASTIC = True
+PURELY_ELASTIC = False
 
 suffix = ""
 if PURELY_ELASTIC:
@@ -117,7 +116,7 @@ def sample_random_goal(sim, app=None, dof_vector=np.ones(3)):
 
     settling_time = 1
     n_waypoints = 2
-    n_seconds = 10*n_waypoints + settling_time
+    n_seconds = 10 * n_waypoints + settling_time
     center = np.array([2 * (2 * RADIUS + SIZE_GRIPPER), 0, 0])
     waypoints = [to_numpy_array(right_gripper.getPosition())]
     scales = np.zeros(n_waypoints)
@@ -132,7 +131,7 @@ def sample_random_goal(sim, app=None, dof_vector=np.ones(3)):
         scales[i] = length
 
     norm_scales = scales / sum(scales)
-    time_scales = norm_scales*n_seconds
+    time_scales = norm_scales * n_seconds
 
     t = sim.getTimeStamp()
     start_time = t
@@ -140,7 +139,7 @@ def sample_random_goal(sim, app=None, dof_vector=np.ones(3)):
         if app:
             app.executeOneStepWithGraphics()
         velocity = polynomial_trajectory(t, start_time, waypoints, time_scales, degree=3)
-        velocity = velocity*dof_vector
+        velocity = velocity * dof_vector
         right_motor_x.setSpeed(velocity[0])
         right_motor_y.setSpeed(velocity[1])
         right_motor_z.setSpeed(velocity[2])
@@ -192,10 +191,13 @@ def sample_fixed_goal(sim, app=None):
 
     # Trajectory limits:
     max_velocity = np.max(np.max(abs(velocities)))
-    accelerations = np.gradient(velocities, axis=0)
+    accelerations = np.gradient(velocities, (TIMESTEP * N_SUBSTEPS), axis=0)
     max_acceleration = np.max(np.max(abs(accelerations)))
     print('Max velocity: ' + str(max_velocity))
     print('Max acceleration: ' + str(max_acceleration))
+
+    # Save trajectory
+    np.save('bend_wire_traj.npy', velocities)
 
 
 def build_simulation(goal=False):
@@ -419,7 +421,7 @@ def main(args):
     # 4) Test random goal generation
     file_directory = os.path.dirname(os.path.abspath(__file__))
     package_directory = os.path.split(file_directory)[0]
-    random_goal_file = os.path.join(package_directory, 'envs/assets',  FILE_NAME + "_goal_random.agx")
+    random_goal_file = os.path.join(package_directory, 'envs/assets', FILE_NAME + "_goal_random.agx")
     add_goal_assembly_from_file(sim, random_goal_file)
 
     # Render simulation

@@ -4,6 +4,8 @@ This module creates the simulation files which will be used in PushRope environm
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).
 """
 # AGX Dynamics imports
+import numpy as np
+
 import agx
 import agxPython
 import agxCollide
@@ -22,9 +24,8 @@ import random
 
 # Local modules
 from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, \
-    add_goal_assembly_from_file
+    add_goal_assembly_from_file, to_numpy_array
 from gym_agx.utils.agx_classes import KeyboardMotorHandler
-
 
 FILE_NAME = "push_rope"
 
@@ -269,17 +270,31 @@ def sample_fixed_goal(sim, app=None):
                      65366: (motor_z, -0.05)}
     sim.add(KeyboardMotorHandler(key_motor_map))
 
+    pusher = sim.getRigidBody("pusher_goal")
+
     n_seconds = 30
-    t = sim.getTimeStamp()
-    while t < n_seconds:
+    n_time_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
+    velocities = np.zeros([n_time_steps, 3])
+    for i in range(n_time_steps):
         if app:
             app.executeOneStepWithGraphics()
+
+        # velocities[i, :] = to_numpy_array(pusher.getVelocity())
+        velocities[i, 0] = motor_x.getSpeed()
+        velocities[i, 1] = motor_y.getSpeed()
+        velocities[i, 2] = motor_z.getSpeed()
 
         t = sim.getTimeStamp()
         t_0 = t
         while t < t_0 + TIMESTEP * N_SUBSTEPS:
             sim.stepForward()
             t = sim.getTimeStamp()
+
+    # reset timestamp, after simulation
+    sim.setTimeStamp(0)
+
+    # Save trajectory
+    np.save('push_rope_traj.npy', velocities)
 
 
 def build_simulation(goal=False, rope=True):
@@ -490,7 +505,7 @@ def main(args):
     # 4) Build random goal simulation object (without DLO)
     random_goal_sim = build_simulation(goal=True, rope=False)
 
-    success = save_simulation(random_goal_sim, FILE_NAME + "_goal_random", aagx=True)
+    success = save_simulation(random_goal_sim, FILE_NAME + "_goal_random")
     if not success:
         print("Goal simulation not saved!")
 

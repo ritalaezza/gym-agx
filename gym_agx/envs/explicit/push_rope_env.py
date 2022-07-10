@@ -70,8 +70,8 @@ class PushRopeEnv(dlo_env.DloEnv):
                 name='pusher',
                 controllable=True,
                 observable=True,
-                max_velocity=5 / 100,  # m/s
-                max_acceleration=10 / 100,  # m/s^2
+                max_velocity=5 / 10,  # m/s
+                max_acceleration=2,  # m/s^2
             )
             pusher.add_constraint(name='pusher_joint_base_x',
                                   end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,

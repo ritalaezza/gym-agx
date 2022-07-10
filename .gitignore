@@ -11,6 +11,7 @@ logs/
 
 # Extensions:
 *.pyc
+*.npy
 *.aagx
 *.h5f
 

@@ -24,7 +24,6 @@ from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, s
     add_goal_assembly_from_file
 from gym_agx.utils.utils import sample_sphere, polynomial_trajectory
 
-
 FILE_NAME = 'bend_wire_obstacle'
 # Simulation parameters
 N_SUBSTEPS = 2
@@ -147,13 +146,13 @@ def sample_random_goal(sim, app=None, dof_vector=np.ones(3)):
         if app:
             app.executeOneStepWithGraphics()
 
-        right_velocity = polynomial_trajectory(t, start_time, waypoints_right, time_scales_right, degree=3)
+        right_velocity = polynomial_trajectory(t, start_time, waypoints_right, time_scales_right, degree=5)
         right_velocity = right_velocity * dof_vector
         right_motor_x.setSpeed(right_velocity[0])
         right_motor_y.setSpeed(right_velocity[1])
         right_motor_z.setSpeed(right_velocity[2])
 
-        left_velocity = polynomial_trajectory(t, start_time, waypoints_left, time_scales_left, degree=3)
+        left_velocity = polynomial_trajectory(t, start_time, waypoints_left, time_scales_left, degree=5)
         left_velocity = left_velocity * dof_vector
         left_motor_x.setSpeed(left_velocity[0])
         left_motor_y.setSpeed(left_velocity[1])
@@ -185,22 +184,32 @@ def sample_fixed_goal(sim, app=None):
     left_motor_z = sim.getConstraint1DOF("gripper_left_goal_joint_base_z").getMotor1D()
 
     # Define trajectory waypoints
-    waypoints_right = [to_numpy_array(right_gripper.getPosition()), np.array([LENGTH / 2, 0, - LENGTH / 2])]
-    waypoints_left = [to_numpy_array(left_gripper.getPosition()), np.array([-CYLINDER_RADIUS, 0, - LENGTH / 2])]
+    waypoints_right = [to_numpy_array(right_gripper.getPosition()),
+                       np.array([LENGTH / 2, 0, -2 * CYLINDER_RADIUS]),
+                       np.array([LENGTH / 2, 0, -2 * CYLINDER_RADIUS]),
+                       np.array([LENGTH / 4, 0, - LENGTH / 2])]
+    waypoints_left = [to_numpy_array(left_gripper.getPosition()),
+                      np.array([-LENGTH / 2, 0, -2 * CYLINDER_RADIUS]),
+                      np.array([-CYLINDER_RADIUS, 0, - LENGTH / 2]),
+                      np.array([-CYLINDER_RADIUS, 0, - LENGTH / 2])]
 
-    n_seconds = 20
-    time_scale = np.array([n_seconds - 1])
+    time_scales = np.array([5, 10, 10])
 
+    n_seconds = np.sum(time_scales)
+    n_time_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
     t = sim.getTimeStamp()
     start_time = t
-    while t < n_seconds:
+    velocities = np.zeros([2, n_time_steps, 3])
+    for i in range(n_time_steps):
         if app:
             app.executeOneStepWithGraphics()
-        velocity_right = polynomial_trajectory(t, start_time, waypoints_right, time_scale, degree=3)
+        velocity_right = polynomial_trajectory(t, start_time, waypoints_right, time_scales, degree=5)
+        velocities[0, i, :] = velocity_right
         right_motor_x.setSpeed(velocity_right[0])
         right_motor_y.setSpeed(velocity_right[1])
         right_motor_z.setSpeed(velocity_right[2])
-        velocity_left = polynomial_trajectory(t, start_time, waypoints_left, time_scale, degree=3)
+        velocity_left = polynomial_trajectory(t, start_time, waypoints_left, time_scales, degree=5)
+        velocities[1, i, :] = velocity_left
         left_motor_x.setSpeed(velocity_left[0])
         left_motor_y.setSpeed(velocity_left[1])
         left_motor_z.setSpeed(velocity_left[2])
@@ -210,6 +219,24 @@ def sample_fixed_goal(sim, app=None):
         while t < t_0 + TIMESTEP * N_SUBSTEPS:
             sim.stepForward()
             t = sim.getTimeStamp()
+
+    # reset timestamp, after simulation
+    sim.setTimeStamp(0)
+    print(right_gripper.getPosition())
+    print(left_gripper.getPosition())
+
+    # Trajectory limits:
+    max_velocity = np.max(np.max(np.max(abs(velocities))))
+    accelerations_right = np.gradient(velocities[0, :, :], (TIMESTEP * N_SUBSTEPS), axis=0)
+    accelerations_left = np.gradient(velocities[1, :, :], (TIMESTEP * N_SUBSTEPS), axis=0)
+    max_acceleration_right = np.max(np.max(abs(accelerations_right)))
+    max_acceleration_left = np.max(np.max(abs(accelerations_left)))
+    max_acceleration = max(max_acceleration_right, max_acceleration_left)
+    print('Max velocity: ' + str(max_velocity))
+    print('Max acceleration: ' + str(max_acceleration))
+
+    # Save trajectory
+    np.save('bend_wire_obstacle_traj.npy', velocities)
 
 
 def build_simulation(goal=False):
@@ -257,7 +284,7 @@ def build_simulation(goal=False):
         ground = create_body(name="ground", shape=agxCollide.Box(LENGTH, LENGTH, GROUND_WIDTH),
                              position=agx.Vec3(0, 0, -(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH)),
                              motion_control=agx.RigidBody.STATIC)
-        sim.add(ground)
+        scene.add(ground)
 
     # Create two grippers
     gripper_left = create_body(name="gripper_left" + goal_string,
@@ -343,7 +370,7 @@ def build_simulation(goal=False):
         print(report.getActualError())
 
     # Add cable to simulation
-    sim.add(cable)
+    scene.add(cable)
 
     # Add segment names and get first and last segment
     segment_count = 0
@@ -359,7 +386,7 @@ def build_simulation(goal=False):
         iterator.inc()
 
     # Add hinge constraints
-    hinge_joint_left = agx.Hinge(sim.getRigidBody("gripper_left" + goal_string), frame_left, segment_left)
+    hinge_joint_left = agx.Hinge(scene.getRigidBody("gripper_left" + goal_string), frame_left, segment_left)
     hinge_joint_left.setName('hinge_joint_left' + goal_string)
     motor_left = hinge_joint_left.getMotor1D()
     motor_left.setEnable(False)
@@ -371,9 +398,9 @@ def build_simulation(goal=False):
     range_left = hinge_joint_left.getRange1D()
     range_left.setEnable(True)
     range_left.setRange(agx.RangeReal(-math.pi / 2, math.pi / 2))
-    sim.add(hinge_joint_left)
+    scene.add(hinge_joint_left)
 
-    hinge_joint_right = agx.Hinge(sim.getRigidBody("gripper_right" + goal_string), frame_right, segment_right)
+    hinge_joint_right = agx.Hinge(scene.getRigidBody("gripper_right" + goal_string), frame_right, segment_right)
     hinge_joint_right.setName('hinge_joint_right' + goal_string)
     motor_right = hinge_joint_right.getMotor1D()
     motor_right.setEnable(False)
@@ -385,7 +412,7 @@ def build_simulation(goal=False):
     range_right = hinge_joint_right.getRange1D()
     range_right.setEnable(True)
     range_right.setRange(agx.RangeReal(-math.pi / 2, math.pi / 2))
-    sim.add(hinge_joint_right)
+    scene.add(hinge_joint_right)
 
     # Create bases for gripper motors
     prismatic_base_left = create_locked_prismatic_base("gripper_left" + goal_string, gripper_left_body, compliance=0,
@@ -398,7 +425,7 @@ def build_simulation(goal=False):
                                                                         (-(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH),
                                                                          0)],
                                                        lock_status=[False, False, False])
-    sim.add(prismatic_base_left)
+    scene.add(prismatic_base_left)
     prismatic_base_right = create_locked_prismatic_base("gripper_right" + goal_string, gripper_right_body, compliance=0,
                                                         motor_ranges=[(-FORCE_RANGE, FORCE_RANGE),
                                                                       (-FORCE_RANGE, FORCE_RANGE),
@@ -409,7 +436,7 @@ def build_simulation(goal=False):
                                                                          (-(GROUND_WIDTH + SIZE_GRIPPER / 2 + LENGTH),
                                                                           0)],
                                                         lock_status=[False, False, False])
-    sim.add(prismatic_base_right)
+    scene.add(prismatic_base_right)
 
     return sim
 
