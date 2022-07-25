@@ -5,11 +5,6 @@ Main Classes
 ------------
 This library contains two main classes, one inheriting from `Gym <https://gym.openai.com/>`_'s **Env** class, and another from the **GoalEnv** class.
 
-.. toctree::
-   :maxdepth: 1
-
-   gym_agx.envs
-
 .. autoclass:: gym_agx.envs.agx_env.AgxEnv
    :members:
 

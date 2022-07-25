@@ -1,6 +1,6 @@
-"""Simulation of cable pushing
+"""Simulation of cable closing
 
-This module creates the simulation files which will be used in cable_pushing environments.
+This module creates the simulation files which will be used in CableClosing environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).
 """
 # AGX Dynamics imports

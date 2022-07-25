@@ -49,7 +49,8 @@ class BendWireEnv(dlo_env.DloEnv):
 
     def __init__(self, n_substeps, observation_config=None, grippers=None, reward_type=None, reward_config=None,
                  scene_path=None, goal_scene_path=None, random_goal_scene_path=None, dof_vector=None, **kwargs):
-        """Initializes BendWire environment
+        """Initializes BendWire environment.
+
         :param int n_substeps: number of simulation steps between each action step
         :param ObservationConfig: types of observations to be used
         :param list grippers: EndEffector objects

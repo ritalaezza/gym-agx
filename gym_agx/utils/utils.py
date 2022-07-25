@@ -7,7 +7,8 @@ logger = logging.getLogger('gym_agx.utils')
 
 
 def construct_space(observation, inc=0):
-    """General purpose function to construct OpenAI Gym spaces from a sampled observation
+    """General purpose function to construct OpenAI Gym spaces from a sampled observation.
+
     :param observation: sampled observation, made up of nested dictionaries which have NumPy arrays at leaves
     :param inc: helps determine number of recursive calls (should not be manually set)
     :return: OpenAI Gym space
@@ -26,7 +27,8 @@ def construct_space(observation, inc=0):
 
 
 def goal_area(achieved_goal, goal):
-    """Computes area between desired goal and achieved goal
+    """Computes area between desired goal and achieved goal.
+
     :param achieved_goal: vector of achieved goal
     :param goal: vector of desired goal
     :return: area
@@ -36,7 +38,8 @@ def goal_area(achieved_goal, goal):
 
 
 def rotate_rpy(input_vector, phi, theta, psi, transpose=False):
-    """Apply rotation to vector using Roll-Pitch-Yaw (RPY) or ZYX angles
+    """Apply rotation to vector using Roll-Pitch-Yaw (RPY) or ZYX angles.
+
     :param numpy.ndarray input_vector: input vector
     :param phi: roll angle around z
     :param theta: pitch angle around y
@@ -60,7 +63,8 @@ def rotate_rpy(input_vector, phi, theta, psi, transpose=False):
 
 def sample_sphere(center, radius_range, polar_range, azimuthal_range, rpy_angles=None):
     """Uniform sampling bounded by sphere. Default spherical coordinate frame is same as AGX Dynamics base frame and the
-    Roll-Pitch-Yaw (RPY) or ZYX angles are used to rotate the points generated in this frame
+    Roll-Pitch-Yaw (RPY) or ZYX angles are used to rotate the points generated in this frame.
+
     :param center: center position of the sphere
     :param radius_range: range of acceptable radius values [min, max]
     :param polar_range: range of values for polar angle (xy-z) in [0, pi], angle=0 aligned with z-axis
@@ -100,7 +104,8 @@ def sample_sphere(center, radius_range, polar_range, azimuthal_range, rpy_angles
 
 def point_to_point_trajectory(t, time_limit, start_position, end_position, degree=3):
     """Assuming a third/fifth order polynomial trajectory: x(s) = x_start + s(x_end - x_start) , s in [0, 1]
-    with time scaling: s(t) = a_0 + a_1 t + a_2 t^2 + a_3 t^3 , t in [0, T]
+    with time scaling: s(t) = a_0 + a_1 t + a_2 t^2 + a_3 t^3 , t in [0, T].
+
     :param t: time t, for instant velocity
     :param time_limit: time limit, independent of start_time. Duration of trajectory
     :param start_position: position at start_time
@@ -124,7 +129,8 @@ def point_to_point_trajectory(t, time_limit, start_position, end_position, degre
 
 def polynomial_trajectory(current_time, start_time, waypoints, time_scales, degree=3):
     """Third/fifth order polynomial trajectory: x(s) = waypoints[i] + s(waypoints[i+1] - waypoints[i]), s in [0,1]
-    with time scaling: s(t) = a_0 + a_1 t + a_2 t^2 + a_3 t^3 , t in [0, T]
+    with time scaling: s(t) = a_0 + a_1 t + a_2 t^2 + a_3 t^3 , t in [0, T].
+
     :param current_time: current time
     :param start_time: provides reference for start of whole trajectory
     :param waypoints: list of Numpy arrays with waypoints including start and end positions
@@ -149,7 +155,8 @@ def polynomial_trajectory(current_time, start_time, waypoints, time_scales, degr
 
 
 def find_reference_angle(angle):
-    """Finds reference angle in first quadrant
+    """Finds reference angle in first quadrant.
+
     :param angle: angle in radians
     :return: reference angle and sign"""
     while angle > 2 * math.pi:
@@ -173,7 +180,8 @@ def find_reference_angle(angle):
 
 
 def compute_linear_distance(v0, v1):
-    """Computes linear distance between two points
+    """Computes linear distance between two points.
+
     :param v0: NumPy array
     :param v1: NumPy array
     :return: Euclidean distance between v0 and v1
@@ -182,7 +190,8 @@ def compute_linear_distance(v0, v1):
 
 
 def compute_angle(v0, v1):
-    """Computes angle between two segments (through circumscribed osculating circle)
+    """Computes angle between two segments (through circumscribed osculating circle).
+
     :param v0: NumPy array
     :param v1: NumPy array
     :return: angle in radians
@@ -196,7 +205,8 @@ def compute_angle(v0, v1):
 
 
 def compute_curvature(v0, v1, segment_length=1):
-    """Computes curvature between two segments (through circumscribed osculating circle)
+    """Computes curvature between two segments (through circumscribed osculating circle).
+
     :param v0: NumPy array
     :param v1: NumPy array
     :param segment_length: length of AGX Cable segment (default 1)
@@ -212,7 +222,8 @@ def compute_curvature(v0, v1, segment_length=1):
 
 
 def get_cable_angles(cable_segment_edges):
-    """Iterates through cable state to compute angle between three adjacent points
+    """Iterates through cable state to compute angle between three adjacent points.
+
     :param cable_segment_edges: Numpy array with coordinates of cable segments
     """
     cable_vectors = np.diff(cable_segment_edges)
@@ -224,7 +235,8 @@ def get_cable_angles(cable_segment_edges):
 
 
 def get_cable_curvature(cable_segment_edges, segment_length=1):
-    """Iterates through cable state to compute curvature between three adjacent points
+    """Iterates through cable state to compute curvature between three adjacent points.
+
     :param cable_segment_edges: Numpy array with coordinates of cable segments
     :param segment_length: length of AGX Cable segment (default 1)
     """
@@ -237,7 +249,8 @@ def get_cable_curvature(cable_segment_edges, segment_length=1):
 
 
 def compute_torsion(v0, v1, v2, segment_length=1):
-    """Computes torsion between two segments (through circumscribed osculating circle)
+    """Computes torsion between two segments (through circumscribed osculating circle).
+
     :param v0: NumPy array
     :param v1: NumPy array
     :param v2: NumPy array
@@ -261,7 +274,8 @@ def compute_torsion(v0, v1, v2, segment_length=1):
 
 
 def get_cable_torsion(cable_state, segment_length=1):
-    """Iterates through cable state to compute torsion between four adjacent points
+    """Iterates through cable state to compute torsion between four adjacent points.
+
     :param cable_state: Numpy array with coordinates of cable segments
     :param segment_length: length of AGX Cable segment (default 1)
     """
@@ -275,7 +289,8 @@ def get_cable_torsion(cable_state, segment_length=1):
 
 
 def point_inside_polygon(polygon, point):
-    """Point in polygon algorithm (Jordan theorem)
+    """Point in polygon algorithm (Jordan theorem).
+
     :param polygon:
     :param point:
     :return:
@@ -301,7 +316,8 @@ def point_inside_polygon(polygon, point):
 
 
 def all_points_below_z(points, max_z):
-    """Test if all segments are below a certain height
+    """Test if all segments are below a certain height.
+
     :param points:
     :param max_z:
     :return:

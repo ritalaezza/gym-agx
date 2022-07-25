@@ -68,7 +68,8 @@ class AgxGoalEnv(GoalEnv):
     metadata = {'render.modes': ['osg', 'debug', 'human', 'depth']}
 
     def __init__(self, scene_path, n_substeps, n_actions, observation_config, camera_pose, osg_window, agx_only, args):
-        """Initializes a AgxEnv object
+        """Initializes a AgxEnv object.
+
         :param str scene_path: path to binary file containing serialized simulation defined in sim/ folder
         :param int n_substeps: number os simulation steps per call to step()
         :param int n_actions: number of actions (DoF)
@@ -235,7 +236,8 @@ class AgxGoalEnv(GoalEnv):
         logger.debug("Gravity after readFile is: {}".format(self.gravity))
 
     def _init_app(self, add_background_rgb=False, add_background_depth=False):
-        """Initialize OSG Example Application. Needed for rendering graphics
+        """Initialize OSG Example Application. Needed for rendering graphics.
+
         :param bool add_background_rgb: flag to determine if type of background rendering is RGB
         :param bool add_background_depth: flag to determine if type of background rendering is depth
         """
@@ -258,8 +260,7 @@ class AgxGoalEnv(GoalEnv):
         logger.debug("Gravity after initSimulation is: {}".format(self.sim.getUniformGravity()))
 
     def _reset_sim(self):
-        """Resets the simulation
-        """
+        """Resets the simulation."""
         self.sim.cleanup(agxSDK.Simulation.CLEANUP_ALL, True)
         if not self.sim.restore(self.scene_path, agxSDK.Simulation.READ_ALL):
             logger.error("Unable to restore simulation!")
@@ -271,8 +272,7 @@ class AgxGoalEnv(GoalEnv):
         return True
 
     def _step_callback(self):
-        """Steps the simulation, until n_substeps have passed
-        """
+        """Steps the simulation, until n_substeps have passed."""
         t = self.sim.getTimeStamp()
 
         t_0 = t
@@ -284,7 +284,8 @@ class AgxGoalEnv(GoalEnv):
                 logger.error("Unexpected error:", sys.exc_info()[0])
 
     def _render_callback(self, add_background_rgb=False, add_background_depth=False):
-        """Executes one step with graphics rendering
+        """Executes one step with graphics rendering.
+
         :param bool add_background_rgb: flag to determine if type of background rendering is RGB
         :param bool add_background_depth: flag to determine if type of background rendering is depth
         """
@@ -294,7 +295,8 @@ class AgxGoalEnv(GoalEnv):
         self.app.executeOneStepWithGraphics()
 
     def _set_render_mode(self, mode):
-        """Change OSG render mode
+        """Change OSG render mode.
+
         :param str mode: rendering mode ('osg', 'debug')
         """
         if mode == 'osg':
@@ -307,7 +309,8 @@ class AgxGoalEnv(GoalEnv):
             logger.error("Unexpected rendering mode: {}".format(mode))
 
     def _add_background_rendering(self, depth=False):
-        """Add rendering buffer to application. Needed for image observations
+        """Add rendering buffer to application. Needed for image observations.
+
         :param bool depth: Boolean to define if type of rendering is RGB or depth
         """
         image_size = self.observation_config.image_size
@@ -328,7 +331,8 @@ class AgxGoalEnv(GoalEnv):
         self.render_to_image.append(rti)
 
     def _matplotlib_rendering(self, buffer='rgb_buffer'):
-        """Matplotlib rendering shows RGB and depth images. Useful when OSG window is disabled
+        """Matplotlib rendering shows RGB and depth images. Useful when OSG window is disabled.
+
         :param str buffer: type of buffer for matplotlib rendering: 'rgb_buffer' or 'depth_buffer'
         """
         rgb_buffer = None
@@ -361,30 +365,24 @@ class AgxGoalEnv(GoalEnv):
                 plt.pause(1e-5)
 
     def _add_rendering(self):
-        """Add environment specific rendering information, to OSG ExampleApplication.
-        Implement this in each subclass.
-        """
+        """Create ExampleApplication instance and add rendering information. Implement this in each subclass."""
         raise NotImplementedError()
 
     # Extension methods
     # ----------------------------
 
     def _get_observation(self):
-        """Returns the observation.
-        """
+        """Returns the observation."""
         raise NotImplementedError()
 
     def _set_action(self, action):
-        """Applies the given action to the simulation.
-        """
+        """Applies the given action to the simulation."""
         raise NotImplementedError()
 
     def _is_success(self, achieved_goal, desired_goal):
-        """Indicates whether the achieved goal successfully reached the desired goal.
-        """
+        """Indicates whether the achieved goal successfully reached the desired goal."""
         raise NotImplementedError()
 
     def _sample_goal(self):
-        """Samples a new goal and returns it.
-        """
+        """Samples a new goal and returns it."""
         raise NotImplementedError()

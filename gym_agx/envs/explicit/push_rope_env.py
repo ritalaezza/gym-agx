@@ -46,7 +46,8 @@ class PushRopeEnv(dlo_env.DloEnv):
 
     def __init__(self, n_substeps, observation_config=None, pushers=None, reward_type=None, reward_config=None,
                  scene_path=None, goal_scene_path=None, random_goal_scene_path=None, **kwargs):
-        """Initializes PushRope environment
+        """Initializes PushRope environment.
+
         :param int n_substeps: number of simulation steps between each action step
         :param ObservationConfig: types of observations to be used
         :param list pushers: EndEffector objects
@@ -71,7 +72,7 @@ class PushRopeEnv(dlo_env.DloEnv):
                 controllable=True,
                 observable=True,
                 max_velocity=5 / 10,  # m/s
-                max_acceleration=2,  # m/s^2
+                max_acceleration=3,  # m/s^2
             )
             pusher.add_constraint(name='pusher_joint_base_x',
                                   end_effector_dof=EndEffectorConstraint.Dof.X_TRANSLATION,
@@ -136,4 +137,3 @@ class PushRopeEnv(dlo_env.DloEnv):
 
     def _sample_random_goal(self, sim):
         push_rope.sample_random_goal(self.sim)
-

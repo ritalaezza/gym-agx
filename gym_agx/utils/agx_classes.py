@@ -22,11 +22,11 @@ class CameraConfig:
 
 
 class KeyboardMotorHandler(agxSDK.GuiEventListener):
-    """General class to control simulations using keyboard.
-    """
+    """General class to control simulations using keyboard."""
 
     def __init__(self, key_motor_maps):
-        """Each instance of this class takes a dictionary
+        """Each instance of this class takes a dictionary.
+
         :param dict key_motor_maps: This dictionary of tuples will assign a motor per key and set the desired speed when
         pressed, taking into account desired direction {agxSDK.GuiEventListener.KEY: (motor, speed)}
         :return Boolean handled: indicates success"""
@@ -49,6 +49,7 @@ class KeyboardMotorHandler(agxSDK.GuiEventListener):
 class InfoPrinter(agxSDK.StepEventListener):
     def __init__(self, app, text_table, text_color):
         """Write help text. textTable is a table with strings that will be drawn above the default text.
+
         :param app: OSG Example Application object
         :param text_table: table with text to be printed on screen
         :return: AGX simulation object
@@ -71,6 +72,7 @@ class InfoPrinter(agxSDK.StepEventListener):
 class HelpListener(agxSDK.StepEventListener):
     def __init__(self, app, text_table):
         """Write information to screen from lambda functions during the simulation.
+
         :param app: OSG Example Application object
         :param text_table: table with text to be printed on screen
         :return: AGX simulation object

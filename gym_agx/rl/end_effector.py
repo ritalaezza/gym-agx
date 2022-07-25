@@ -7,6 +7,7 @@ logger = logging.getLogger('gym_agx.rl')
 
 
 class EndEffectorConstraint:
+    """End-effector Constraint Types."""
     class Dof(Enum):
         X_TRANSLATION = 0,
         Y_TRANSLATION = 1,
@@ -21,7 +22,8 @@ class EndEffectorConstraint:
 
     def __init__(self, end_effector_dof, compute_forces_enabled, velocity_control, compliance_control, velocity_index,
                  compliance_index):
-        """EndEffectorConstraint class, defining important parameters of individual constraints
+        """EndEffectorConstraint class, defining important parameters of individual constraints.
+
         :param EndEffectorConstraint.Dof end_effector_dof: degree of freedom of end-effector controlled
         :param bool compute_forces_enabled: force and torque can be measured (should be consistent with simulation)
         :param bool velocity_control: is velocity controlled
@@ -46,7 +48,8 @@ class EndEffector:
 
     def __init__(self, name, controllable, observable, max_velocity=1, max_angular_velocity=1, max_acceleration=1,
                  max_angular_acceleration=1, min_compliance=0, max_compliance=1e6):
-        """EndEffector class which keeps track of end-effector constraints and action indices
+        """EndEffector class which keeps track of end-effector constraints and action indices.
+
         :param str name: Name of the end-effector, should match name of rigid body in simulation
         :param bool controllable: Determines if the end-effector is controllable
         :param bool observable: Determines if the end-effector is observable
@@ -71,7 +74,8 @@ class EndEffector:
 
     def add_constraint(self, name, end_effector_dof, compute_forces_enabled=False, velocity_control=False,
                        compliance_control=False):
-        """Add constraints which make up the end-effector
+        """Add constraints which make up the end-effector.
+
         :param str name: Name of the constraint. Should be consistent with name of constraint in simulation
         :param EndEffectorConstraint.Dof end_effector_dof: DoF of end-effector that this constraint controls
         :param bool compute_forces_enabled: Force and torque can be measured (should be consistent with simulation)
@@ -98,7 +102,8 @@ class EndEffector:
         self.constraints.update({name: end_effector_constraint})
 
     def apply_control(self, sim, action, dt):
-        """Apply control to simulation
+        """Apply control to simulation.
+
         :param agxSDK.Simulation sim: AGX simulation object
         :param np.ndarray action: Action from Gym interface
         :param float dt: Action time-step, needed to compute velocity and acceleration
@@ -126,7 +131,8 @@ class EndEffector:
         return control_actions
 
     def get_velocity(self, sim, constraint_dof):
-        """Get current velocity of end_effector
+        """Get current velocity of end_effector.
+
         :param agxSDK.Simulation sim: AGX simulation object
         :param EndEffectorConstraint.Dof constraint_dof: Degree of freedom to read velocity from
         :return: End-effector velocity and boolean indicating if it is linear or angular
@@ -156,7 +162,8 @@ class EndEffector:
         return velocity, linear
 
     def rescale_velocity(self, velocity, current_velocity, dt, linear):
-        """Rescales velocity according to velocity and acceleration limits. Note that this is done DoF-wise only
+        """Rescales velocity according to velocity and acceleration limits. Note that this is done DoF-wise only.
+
         :param float velocity: Action from Gym interface
         :param float current_velocity: Current velocity of the end-effector
         :param float dt: Action time-step
@@ -185,7 +192,8 @@ class EndEffector:
         return velocity
 
     def rescale_compliance(self, compliance):
-        """Rescales compliance between limits defined at initialization of end-effector object
+        """Rescales compliance between limits defined at initialization of end-effector object.
+
         :param float compliance: Action from Gym interface
         :return: Rescaled compliance
         """

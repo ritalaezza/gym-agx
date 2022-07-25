@@ -14,7 +14,8 @@ class DloEnv(agx_goal_env.AgxGoalEnv):
 
     def __init__(self, args, scene_path, n_substeps, end_effectors, observation_config, camera_config, reward_config,
                  randomized_goal, goal_scene_path, show_goal, osg_window=True, agx_only=False):
-        """Initializes a Dlo object
+        """Initializes a Dlo object.
+
         :param list args: arguments for agxViewer
         :param str scene_path: path to binary file in assets/ folder containing serialized simulation defined in sim/
         folder
@@ -146,6 +147,5 @@ class DloEnv(agx_goal_env.AgxGoalEnv):
         return goal
 
     def _sample_random_goal(self, sim):
-        """Insert here random goal generation function
-        """
+        """Insert here random goal generation function."""
         raise NotImplementedError()

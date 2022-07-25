@@ -1,4 +1,4 @@
-"""Simulation for BendWire environment
+"""Simulation of bend wire environment
 
 This module creates the simulation files which will be used in BendWire environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).
@@ -103,7 +103,8 @@ def add_rendering(sim):
 
 
 def sample_random_goal(sim, app=None, dof_vector=np.ones(3)):
-    """Goal Randomization: Sample 2 points, and execute point-to-point trajectory
+    """Goal Randomization: Sample 2 points, and execute point-to-point trajectory.
+
     :param sim: AGX Dynamics simulation object
     :param app: AGX Dynamics application object
     :param np.array dof_vector: desired degrees of freedom of the gripper(s), [x, y, z]
@@ -155,7 +156,8 @@ def sample_random_goal(sim, app=None, dof_vector=np.ones(3)):
 
 
 def sample_fixed_goal(sim, app=None):
-    """Define the trajectory to generate fixed goal
+    """Define the trajectory to generate fixed goal.
+
     :param sim: AGX Dynamics simulation object
     :param app: AGX Dynamics application object
     """
@@ -201,7 +203,8 @@ def sample_fixed_goal(sim, app=None):
 
 
 def build_simulation(goal=False):
-    """Builds simulations for both start and goal configurations
+    """Builds simulations for both start and goal configurations.
+
     :param bool goal: toggles between simulation definition of start and goal configurations
     :return agxSDK.Simulation: simulation object
     """

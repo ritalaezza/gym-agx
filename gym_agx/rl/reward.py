@@ -6,6 +6,7 @@ logger = logging.getLogger('gym_agx.rl')
 
 
 class RewardType(Enum):
+    """Reward Types."""
     SPARSE = "sparse"
     DENSE = "dense"
     
@@ -13,7 +14,8 @@ class RewardType(Enum):
 class RewardConfig(ABC):
 
     def __init__(self, reward_type, reward_range, set_done_on_success=True, **kwargs):
-        """Initialize RewardConfig object. Defines reward type, limit and function
+        """Initialize RewardConfig object. Defines reward type, limit and function.
+
         :param RewardConfig.RewardType reward_type: defines the type of reward
         :param tuple reward_range: tuple of floats, determining the bounds of the reward
         :param bool set_done_on_success: boolean which determines if task is episodic, and should be terminated once
@@ -30,7 +32,8 @@ class RewardConfig(ABC):
         """This function should return a reward computed based on the achieved_goal and desired_goal dictionaries. These
          may contain more than a single observation, which means the reward can weight different parts of the goal
          differently. The info dictionary should be populated and returned with any relevant information useful for
-         analysing results
+         analysing results.
+
         :param dict achieved_goal: dictionary of observations of achieved state
         :param dict desired_goal: dictionary of observations of desired state
         :param dict info: information dictionary, which should be updated, and can be used to include more information
@@ -52,7 +55,8 @@ class RewardConfig(ABC):
         return reward
 
     def is_success(self, achieved_goal, desired_goal):
-        """This function should return a boolean based on the achieved_goal and desired_goal dictionaries
+        """This function should return a boolean based on the achieved_goal and desired_goal dictionaries.
+
         :param dict achieved_goal: dictionary of observations from achieved state
         :param dict desired_goal: dictionary of observations from desired state
         :return: success
@@ -63,7 +67,8 @@ class RewardConfig(ABC):
 
     @abstractmethod
     def reward_function(self, achieved_goal, desired_goal, info):
-        """This abstract method should define how the reward is computed
+        """This abstract method should define how the reward is computed.
+
         :param dict achieved_goal: dictionary of observations from achieved state
         :param dict desired_goal: dictionary of observations from desired state
         :param dict info: information dictionary, which should be updated, and can be used to include more information
@@ -75,7 +80,8 @@ class RewardConfig(ABC):
     @abstractmethod
     def scale_reward(self, reward):
         """This abstract method should define how the dense reward is scaled. This function is always called, for dense
-        rewards, after the reward_function returns a reward value
+        rewards, after the reward_function returns a reward value.
+
         :param reward: reward output from reward_function
         :return: scaled reward
         """
@@ -84,7 +90,8 @@ class RewardConfig(ABC):
     @abstractmethod
     def success_condition(self, achieved_goal, desired_goal):
         """This abstract method returns a boolean indicating if the desired_goal is achieved. Since the goals may be
-        composed of several observations, different conditions can be checked, at the same time
+        composed of several observations, different conditions can be checked, at the same time.
+
         :param dict achieved_goal: dictionary of observations from achieved state
         :param dict desired_goal: dictionary of observations from desired state
         :return boolean

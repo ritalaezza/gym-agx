@@ -27,7 +27,8 @@ class AgxEnv(gym.Env):
     metadata = {'render.modes': ['osg', 'debug']}
 
     def __init__(self, scene_path, n_substeps, n_actions, observation_type, image_size, camera_pose, no_graphics, args):
-        """Initializes a AgxEnv object
+        """Initializes a AgxEnv object.
+
         :param scene_path: path to binary file containing serialized simulation defined in sim/ folder
         :param n_substeps: number os simulation steps per call to step()
         :param n_actions: number of actions (DoF)
@@ -115,7 +116,8 @@ class AgxEnv(gym.Env):
         logger.debug("Gravity after readFile is: {}".format(self.gravity))
 
     def _add_background_rendering(self, depth=False):
-        """Add rendering buffer to application. Needed for image observations
+        """Add rendering buffer to application. Needed for image observations.
+
         :param bool depth: Boolean to define if type of rendering is RGB or depth.
         """
 
@@ -136,7 +138,8 @@ class AgxEnv(gym.Env):
         self.render_to_image.append(rti)
 
     def _init_app(self):
-        """Initialize OSG Example Application. Needed for rendering graphics
+        """Initialize OSG Example Application. Needed for rendering graphics.
+
         :param bool add_background_rgb: flag to determine if type of background rendering is RGB
         :param bool add_background_depth: flag to determine if type of background rendering is depth
         """
@@ -158,22 +161,18 @@ class AgxEnv(gym.Env):
         logger.debug("Gravity after initSimulation is: {}".format(self.sim.getUniformGravity()))
 
     def _add_rendering(self, mode='osg'):
-        """Create ExampleApplication instance and add rendering information.
-        Implement this in each subclass
-        """
+        """Create ExampleApplication instance and add rendering information. Implement this in each subclass."""
         raise NotImplementedError()
 
     # Extension methods
     # ----------------------------
 
     def _get_observation(self):
-        """Returns the observation.
-        """
+        """Returns the observation."""
         raise NotImplementedError()
 
     def _set_action(self, action):
-        """Applies the given action to the simulation.
-        """
+        """Applies the given action to the simulation."""
         raise NotImplementedError()
 
     def _reset_sim(self):
@@ -197,7 +196,8 @@ class AgxEnv(gym.Env):
                 logger.error("Unexpected error:", sys.exc_info()[0])
 
     def _render_callback(self):
-        """Executes one step with graphics rendering
+        """Executes one step with graphics rendering.
+
         :param bool add_background_rgb: flag to determine if type of background rendering is RGB
         :param bool add_background_depth: flag to determine if type of background rendering is depth
         """

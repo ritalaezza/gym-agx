@@ -1,6 +1,6 @@
-"""Simulation of cable pushing
+"""Simulation of peg in hole
 
-This module creates the simulation files which will be used in cable_pushing environments.
+This module creates the simulation files which will be used in PegInHole environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).
 """
 # AGX Dynamics imports
@@ -400,6 +400,7 @@ def is_goal_reached(sim):
 def determine_n_segments_inserted(segment_pos, cylinder_pos):
     """
     Determine number of segments that are inserted into the hole.
+
     :param segment_pos:
     :return:
     """

@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Utilities" href="gym_agx.utils.html" />
-    <link rel="prev" title="Implicit Shape Control Environments" href="gym_agx.envs.implicit.html" /> 
+    <link rel="prev" title="Reinforcement Learning Classes" href="gym_agx.rl.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -40,6 +40,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="gym_agx.envs.html">Environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.rl.html">Reinforcement Learning Classes</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Simulations</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-gym_agx.sims.bend_wire">Bend Wire</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-gym_agx.sims.bend_wire_obstacle">Bend Wire with Obstacle</a></li>
@@ -80,7 +81,7 @@
 <h1>Simulations<a class="headerlink" href="#simulations" title="Permalink to this heading">¶</a></h1>
 <section id="module-gym_agx.sims.bend_wire">
 <span id="bend-wire"></span><h2>Bend Wire<a class="headerlink" href="#module-gym_agx.sims.bend_wire" title="Permalink to this heading">¶</a></h2>
-<p>Simulation for BendWire environment</p>
+<p>Simulation of bend wire environment</p>
 <p>This module creates the simulation files which will be used in BendWire environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).</p>
 <dl class="py function">
@@ -91,26 +92,44 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
 <dl class="py function">
 <dt class="sig sig-object py" id="gym_agx.sims.bend_wire.sample_random_goal">
 <span class="sig-prename descclassname"><span class="pre">gym_agx.sims.bend_wire.</span></span><span class="sig-name descname"><span class="pre">sample_random_goal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dof_vector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([1.0,</span> <span class="pre">1.0,</span> <span class="pre">1.0])</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.bend_wire.sample_random_goal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Goal Randomization: Sample 2 points, and execute point-to-point trajectory
-:param sim: AGX Dynamics simulation object
-:param app: AGX Dynamics application object
-:param np.array dof_vector: desired degrees of freedom of the gripper(s), [x, y, z]</p>
+<dd><p>Goal Randomization: Sample 2 points, and execute point-to-point trajectory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> -- AGX Dynamics simulation object</p></li>
+<li><p><strong>app</strong> -- AGX Dynamics application object</p></li>
+<li><p><strong>dof_vector</strong> (<em>np.array</em>) -- desired degrees of freedom of the gripper(s), [x, y, z]</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="gym_agx.sims.bend_wire.sample_fixed_goal">
 <span class="sig-prename descclassname"><span class="pre">gym_agx.sims.bend_wire.</span></span><span class="sig-name descname"><span class="pre">sample_fixed_goal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.bend_wire.sample_fixed_goal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Define the trajectory to generate fixed goal
-:param sim: AGX Dynamics simulation object
-:param app: AGX Dynamics application object</p>
+<dd><p>Define the trajectory to generate fixed goal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> -- AGX Dynamics simulation object</p></li>
+<li><p><strong>app</strong> -- AGX Dynamics application object</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="gym_agx.sims.bend_wire.build_simulation">
 <span class="sig-prename descclassname"><span class="pre">gym_agx.sims.bend_wire.</span></span><span class="sig-name descname"><span class="pre">build_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">goal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.bend_wire.build_simulation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Builds simulations for both start and goal configurations
-:param bool goal: toggles between simulation definition of start and goal configurations
-:return agxSDK.Simulation: simulation object</p>
+<dd><p>Builds simulations for both start and goal configurations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>goal</strong> (<em>bool</em>) -- toggles between simulation definition of start and goal configurations</p>
+</dd>
+<dt class="field-even">Return agxSDK.Simulation</dt>
+<dd class="field-even"><p>simulation object</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -121,8 +140,8 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
 </section>
 <section id="module-gym_agx.sims.bend_wire_obstacle">
 <span id="bend-wire-with-obstacle"></span><h2>Bend Wire with Obstacle<a class="headerlink" href="#module-gym_agx.sims.bend_wire_obstacle" title="Permalink to this heading">¶</a></h2>
-<p>Simulation for BendWireObstacle environment</p>
-<p>This module creates the simulation files which will be used in bend_wire with obstacle environments.
+<p>Simulation of bend wire with obstacle</p>
+<p>This module creates the simulation files which will be used in BendWireObstacle environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gym_agx.sims.bend_wire_obstacle.add_rendering">
@@ -132,26 +151,44 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
 <dl class="py function">
 <dt class="sig sig-object py" id="gym_agx.sims.bend_wire_obstacle.sample_random_goal">
 <span class="sig-prename descclassname"><span class="pre">gym_agx.sims.bend_wire_obstacle.</span></span><span class="sig-name descname"><span class="pre">sample_random_goal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dof_vector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([1.0,</span> <span class="pre">1.0,</span> <span class="pre">1.0])</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.bend_wire_obstacle.sample_random_goal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Goal Randomization: Sample 2 points, and execute point-to-point trajectory
-:param sim: AGX Dynamics simulation object
-:param app: AGX Dynamics application object
-:param np.array dof_vector: desired degrees of freedom of the gripper(s), [x, y, z]</p>
+<dd><p>Goal Randomization: Sample 2 points, and execute point-to-point trajectory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> -- AGX Dynamics simulation object</p></li>
+<li><p><strong>app</strong> -- AGX Dynamics application object</p></li>
+<li><p><strong>dof_vector</strong> (<em>np.array</em>) -- desired degrees of freedom of the gripper(s), [x, y, z]</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="gym_agx.sims.bend_wire_obstacle.sample_fixed_goal">
 <span class="sig-prename descclassname"><span class="pre">gym_agx.sims.bend_wire_obstacle.</span></span><span class="sig-name descname"><span class="pre">sample_fixed_goal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.bend_wire_obstacle.sample_fixed_goal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Define the trajectory to generate fixed goal
-:param sim: AGX Dynamics simulation object
-:param app: AGX Dynamics application object</p>
+<dd><p>Define the trajectory to generate fixed goal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> -- AGX Dynamics simulation object</p></li>
+<li><p><strong>app</strong> -- AGX Dynamics application object</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="gym_agx.sims.bend_wire_obstacle.build_simulation">
 <span class="sig-prename descclassname"><span class="pre">gym_agx.sims.bend_wire_obstacle.</span></span><span class="sig-name descname"><span class="pre">build_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">goal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.bend_wire_obstacle.build_simulation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Builds simulations for both start and goal configurations
-:param bool goal: toggles between simulation definition of start and goal configurations
-:return agxSDK.Simulation: simulation object</p>
+<dd><p>Builds simulations for both start and goal configurations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>goal</strong> (<em>bool</em>) -- toggles between simulation definition of start and goal configurations</p>
+</dd>
+<dt class="field-even">Return agxSDK.Simulation</dt>
+<dd class="field-even"><p>simulation object</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -173,10 +210,8 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
 <dl class="py function">
 <dt class="sig sig-object py" id="gym_agx.sims.push_rope.sample_random_goal">
 <span class="sig-prename descclassname"><span class="pre">gym_agx.sims.push_rope.</span></span><span class="sig-name descname"><span class="pre">sample_random_goal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">render</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.push_rope.sample_random_goal" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>Goal Randomization: for the PushRope environment it is too difficult to generate proper trajectories that lead to</dt><dd><p>varied shapes. For this reason, a new rope is added to the scene every time, and routed through random points</p>
-</dd>
-</dl>
+<dd><p>Goal Randomization for the PushRope environment it is too difficult to generate proper trajectories that lead to
+varied shapes. For this reason, a new rope is added to the scene every time, and routed through random points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -191,18 +226,32 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
 <dt class="sig sig-object py" id="gym_agx.sims.push_rope.sample_fixed_goal">
 <span class="sig-prename descclassname"><span class="pre">gym_agx.sims.push_rope.</span></span><span class="sig-name descname"><span class="pre">sample_fixed_goal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.push_rope.sample_fixed_goal" title="Permalink to this definition">¶</a></dt>
 <dd><p>Define the trajectory to generate fixed goal. For the PushRope environment a keyboard listener is added to allow
-manual control
-:param sim: AGX Dynamics simulation object
-:param app: AGX Dynamics application object</p>
+manual control.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> -- AGX Dynamics simulation object</p></li>
+<li><p><strong>app</strong> -- AGX Dynamics application object</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="gym_agx.sims.push_rope.build_simulation">
 <span class="sig-prename descclassname"><span class="pre">gym_agx.sims.push_rope.</span></span><span class="sig-name descname"><span class="pre">build_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">goal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rope</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.push_rope.build_simulation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Builds simulations for both start and goal configurations
-:param bool goal: toggles between simulation definition of start and goal configurations
-:param bool rope: add rope to the scene or not
-:return agxSDK.Simulation: simulation object</p>
+<dd><p>Builds simulations for both start and goal configurations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>goal</strong> (<em>bool</em>) -- toggles between simulation definition of start and goal configurations</p></li>
+<li><p><strong>rope</strong> (<em>bool</em>) -- add rope to the scene or not</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return agxSDK.Simulation</dt>
+<dd class="field-even"><p>simulation object</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -213,8 +262,8 @@ manual control
 </section>
 <section id="module-gym_agx.sims.peg_in_hole">
 <span id="peg-in-hole"></span><h2>Peg In Hole<a class="headerlink" href="#module-gym_agx.sims.peg_in_hole" title="Permalink to this heading">¶</a></h2>
-<p>Simulation of cable pushing</p>
-<p>This module creates the simulation files which will be used in cable_pushing environments.
+<p>Simulation of peg in hole</p>
+<p>This module creates the simulation files which will be used in PegInHole environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gym_agx.sims.peg_in_hole.create_gripper_peg_in_hole">
@@ -246,9 +295,15 @@ inserted and False otherwise.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gym_agx.sims.peg_in_hole.determine_n_segments_inserted">
 <span class="sig-prename descclassname"><span class="pre">gym_agx.sims.peg_in_hole.</span></span><span class="sig-name descname"><span class="pre">determine_n_segments_inserted</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segment_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cylinder_pos</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.sims.peg_in_hole.determine_n_segments_inserted" title="Permalink to this definition">¶</a></dt>
-<dd><p>Determine number of segments that are inserted into the hole.
-:param segment_pos:
-:return:</p>
+<dd><p>Determine number of segments that are inserted into the hole.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>segment_pos</strong> -- </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -264,8 +319,8 @@ inserted and False otherwise.</p>
 </section>
 <section id="module-gym_agx.sims.rubber_band">
 <span id="rubber-band"></span><h2>Rubber Band<a class="headerlink" href="#module-gym_agx.sims.rubber_band" title="Permalink to this heading">¶</a></h2>
-<p>Simulation of cable pushing</p>
-<p>This module creates the simulation files which will be used in cable_pushing environments.
+<p>Simulation of rubber band</p>
+<p>This module creates the simulation files which will be used in RubberBand environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gym_agx.sims.rubber_band.create_pole">
@@ -315,8 +370,8 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
 </section>
 <section id="module-gym_agx.sims.cable_closing">
 <span id="cable-closing"></span><h2>Cable Closing<a class="headerlink" href="#module-gym_agx.sims.cable_closing" title="Permalink to this heading">¶</a></h2>
-<p>Simulation of cable pushing</p>
-<p>This module creates the simulation files which will be used in cable_pushing environments.
+<p>Simulation of cable closing</p>
+<p>This module creates the simulation files which will be used in CableClosing environments.
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="gym_agx.sims.cable_closing.add_rendering">
@@ -355,7 +410,7 @@ TODO: Instead of setting all parameters in this file, there should be a paramete
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="gym_agx.envs.implicit.html" class="btn btn-neutral float-left" title="Implicit Shape Control Environments" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="gym_agx.rl.html" class="btn btn-neutral float-left" title="Reinforcement Learning Classes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="gym_agx.utils.html" class="btn btn-neutral float-right" title="Utilities" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

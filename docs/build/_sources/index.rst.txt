@@ -14,5 +14,6 @@ Most of the documentation is auto-generated using `Sphinx <https://www.sphinx-do
    :maxdepth: 3
 
    gym_agx.envs
+   gym_agx.rl
    gym_agx.sims
    gym_agx.utils

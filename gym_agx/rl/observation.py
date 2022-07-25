@@ -12,6 +12,7 @@ logger = logging.getLogger('gym_agx.rl')
 
 
 class ObservationType(Enum):
+    """Observation Types."""
     DLO_POSITIONS = "dlo_positions"
     DLO_ROTATIONS = "dlo_rotations"
     DLO_ANGLES = "dlo_angles"
@@ -29,7 +30,8 @@ class ObservationType(Enum):
 class ObservationConfig:
 
     def __init__(self, goals, observations=None):
-        """Initialize observation configuration object with list of observations and goal type
+        """Initialize observation configuration object with list of observations and goal type.
+
         :param list goals: list of ObservationType which will be used to compute reward, based on achieved
         goals and desired goals
         :param list observations: list of ObservationType values that will be used as input to agent. Can be given as
@@ -51,7 +53,8 @@ class ObservationConfig:
 
     def get_observations(self, sim, rti, end_effectors, cable=None, goal_only=False):
         """Main function which gets observations, based on configuration. To avoid repeated calls to same observation,
-        goals can be obtained at the same time, by taking the union of the two sets
+        goals can be obtained at the same time, by taking the union of the two sets.
+
         :param agx.Simulation sim: AGX Dynamics simulation object
         :param list rti: agxOSG.RenderToImage buffers to render image observations
         :param EndEffector end_effectors: List of EndEffector objects which are required to obtain observations of the
@@ -166,24 +169,25 @@ class ObservationConfig:
         return observation, achieved_goal
 
     def set_dlo_positions(self):
-        """3D coordinates of DLO segments"""
+        """3D coordinates of DLO segments."""
         self.observations.add(ObservationType.DLO_POSITIONS)
 
     def set_dlo_rotations(self):
-        """Quaternions of DLO segments"""
+        """Quaternions of DLO segments."""
         self.observations.add(ObservationType.DLO_ROTATIONS)
 
     def set_dlo_poses(self):
-        """3D coordinates and quaternions of DLO segments"""
+        """3D coordinates and quaternions of DLO segments."""
         self.observations.add(ObservationType.DLO_POSITIONS)
         self.observations.add(ObservationType.DLO_ROTATIONS)
 
     def set_dlo_angles(self):
-        """Inner angles of DLO segments"""
+        """Inner angles of DLO segments."""
         self.observations.add(ObservationType.DLO_ANGLES)
 
     def set_img_rgb(self, image_size=None):
-        """RGB image of scene containing DLO and end-effector(s)
+        """RGB image of scene containing DLO and end-effector(s).
+
         :param tuple image_size: tuple with dimensions of image
         """
         self.observations.add(ObservationType.IMG_RGB)
@@ -192,7 +196,8 @@ class ObservationConfig:
             self.image_size = image_size
 
     def set_img_depth(self, image_size=None):
-        """Depth image of scene containing DLO and end-effector(s)
+        """Depth image of scene containing DLO and end-effector(s).
+
         :param tuple image_size: tuple with dimensions of image
         """
         self.observations.add(ObservationType.IMG_DEPTH)
@@ -201,45 +206,45 @@ class ObservationConfig:
             self.image_size = image_size
 
     def set_dlo_frenet_curvature(self):
-        """Discrete Frenet curvature of DLO"""
+        """Discrete Frenet curvature of DLO."""
         self.observations.add(ObservationType.DLO_CURVATURE)
 
     def set_dlo_frenet_torsion(self):
-        """Discrete Frenet torsion of DLO"""
+        """Discrete Frenet torsion of DLO."""
         self.observations.add(ObservationType.DLO_TORSION)
 
     def set_dlo_frenet_values(self):
-        """Discrete Frenet curvature and torsion of DLO"""
+        """Discrete Frenet curvature and torsion of DLO."""
         self.observations.add(ObservationType.DLO_CURVATURE)
         self.observations.add(ObservationType.DLO_TORSION)
 
     def set_ee_position(self):
-        """3D coordinates of edd-effector(s)"""
+        """3D coordinates of edd-effector(s)."""
         self.observations.add(ObservationType.EE_POSITION)
 
     def set_ee_rotation(self):
-        """Quaternions of edd-effector(s)"""
+        """Quaternions of edd-effector(s)."""
         self.observations.add(ObservationType.EE_ROTATION)
 
     def set_ee_velocity(self):
-        """Linear velocity of edd-effector(s)"""
+        """Linear velocity of edd-effector(s)."""
         self.observations.add(ObservationType.EE_VELOCITY)
 
     def set_ee_angular_velocity(self):
-        """Angular velocity of edd-effector(s)"""
+        """Angular velocity of edd-effector(s)."""
         self.observations.add(ObservationType.EE_ANGULAR_VELOCITY)
 
     def set_ee_pose(self):
-        """3D coordinates and quaternions of edd-effector(s)"""
+        """3D coordinates and quaternions of edd-effector(s)."""
         self.observations.add(ObservationType.EE_POSITION)
         self.observations.add(ObservationType.EE_ROTATION)
 
     def set_ee_force_torque(self):
-        """Forces and torques sensed by edd-effector(s)"""
+        """Forces and torques sensed by edd-effector(s)."""
         self.observations.add(ObservationType.EE_FORCE_TORQUE)
 
     def set_all_ee(self):
-        """Pose, velocities and force-torques sensed by edd-effector(s)"""
+        """Pose, velocities and force-torques sensed by edd-effector(s)."""
         self.observations.add(ObservationType.EE_POSITION)
         self.observations.add(ObservationType.EE_ROTATION)
         self.observations.add(ObservationType.EE_VELOCITY)
@@ -248,7 +253,8 @@ class ObservationConfig:
 
 
 def get_cable_segment_rotations(cable):
-    """Get AGX Cable segments' center of mass rotations
+    """Get AGX Cable segments' center of mass rotations.
+
     :param cable: AGX Cable object
     :return: NumPy array with segments' rotations
     """
@@ -267,7 +273,8 @@ def get_cable_segment_rotations(cable):
 
 
 def get_cable_segment_positions(cable):
-    """Get AGX Cable segments' center of mass positions
+    """Get AGX Cable segments' center of mass positions.
+
     :param cable: AGX Cable object
     :return: NumPy array with segments' positions
     """
@@ -286,7 +293,8 @@ def get_cable_segment_positions(cable):
 
 
 def get_cable_segment_positions_and_velocities(cable):
-    """Get AGX Cable segments' center of mass positions
+    """Get AGX Cable segments' center of mass positions.
+
     :param cable: AGX Cable object
     :return: NumPy array with segments' positions
     """
@@ -308,7 +316,8 @@ def get_cable_segment_positions_and_velocities(cable):
 
 
 def get_ring_segment_positions(sim, ring_name, num_segments=None):
-    """Get ring segments positions
+    """Get ring segments positions.
+
     :param sim: AGX Dynamics simulation object
     :param ring_name: name of ring object
     :param num_segments: number of segments making up the ring (possibly saves search time)
@@ -331,7 +340,8 @@ def get_ring_segment_positions(sim, ring_name, num_segments=None):
 
 
 def get_rigid_body_position(sim, key):
-    """Get position of AGX rigid body
+    """Get position of AGX rigid body.
+
     :param sim: AGX Dynamics simulation object
     :param key: name of rigid body
     :return: NumPy array with rigid body position
@@ -344,7 +354,8 @@ def get_rigid_body_position(sim, key):
 
 
 def get_rigid_body_rotation(sim, name):
-    """Get rotation of AGX rigid body
+    """Get rotation of AGX rigid body.
+
     :param sim: AGX Dynamics simulation object
     :param name: name of rigid body
     :return: NumPy array with rigid body rotation
@@ -357,7 +368,8 @@ def get_rigid_body_rotation(sim, name):
 
 
 def get_rigid_body_velocity(sim, name):
-    """Get velocity of AGX rigid body
+    """Get velocity of AGX rigid body.
+
     :param sim: AGX Dynamics simulation object
     :param name: name of rigid body
     :return: NumPy array with rigid body rotation
@@ -370,7 +382,8 @@ def get_rigid_body_velocity(sim, name):
 
 
 def get_rigid_body_angular_velocity(sim, name):
-    """Get rotation of AGX rigid body
+    """Get rotation of AGX rigid body.
+
     :param sim: AGX Dynamics simulation object
     :param name: name of rigid body
     :return: NumPy array with rigid body rotation
@@ -383,7 +396,8 @@ def get_rigid_body_angular_velocity(sim, name):
 
 
 def get_constraint_force_torque(sim, name, constraint_name):
-    """Gets force a torque on rigid object, computed by a constraint defined by 'constraint_name'
+    """Gets force a torque on rigid object, computed by a constraint defined by 'constraint_name'.
+
     :param sim: AGX Simulation object
     :param name: name of rigid body
     :param constraint_name: Name indicating which constraint contains force torque information for this object

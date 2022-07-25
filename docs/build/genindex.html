@@ -37,6 +37,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="gym_agx.envs.html">Environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.rl.html">Reinforcement Learning Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gym_agx.sims.html">Simulations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gym_agx.utils.html">Utilities</a></li>
 </ul>
@@ -72,20 +73,29 @@
  | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
- | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
+ | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#X"><strong>X</strong></a>
+ | <a href="#Y"><strong>Y</strong></a>
+ | <a href="#Z"><strong>Z</strong></a>
  
 </div>
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffector.action_indices">action_indices (gym_agx.rl.end_effector.EndEffector attribute)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffector.add_constraint">add_constraint() (gym_agx.rl.end_effector.EndEffector method)</a>
+</li>
       <li><a href="gym_agx.utils.html#gym_agx.utils.agx_utils.add_goal_assembly_from_file">add_goal_assembly_from_file() (in module gym_agx.utils.agx_utils)</a>
 </li>
       <li><a href="gym_agx.sims.html#gym_agx.sims.bend_wire.add_rendering">add_rendering() (in module gym_agx.sims.bend_wire)</a>
@@ -109,6 +119,8 @@
       <li><a href="gym_agx.envs.html#gym_agx.envs.agx_goal_env.AgxGoalEnv">AgxGoalEnv (class in gym_agx.envs.agx_goal_env)</a>
 </li>
       <li><a href="gym_agx.utils.html#gym_agx.utils.utils.all_points_below_z">all_points_below_z() (in module gym_agx.utils.utils)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffector.apply_control">apply_control() (gym_agx.rl.end_effector.EndEffector method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -167,6 +179,8 @@
       <ul>
         <li><a href="gym_agx.envs.html#gym_agx.envs.dlo_env.DloEnv.compute_reward">(gym_agx.envs.dlo_env.DloEnv method)</a>
 </li>
+        <li><a href="gym_agx.rl.html#gym_agx.rl.reward.RewardConfig.compute_reward">(gym_agx.rl.reward.RewardConfig method)</a>
+</li>
       </ul></li>
       <li><a href="gym_agx.sims.html#gym_agx.sims.cable_closing.compute_segments_pos">compute_segments_pos() (in module gym_agx.sims.cable_closing)</a>
 
@@ -206,18 +220,54 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.reward.RewardType.DENSE">DENSE (gym_agx.rl.reward.RewardType attribute)</a>
+</li>
       <li><a href="gym_agx.sims.html#gym_agx.sims.peg_in_hole.determine_n_segments_inserted">determine_n_segments_inserted() (in module gym_agx.sims.peg_in_hole)</a>
 </li>
-      <li><a href="gym_agx.envs.html#gym_agx.envs.dlo_env.DloEnv">DloEnv (class in gym_agx.envs.dlo_env)</a>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationType.DLO_ANGLES">DLO_ANGLES (gym_agx.rl.observation.ObservationType attribute)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationType.DLO_CURVATURE">DLO_CURVATURE (gym_agx.rl.observation.ObservationType attribute)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationType.DLO_POSITIONS">DLO_POSITIONS (gym_agx.rl.observation.ObservationType attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationType.DLO_ROTATIONS">DLO_ROTATIONS (gym_agx.rl.observation.ObservationType attribute)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationType.DLO_TORSION">DLO_TORSION (gym_agx.rl.observation.ObservationType attribute)</a>
+</li>
+      <li><a href="gym_agx.envs.html#gym_agx.envs.dlo_env.DloEnv">DloEnv (class in gym_agx.envs.dlo_env)</a>
+</li>
       <li><a href="gym_agx.envs.html#gym_agx.envs.agx_env.AgxEnv.dt">dt (gym_agx.envs.agx_env.AgxEnv property)</a>
 
       <ul>
         <li><a href="gym_agx.envs.html#gym_agx.envs.agx_goal_env.AgxGoalEnv.dt">(gym_agx.envs.agx_goal_env.AgxGoalEnv property)</a>
 </li>
       </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationType.EE_ANGULAR_VELOCITY">EE_ANGULAR_VELOCITY (gym_agx.rl.observation.ObservationType attribute)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationType.EE_FORCE_TORQUE">EE_FORCE_TORQUE (gym_agx.rl.observation.ObservationType attribute)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationType.EE_POSITION">EE_POSITION (gym_agx.rl.observation.ObservationType attribute)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationType.EE_ROTATION">EE_ROTATION (gym_agx.rl.observation.ObservationType attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationType.EE_VELOCITY">EE_VELOCITY (gym_agx.rl.observation.ObservationType attribute)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffector">EndEffector (class in gym_agx.rl.end_effector)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffectorConstraint">EndEffectorConstraint (class in gym_agx.rl.end_effector)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffectorConstraint.Dof">EndEffectorConstraint.Dof (class in gym_agx.rl.end_effector)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -238,12 +288,57 @@
 </li>
       <li><a href="gym_agx.utils.html#gym_agx.utils.agx_utils.get_cable_segment_edges">get_cable_segment_edges() (in module gym_agx.utils.agx_utils)</a>
 </li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.get_cable_segment_positions">get_cable_segment_positions() (in module gym_agx.rl.observation)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.get_cable_segment_positions_and_velocities">get_cable_segment_positions_and_velocities() (in module gym_agx.rl.observation)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.get_cable_segment_rotations">get_cable_segment_rotations() (in module gym_agx.rl.observation)</a>
+</li>
       <li><a href="gym_agx.utils.html#gym_agx.utils.utils.get_cable_torsion">get_cable_torsion() (in module gym_agx.utils.utils)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.get_constraint_force_torque">get_constraint_force_torque() (in module gym_agx.rl.observation)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.get_observations">get_observations() (gym_agx.rl.observation.ObservationConfig method)</a>
 </li>
       <li><a href="gym_agx.sims.html#gym_agx.sims.rubber_band.get_poles_enclosed">get_poles_enclosed() (in module gym_agx.sims.rubber_band)</a>
 </li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.get_rigid_body_angular_velocity">get_rigid_body_angular_velocity() (in module gym_agx.rl.observation)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.get_rigid_body_position">get_rigid_body_position() (in module gym_agx.rl.observation)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.get_rigid_body_rotation">get_rigid_body_rotation() (in module gym_agx.rl.observation)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.get_rigid_body_velocity">get_rigid_body_velocity() (in module gym_agx.rl.observation)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.get_ring_segment_positions">get_ring_segment_positions() (in module gym_agx.rl.observation)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffector.get_velocity">get_velocity() (gym_agx.rl.end_effector.EndEffector method)</a>
+</li>
       <li><a href="gym_agx.utils.html#gym_agx.utils.utils.goal_area">goal_area() (in module gym_agx.utils.utils)</a>
 </li>
+      <li>
+    gym_agx.rl.end_effector
+
+      <ul>
+        <li><a href="gym_agx.rl.html#module-gym_agx.rl.end_effector">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    gym_agx.rl.observation
+
+      <ul>
+        <li><a href="gym_agx.rl.html#module-gym_agx.rl.observation">module</a>
+</li>
+      </ul></li>
+      <li>
+    gym_agx.rl.reward
+
+      <ul>
+        <li><a href="gym_agx.rl.html#module-gym_agx.rl.reward">module</a>
+</li>
+      </ul></li>
       <li>
     gym_agx.sims.bend_wire
 
@@ -265,8 +360,6 @@
         <li><a href="gym_agx.sims.html#module-gym_agx.sims.cable_closing">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     gym_agx.sims.peg_in_hole
 
@@ -305,16 +398,16 @@
   </ul></td>
 </tr></table>
 
-<h2 id="H">H</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="gym_agx.utils.html#gym_agx.utils.utils.harmonic_trajectory">harmonic_trajectory() (in module gym_agx.utils.utils)</a>
-</li>
-  </ul></td>
-</tr></table>
-
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationType.IMG_DEPTH">IMG_DEPTH (gym_agx.rl.observation.ObservationType attribute)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationType.IMG_RGB">IMG_RGB (gym_agx.rl.observation.ObservationType attribute)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffectorConstraint.is_active">is_active (gym_agx.rl.end_effector.EndEffectorConstraint property)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="gym_agx.sims.html#gym_agx.sims.cable_closing.is_goal_reached">is_goal_reached() (in module gym_agx.sims.cable_closing)</a>
 
@@ -324,6 +417,16 @@
         <li><a href="gym_agx.sims.html#gym_agx.sims.rubber_band.is_goal_reached">(in module gym_agx.sims.rubber_band)</a>
 </li>
       </ul></li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.reward.RewardConfig.is_success">is_success() (gym_agx.rl.reward.RewardConfig method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.LOCK">LOCK (gym_agx.rl.end_effector.EndEffectorConstraint.Dof attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -352,12 +455,16 @@
         <li><a href="gym_agx.envs.html#gym_agx.envs.agx_goal_env.AgxGoalEnv.metadata">(gym_agx.envs.agx_goal_env.AgxGoalEnv attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     module
 
       <ul>
+        <li><a href="gym_agx.rl.html#module-gym_agx.rl.end_effector">gym_agx.rl.end_effector</a>
+</li>
+        <li><a href="gym_agx.rl.html#module-gym_agx.rl.observation">gym_agx.rl.observation</a>
+</li>
+        <li><a href="gym_agx.rl.html#module-gym_agx.rl.reward">gym_agx.rl.reward</a>
+</li>
         <li><a href="gym_agx.sims.html#module-gym_agx.sims.bend_wire">gym_agx.sims.bend_wire</a>
 </li>
         <li><a href="gym_agx.sims.html#module-gym_agx.sims.bend_wire_obstacle">gym_agx.sims.bend_wire_obstacle</a>
@@ -375,6 +482,18 @@
         <li><a href="gym_agx.utils.html#module-gym_agx.utils.utils">gym_agx.utils.utils</a>
 </li>
       </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig">ObservationConfig (class in gym_agx.rl.observation)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationType">ObservationType (class in gym_agx.rl.observation)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -413,8 +532,10 @@
         <li><a href="gym_agx.envs.implicit.html#gym_agx.envs.implicit.rubber_band_env.RubberBandEnv.render">(gym_agx.envs.implicit.rubber_band_env.RubberBandEnv method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffector.rescale_compliance">rescale_compliance() (gym_agx.rl.end_effector.EndEffector method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffector.rescale_velocity">rescale_velocity() (gym_agx.rl.end_effector.EndEffector method)</a>
+</li>
       <li><a href="gym_agx.envs.html#gym_agx.envs.agx_env.AgxEnv.reset">reset() (gym_agx.envs.agx_env.AgxEnv method)</a>
 
       <ul>
@@ -427,6 +548,14 @@
         <li><a href="gym_agx.envs.implicit.html#gym_agx.envs.implicit.rubber_band_env.RubberBandEnv.reset">(gym_agx.envs.implicit.rubber_band_env.RubberBandEnv method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.reward.RewardConfig.reward_function">reward_function() (gym_agx.rl.reward.RewardConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.reward.RewardConfig">RewardConfig (class in gym_agx.rl.reward)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.reward.RewardType">RewardType (class in gym_agx.rl.reward)</a>
+</li>
       <li><a href="gym_agx.utils.html#gym_agx.utils.utils.rotate_rpy">rotate_rpy() (in module gym_agx.utils.utils)</a>
 </li>
       <li><a href="gym_agx.envs.implicit.html#gym_agx.envs.implicit.rubber_band_env.RubberBandEnv">RubberBandEnv (class in gym_agx.envs.implicit.rubber_band_env)</a>
@@ -455,15 +584,49 @@
       </ul></li>
       <li><a href="gym_agx.utils.html#gym_agx.utils.utils.sample_sphere">sample_sphere() (in module gym_agx.utils.utils)</a>
 </li>
-      <li><a href="gym_agx.utils.html#gym_agx.utils.agx_utils.save_goal_simulation">save_goal_simulation() (in module gym_agx.utils.agx_utils)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="gym_agx.utils.html#gym_agx.utils.agx_utils.save_simulation">save_simulation() (in module gym_agx.utils.agx_utils)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.reward.RewardConfig.scale_reward">scale_reward() (gym_agx.rl.reward.RewardConfig method)</a>
 </li>
       <li><a href="gym_agx.envs.html#gym_agx.envs.agx_env.AgxEnv.seed">seed() (gym_agx.envs.agx_env.AgxEnv method)</a>
 </li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_all_ee">set_all_ee() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
       <li><a href="gym_agx.sims.html#gym_agx.sims.rubber_band.set_center_obstacle">set_center_obstacle() (in module gym_agx.sims.rubber_band)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_dlo_angles">set_dlo_angles() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_dlo_frenet_curvature">set_dlo_frenet_curvature() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_dlo_frenet_torsion">set_dlo_frenet_torsion() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_dlo_frenet_values">set_dlo_frenet_values() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_dlo_poses">set_dlo_poses() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_dlo_positions">set_dlo_positions() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_dlo_rotations">set_dlo_rotations() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_ee_angular_velocity">set_ee_angular_velocity() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_ee_force_torque">set_ee_force_torque() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_ee_pose">set_ee_pose() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_ee_position">set_ee_position() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_ee_rotation">set_ee_rotation() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_ee_velocity">set_ee_velocity() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_img_depth">set_img_depth() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.observation.ObservationConfig.set_img_rgb">set_img_rgb() (gym_agx.rl.observation.ObservationConfig method)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.reward.RewardType.SPARSE">SPARSE (gym_agx.rl.reward.RewardType attribute)</a>
 </li>
       <li><a href="gym_agx.envs.html#gym_agx.envs.agx_env.AgxEnv.step">step() (gym_agx.envs.agx_env.AgxEnv method)</a>
 
@@ -477,6 +640,8 @@
         <li><a href="gym_agx.envs.implicit.html#gym_agx.envs.implicit.rubber_band_env.RubberBandEnv.step">(gym_agx.envs.implicit.rubber_band_env.RubberBandEnv method)</a>
 </li>
       </ul></li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.reward.RewardConfig.success_condition">success_condition() (gym_agx.rl.reward.RewardConfig method)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -490,6 +655,48 @@
       <li><a href="gym_agx.utils.html#gym_agx.utils.agx_utils.to_agx_list">to_agx_list() (in module gym_agx.utils.agx_utils)</a>
 </li>
       <li><a href="gym_agx.utils.html#gym_agx.utils.agx_utils.to_numpy_array">to_numpy_array() (in module gym_agx.utils.agx_utils)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="X">X</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.X_COMPLIANCE">X_COMPLIANCE (gym_agx.rl.end_effector.EndEffectorConstraint.Dof attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.X_ROTATION">X_ROTATION (gym_agx.rl.end_effector.EndEffectorConstraint.Dof attribute)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.X_TRANSLATION">X_TRANSLATION (gym_agx.rl.end_effector.EndEffectorConstraint.Dof attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="Y">Y</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Y_COMPLIANCE">Y_COMPLIANCE (gym_agx.rl.end_effector.EndEffectorConstraint.Dof attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Y_ROTATION">Y_ROTATION (gym_agx.rl.end_effector.EndEffectorConstraint.Dof attribute)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Y_TRANSLATION">Y_TRANSLATION (gym_agx.rl.end_effector.EndEffectorConstraint.Dof attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="Z">Z</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Z_COMPLIANCE">Z_COMPLIANCE (gym_agx.rl.end_effector.EndEffectorConstraint.Dof attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Z_ROTATION">Z_ROTATION (gym_agx.rl.end_effector.EndEffectorConstraint.Dof attribute)</a>
+</li>
+      <li><a href="gym_agx.rl.html#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Z_TRANSLATION">Z_TRANSLATION (gym_agx.rl.end_effector.EndEffectorConstraint.Dof attribute)</a>
 </li>
   </ul></td>
 </tr></table>

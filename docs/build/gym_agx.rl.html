@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="English" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reinforcement Learning Classes &mdash; gym-agx  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Simulations" href="gym_agx.sims.html" />
+    <link rel="prev" title="Implicit Shape Control Environments" href="gym_agx.envs.implicit.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> gym-agx
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.envs.html">Environments</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Reinforcement Learning Classes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-gym_agx.rl.end_effector">End-Effector</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gym_agx.rl.observation">Observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gym_agx.rl.reward">Reward</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.sims.html">Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gym_agx.utils.html">Utilities</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">gym-agx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Reinforcement Learning Classes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/gym_agx.rl.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="reinforcement-learning-classes">
+<h1>Reinforcement Learning Classes<a class="headerlink" href="#reinforcement-learning-classes" title="Permalink to this heading">¶</a></h1>
+<section id="module-gym_agx.rl.end_effector">
+<span id="end-effector"></span><h2>End-Effector<a class="headerlink" href="#module-gym_agx.rl.end_effector" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffectorConstraint">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gym_agx.rl.end_effector.</span></span><span class="sig-name descname"><span class="pre">EndEffectorConstraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">end_effector_dof</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_forces_enabled</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity_control</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compliance_control</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compliance_index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffectorConstraint" title="Permalink to this definition">¶</a></dt>
+<dd><p>End-effector Constraint Types.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffectorConstraint.Dof">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Dof</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffectorConstraint.Dof" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffectorConstraint.Dof.X_TRANSLATION">
+<span class="sig-name descname"><span class="pre">X_TRANSLATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0,)</span></em><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.X_TRANSLATION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Y_TRANSLATION">
+<span class="sig-name descname"><span class="pre">Y_TRANSLATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(1,)</span></em><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Y_TRANSLATION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Z_TRANSLATION">
+<span class="sig-name descname"><span class="pre">Z_TRANSLATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(2,)</span></em><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Z_TRANSLATION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffectorConstraint.Dof.X_ROTATION">
+<span class="sig-name descname"><span class="pre">X_ROTATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(3,)</span></em><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.X_ROTATION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Y_ROTATION">
+<span class="sig-name descname"><span class="pre">Y_ROTATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(4,)</span></em><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Y_ROTATION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Z_ROTATION">
+<span class="sig-name descname"><span class="pre">Z_ROTATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(5,)</span></em><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Z_ROTATION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffectorConstraint.Dof.X_COMPLIANCE">
+<span class="sig-name descname"><span class="pre">X_COMPLIANCE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(6,)</span></em><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.X_COMPLIANCE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Y_COMPLIANCE">
+<span class="sig-name descname"><span class="pre">Y_COMPLIANCE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(7,)</span></em><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Y_COMPLIANCE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Z_COMPLIANCE">
+<span class="sig-name descname"><span class="pre">Z_COMPLIANCE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(8,)</span></em><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.Z_COMPLIANCE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffectorConstraint.Dof.LOCK">
+<span class="sig-name descname"><span class="pre">LOCK</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">9</span></em><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffectorConstraint.Dof.LOCK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffectorConstraint.is_active">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_active</span></span><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffectorConstraint.is_active" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gym_agx.rl.end_effector.</span></span><span class="sig-name descname"><span class="pre">EndEffector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">controllable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_velocity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_angular_velocity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_acceleration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_angular_acceleration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_compliance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_compliance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000000.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffector" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffector.action_indices">
+<span class="sig-name descname"><span class="pre">action_indices</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffector.action_indices" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffector.add_constraint">
+<span class="sig-name descname"><span class="pre">add_constraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_effector_dof</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_forces_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity_control</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compliance_control</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffector.add_constraint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add constraints which make up the end-effector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) -- Name of the constraint. Should be consistent with name of constraint in simulation</p></li>
+<li><p><strong>end_effector_dof</strong> (<a class="reference internal" href="#gym_agx.rl.end_effector.EndEffectorConstraint.Dof" title="gym_agx.rl.end_effector.EndEffectorConstraint.Dof"><em>EndEffectorConstraint.Dof</em></a>) -- DoF of end-effector that this constraint controls</p></li>
+<li><p><strong>compute_forces_enabled</strong> (<em>bool</em>) -- Force and torque can be measured (should be consistent with simulation)</p></li>
+<li><p><strong>velocity_control</strong> (<em>bool</em>) -- Is velocity controlled</p></li>
+<li><p><strong>compliance_control</strong> (<em>bool</em>) -- Is compliance controlled</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffector.apply_control">
+<span class="sig-name descname"><span class="pre">apply_control</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffector.apply_control" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply control to simulation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> (<em>agxSDK.Simulation</em>) -- AGX simulation object</p></li>
+<li><p><strong>action</strong> (<em>np.ndarray</em>) -- Action from Gym interface</p></li>
+<li><p><strong>dt</strong> (<em>float</em>) -- Action time-step, needed to compute velocity and acceleration</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Applied actions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffector.get_velocity">
+<span class="sig-name descname"><span class="pre">get_velocity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_dof</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffector.get_velocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get current velocity of end_effector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> (<em>agxSDK.Simulation</em>) -- AGX simulation object</p></li>
+<li><p><strong>constraint_dof</strong> (<a class="reference internal" href="#gym_agx.rl.end_effector.EndEffectorConstraint.Dof" title="gym_agx.rl.end_effector.EndEffectorConstraint.Dof"><em>EndEffectorConstraint.Dof</em></a>) -- Degree of freedom to read velocity from</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>End-effector velocity and boolean indicating if it is linear or angular</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffector.rescale_velocity">
+<span class="sig-name descname"><span class="pre">rescale_velocity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">velocity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_velocity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linear</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffector.rescale_velocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rescales velocity according to velocity and acceleration limits. Note that this is done DoF-wise only.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>velocity</strong> (<em>float</em>) -- Action from Gym interface</p></li>
+<li><p><strong>current_velocity</strong> (<em>float</em>) -- Current velocity of the end-effector</p></li>
+<li><p><strong>dt</strong> (<em>float</em>) -- Action time-step</p></li>
+<li><p><strong>linear</strong> (<em>bool</em>) -- Boolean to differentiate between linear and angular scaling</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Rescaled velocity</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.end_effector.EndEffector.rescale_compliance">
+<span class="sig-name descname"><span class="pre">rescale_compliance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compliance</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.end_effector.EndEffector.rescale_compliance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rescales compliance between limits defined at initialization of end-effector object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>compliance</strong> (<em>float</em>) -- Action from Gym interface</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Rescaled compliance</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-gym_agx.rl.observation">
+<span id="observation"></span><h2>Observation<a class="headerlink" href="#module-gym_agx.rl.observation" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationType">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gym_agx.rl.observation.</span></span><span class="sig-name descname"><span class="pre">ObservationType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Observation Types.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationType.DLO_POSITIONS">
+<span class="sig-name descname"><span class="pre">DLO_POSITIONS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dlo_positions'</span></em><a class="headerlink" href="#gym_agx.rl.observation.ObservationType.DLO_POSITIONS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationType.DLO_ROTATIONS">
+<span class="sig-name descname"><span class="pre">DLO_ROTATIONS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dlo_rotations'</span></em><a class="headerlink" href="#gym_agx.rl.observation.ObservationType.DLO_ROTATIONS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationType.DLO_ANGLES">
+<span class="sig-name descname"><span class="pre">DLO_ANGLES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dlo_angles'</span></em><a class="headerlink" href="#gym_agx.rl.observation.ObservationType.DLO_ANGLES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationType.DLO_CURVATURE">
+<span class="sig-name descname"><span class="pre">DLO_CURVATURE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dlo_curvature'</span></em><a class="headerlink" href="#gym_agx.rl.observation.ObservationType.DLO_CURVATURE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationType.DLO_TORSION">
+<span class="sig-name descname"><span class="pre">DLO_TORSION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dlo_torsion'</span></em><a class="headerlink" href="#gym_agx.rl.observation.ObservationType.DLO_TORSION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationType.IMG_RGB">
+<span class="sig-name descname"><span class="pre">IMG_RGB</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'img_rgb'</span></em><a class="headerlink" href="#gym_agx.rl.observation.ObservationType.IMG_RGB" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationType.IMG_DEPTH">
+<span class="sig-name descname"><span class="pre">IMG_DEPTH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'img_depth'</span></em><a class="headerlink" href="#gym_agx.rl.observation.ObservationType.IMG_DEPTH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationType.EE_FORCE_TORQUE">
+<span class="sig-name descname"><span class="pre">EE_FORCE_TORQUE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ee_force_torque'</span></em><a class="headerlink" href="#gym_agx.rl.observation.ObservationType.EE_FORCE_TORQUE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationType.EE_POSITION">
+<span class="sig-name descname"><span class="pre">EE_POSITION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ee_position'</span></em><a class="headerlink" href="#gym_agx.rl.observation.ObservationType.EE_POSITION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationType.EE_ROTATION">
+<span class="sig-name descname"><span class="pre">EE_ROTATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ee_rotation'</span></em><a class="headerlink" href="#gym_agx.rl.observation.ObservationType.EE_ROTATION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationType.EE_VELOCITY">
+<span class="sig-name descname"><span class="pre">EE_VELOCITY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ee_velocity'</span></em><a class="headerlink" href="#gym_agx.rl.observation.ObservationType.EE_VELOCITY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationType.EE_ANGULAR_VELOCITY">
+<span class="sig-name descname"><span class="pre">EE_ANGULAR_VELOCITY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ee_angular_velocity'</span></em><a class="headerlink" href="#gym_agx.rl.observation.ObservationType.EE_ANGULAR_VELOCITY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gym_agx.rl.observation.</span></span><span class="sig-name descname"><span class="pre">ObservationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">goals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.get_observations">
+<span class="sig-name descname"><span class="pre">get_observations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rti</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_effectors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">goal_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.get_observations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main function which gets observations, based on configuration. To avoid repeated calls to same observation,
+goals can be obtained at the same time, by taking the union of the two sets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> (<em>agx.Simulation</em>) -- AGX Dynamics simulation object</p></li>
+<li><p><strong>rti</strong> (<em>list</em>) -- agxOSG.RenderToImage buffers to render image observations</p></li>
+<li><p><strong>end_effectors</strong> (<a class="reference internal" href="#gym_agx.rl.end_effector.EndEffector" title="gym_agx.rl.end_effector.EndEffector"><em>EndEffector</em></a>) -- List of EndEffector objects which are required to obtain observations of the</p></li>
+</ul>
+</dd>
+</dl>
+<p>end-effectors in the simulation
+:param agx.Cable cable: If the simulation contains an AGX Cable structure, there are special functions to obtain
+its state
+:param goal_only: If set to True, only goals will be retrieved.
+:return: Dictionaries with observations and achieved goals, or just desired goals.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_dlo_positions">
+<span class="sig-name descname"><span class="pre">set_dlo_positions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_dlo_positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>3D coordinates of DLO segments.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_dlo_rotations">
+<span class="sig-name descname"><span class="pre">set_dlo_rotations</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_dlo_rotations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Quaternions of DLO segments.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_dlo_poses">
+<span class="sig-name descname"><span class="pre">set_dlo_poses</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_dlo_poses" title="Permalink to this definition">¶</a></dt>
+<dd><p>3D coordinates and quaternions of DLO segments.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_dlo_angles">
+<span class="sig-name descname"><span class="pre">set_dlo_angles</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_dlo_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inner angles of DLO segments.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_img_rgb">
+<span class="sig-name descname"><span class="pre">set_img_rgb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_img_rgb" title="Permalink to this definition">¶</a></dt>
+<dd><p>RGB image of scene containing DLO and end-effector(s).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>image_size</strong> (<em>tuple</em>) -- tuple with dimensions of image</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_img_depth">
+<span class="sig-name descname"><span class="pre">set_img_depth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_img_depth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Depth image of scene containing DLO and end-effector(s).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>image_size</strong> (<em>tuple</em>) -- tuple with dimensions of image</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_dlo_frenet_curvature">
+<span class="sig-name descname"><span class="pre">set_dlo_frenet_curvature</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_dlo_frenet_curvature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Discrete Frenet curvature of DLO.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_dlo_frenet_torsion">
+<span class="sig-name descname"><span class="pre">set_dlo_frenet_torsion</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_dlo_frenet_torsion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Discrete Frenet torsion of DLO.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_dlo_frenet_values">
+<span class="sig-name descname"><span class="pre">set_dlo_frenet_values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_dlo_frenet_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Discrete Frenet curvature and torsion of DLO.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_ee_position">
+<span class="sig-name descname"><span class="pre">set_ee_position</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_ee_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>3D coordinates of edd-effector(s).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_ee_rotation">
+<span class="sig-name descname"><span class="pre">set_ee_rotation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_ee_rotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Quaternions of edd-effector(s).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_ee_velocity">
+<span class="sig-name descname"><span class="pre">set_ee_velocity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_ee_velocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Linear velocity of edd-effector(s).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_ee_angular_velocity">
+<span class="sig-name descname"><span class="pre">set_ee_angular_velocity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_ee_angular_velocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Angular velocity of edd-effector(s).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_ee_pose">
+<span class="sig-name descname"><span class="pre">set_ee_pose</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_ee_pose" title="Permalink to this definition">¶</a></dt>
+<dd><p>3D coordinates and quaternions of edd-effector(s).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_ee_force_torque">
+<span class="sig-name descname"><span class="pre">set_ee_force_torque</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_ee_force_torque" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forces and torques sensed by edd-effector(s).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.ObservationConfig.set_all_ee">
+<span class="sig-name descname"><span class="pre">set_all_ee</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.ObservationConfig.set_all_ee" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pose, velocities and force-torques sensed by edd-effector(s).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.get_cable_segment_rotations">
+<span class="sig-prename descclassname"><span class="pre">gym_agx.rl.observation.</span></span><span class="sig-name descname"><span class="pre">get_cable_segment_rotations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.get_cable_segment_rotations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get AGX Cable segments' center of mass rotations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cable</strong> -- AGX Cable object</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>NumPy array with segments' rotations</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.get_cable_segment_positions">
+<span class="sig-prename descclassname"><span class="pre">gym_agx.rl.observation.</span></span><span class="sig-name descname"><span class="pre">get_cable_segment_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.get_cable_segment_positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get AGX Cable segments' center of mass positions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cable</strong> -- AGX Cable object</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>NumPy array with segments' positions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.get_cable_segment_positions_and_velocities">
+<span class="sig-prename descclassname"><span class="pre">gym_agx.rl.observation.</span></span><span class="sig-name descname"><span class="pre">get_cable_segment_positions_and_velocities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.get_cable_segment_positions_and_velocities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get AGX Cable segments' center of mass positions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cable</strong> -- AGX Cable object</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>NumPy array with segments' positions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.get_ring_segment_positions">
+<span class="sig-prename descclassname"><span class="pre">gym_agx.rl.observation.</span></span><span class="sig-name descname"><span class="pre">get_ring_segment_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ring_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_segments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.get_ring_segment_positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get ring segments positions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> -- AGX Dynamics simulation object</p></li>
+<li><p><strong>ring_name</strong> -- name of ring object</p></li>
+<li><p><strong>num_segments</strong> -- number of segments making up the ring (possibly saves search time)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>NumPy array with segments' positions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.get_rigid_body_position">
+<span class="sig-prename descclassname"><span class="pre">gym_agx.rl.observation.</span></span><span class="sig-name descname"><span class="pre">get_rigid_body_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.get_rigid_body_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get position of AGX rigid body.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> -- AGX Dynamics simulation object</p></li>
+<li><p><strong>key</strong> -- name of rigid body</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>NumPy array with rigid body position</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.get_rigid_body_rotation">
+<span class="sig-prename descclassname"><span class="pre">gym_agx.rl.observation.</span></span><span class="sig-name descname"><span class="pre">get_rigid_body_rotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.get_rigid_body_rotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get rotation of AGX rigid body.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> -- AGX Dynamics simulation object</p></li>
+<li><p><strong>name</strong> -- name of rigid body</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>NumPy array with rigid body rotation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.get_rigid_body_velocity">
+<span class="sig-prename descclassname"><span class="pre">gym_agx.rl.observation.</span></span><span class="sig-name descname"><span class="pre">get_rigid_body_velocity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.get_rigid_body_velocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get velocity of AGX rigid body.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> -- AGX Dynamics simulation object</p></li>
+<li><p><strong>name</strong> -- name of rigid body</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>NumPy array with rigid body rotation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.get_rigid_body_angular_velocity">
+<span class="sig-prename descclassname"><span class="pre">gym_agx.rl.observation.</span></span><span class="sig-name descname"><span class="pre">get_rigid_body_angular_velocity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.get_rigid_body_angular_velocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get rotation of AGX rigid body.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> -- AGX Dynamics simulation object</p></li>
+<li><p><strong>name</strong> -- name of rigid body</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>NumPy array with rigid body rotation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gym_agx.rl.observation.get_constraint_force_torque">
+<span class="sig-prename descclassname"><span class="pre">gym_agx.rl.observation.</span></span><span class="sig-name descname"><span class="pre">get_constraint_force_torque</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.observation.get_constraint_force_torque" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets force a torque on rigid object, computed by a constraint defined by 'constraint_name'.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sim</strong> -- AGX Simulation object</p></li>
+<li><p><strong>name</strong> -- name of rigid body</p></li>
+<li><p><strong>constraint_name</strong> -- Name indicating which constraint contains force torque information for this object</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>force a torque</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-gym_agx.rl.reward">
+<span id="reward"></span><h2>Reward<a class="headerlink" href="#module-gym_agx.rl.reward" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="gym_agx.rl.reward.RewardType">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gym_agx.rl.reward.</span></span><span class="sig-name descname"><span class="pre">RewardType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.reward.RewardType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reward Types.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.reward.RewardType.SPARSE">
+<span class="sig-name descname"><span class="pre">SPARSE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sparse'</span></em><a class="headerlink" href="#gym_agx.rl.reward.RewardType.SPARSE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gym_agx.rl.reward.RewardType.DENSE">
+<span class="sig-name descname"><span class="pre">DENSE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dense'</span></em><a class="headerlink" href="#gym_agx.rl.reward.RewardType.DENSE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gym_agx.rl.reward.RewardConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gym_agx.rl.reward.</span></span><span class="sig-name descname"><span class="pre">RewardConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reward_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reward_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_done_on_success</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.reward.RewardConfig" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.reward.RewardConfig.compute_reward">
+<span class="sig-name descname"><span class="pre">compute_reward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">achieved_goal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">desired_goal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.reward.RewardConfig.compute_reward" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>This function should return a reward computed based on the achieved_goal and desired_goal dictionaries. These</dt><dd><p>may contain more than a single observation, which means the reward can weight different parts of the goal
+differently. The info dictionary should be populated and returned with any relevant information useful for
+analysing results.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>achieved_goal</strong> (<em>dict</em>) -- dictionary of observations of achieved state</p></li>
+<li><p><strong>desired_goal</strong> (<em>dict</em>) -- dictionary of observations of desired state</p></li>
+<li><p><strong>info</strong> (<em>dict</em>) -- information dictionary, which should be updated, and can be used to include more information</p></li>
+</ul>
+</dd>
+</dl>
+<p>needed for reward computations
+:return: float reward</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.reward.RewardConfig.is_success">
+<span class="sig-name descname"><span class="pre">is_success</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">achieved_goal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">desired_goal</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.reward.RewardConfig.is_success" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function should return a boolean based on the achieved_goal and desired_goal dictionaries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>achieved_goal</strong> (<em>dict</em>) -- dictionary of observations from achieved state</p></li>
+<li><p><strong>desired_goal</strong> (<em>dict</em>) -- dictionary of observations from desired state</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>success</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.reward.RewardConfig.reward_function">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reward_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">achieved_goal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">desired_goal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.reward.RewardConfig.reward_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>This abstract method should define how the reward is computed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>achieved_goal</strong> (<em>dict</em>) -- dictionary of observations from achieved state</p></li>
+<li><p><strong>desired_goal</strong> (<em>dict</em>) -- dictionary of observations from desired state</p></li>
+<li><p><strong>info</strong> (<em>dict</em>) -- information dictionary, which should be updated, and can be used to include more information</p></li>
+</ul>
+</dd>
+</dl>
+<p>needed for reward computations
+:return: reward, info</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.reward.RewardConfig.scale_reward">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">scale_reward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reward</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.reward.RewardConfig.scale_reward" title="Permalink to this definition">¶</a></dt>
+<dd><p>This abstract method should define how the dense reward is scaled. This function is always called, for dense
+rewards, after the reward_function returns a reward value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>reward</strong> -- reward output from reward_function</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>scaled reward</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gym_agx.rl.reward.RewardConfig.success_condition">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">success_condition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">achieved_goal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">desired_goal</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gym_agx.rl.reward.RewardConfig.success_condition" title="Permalink to this definition">¶</a></dt>
+<dd><p>This abstract method returns a boolean indicating if the desired_goal is achieved. Since the goals may be
+composed of several observations, different conditions can be checked, at the same time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>achieved_goal</strong> (<em>dict</em>) -- dictionary of observations from achieved state</p></li>
+<li><p><strong>desired_goal</strong> (<em>dict</em>) -- dictionary of observations from desired state</p></li>
+</ul>
+</dd>
+</dl>
+<p>:return boolean</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="gym_agx.envs.implicit.html" class="btn btn-neutral float-left" title="Implicit Shape Control Environments" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="gym_agx.sims.html" class="btn btn-neutral float-right" title="Simulations" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Rita Laezza.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

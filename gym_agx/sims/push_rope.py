@@ -4,8 +4,6 @@ This module creates the simulation files which will be used in PushRope environm
 TODO: Instead of setting all parameters in this file, there should be a parameter file (e.g. YAML or XML).
 """
 # AGX Dynamics imports
-import numpy as np
-
 import agx
 import agxPython
 import agxCollide
@@ -21,10 +19,11 @@ import os
 import sys
 import math
 import random
+import numpy as np
 
 # Local modules
 from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, \
-    add_goal_assembly_from_file, to_numpy_array
+    add_goal_assembly_from_file
 from gym_agx.utils.agx_classes import KeyboardMotorHandler
 
 FILE_NAME = "push_rope"
@@ -127,8 +126,9 @@ def add_rendering(sim):
 
 
 def sample_random_goal(sim, render=False):
-    """Goal Randomization: for the PushRope environment it is too difficult to generate proper trajectories that lead to
-     varied shapes. For this reason, a new rope is added to the scene every time, and routed through random points
+    """Goal Randomization for the PushRope environment it is too difficult to generate proper trajectories that lead to
+    varied shapes. For this reason, a new rope is added to the scene every time, and routed through random points.
+
     :param sim: AGX Dynamics simulation object
     :param bool render: toggle rendering for debugging purposes only
     """
@@ -254,7 +254,8 @@ def sample_random_goal(sim, render=False):
 
 def sample_fixed_goal(sim, app=None):
     """Define the trajectory to generate fixed goal. For the PushRope environment a keyboard listener is added to allow
-    manual control
+    manual control.
+
     :param sim: AGX Dynamics simulation object
     :param app: AGX Dynamics application object
     """
@@ -270,8 +271,6 @@ def sample_fixed_goal(sim, app=None):
                      65366: (motor_z, -0.05)}
     sim.add(KeyboardMotorHandler(key_motor_map))
 
-    pusher = sim.getRigidBody("pusher_goal")
-
     n_seconds = 30
     n_time_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
     velocities = np.zeros([n_time_steps, 3])
@@ -279,7 +278,6 @@ def sample_fixed_goal(sim, app=None):
         if app:
             app.executeOneStepWithGraphics()
 
-        # velocities[i, :] = to_numpy_array(pusher.getVelocity())
         velocities[i, 0] = motor_x.getSpeed()
         velocities[i, 1] = motor_y.getSpeed()
         velocities[i, 2] = motor_z.getSpeed()
@@ -298,7 +296,8 @@ def sample_fixed_goal(sim, app=None):
 
 
 def build_simulation(goal=False, rope=True):
-    """Builds simulations for both start and goal configurations
+    """Builds simulations for both start and goal configurations.
+
     :param bool goal: toggles between simulation definition of start and goal configurations
     :param bool rope: add rope to the scene or not
     :return agxSDK.Simulation: simulation object
@@ -504,6 +503,10 @@ def main(args):
 
     # 4) Build random goal simulation object (without DLO)
     random_goal_sim = build_simulation(goal=True, rope=False)
+
+    file_directory = os.path.dirname(os.path.abspath(__file__))
+    package_directory = os.path.split(file_directory)[0]
+    print(os.path.join(package_directory, 'envs/assets'))
 
     success = save_simulation(random_goal_sim, FILE_NAME + "_goal_random")
     if not success:
