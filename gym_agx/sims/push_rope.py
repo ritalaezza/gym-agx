@@ -23,8 +23,9 @@ import numpy as np
 
 # Local modules
 from gym_agx.utils.agx_utils import create_body, create_locked_prismatic_base, save_simulation, \
-    add_goal_assembly_from_file
+    add_goal_assembly_from_file, to_numpy_array
 from gym_agx.utils.agx_classes import KeyboardMotorHandler
+from gym_agx.utils.utils import polynomial_trajectory
 
 FILE_NAME = "push_rope"
 
@@ -52,8 +53,8 @@ ALUMINUM_YOUNG_MODULUS = 69e9  # Pascals
 ALUMINUM_YIELD_POINT = 5e7  # Pascals
 
 # Pusher Parameters
-PUSHER_RADIUS = 0.005
-PUSHER_HEIGHT = 0.02
+PUSHER_RADIUS = RADIUS * 3
+PUSHER_HEIGHT = RADIUS * 13
 PUSHER_ROUGHNESS = 1
 PUSHER_ADHESION = 0
 PUSHER_ADHESION_OVERLAP = 0
@@ -68,10 +69,8 @@ GROUND_ADHESION_OVERLAP = 0
 # Rendering Parameters
 GROUND_LENGTH_X = LENGTH
 GROUND_LENGTH_Y = LENGTH
-GROUND_WIDTH = 0.001  # meters
-CABLE_GRIPPER_RATIO = 2
-SIZE_GRIPPER = CABLE_GRIPPER_RATIO * RADIUS
-EYE = agx.Vec3(0, 0, 0.5)
+GROUND_WIDTH = RADIUS / 2  # meters
+EYE = agx.Vec3(0, 0, 4 * LENGTH)
 CENTER = agx.Vec3(0, 0, 0)
 UP = agx.Vec3(0., 0., 0.)
 
@@ -253,13 +252,74 @@ def sample_random_goal(sim, render=False):
 
 
 def sample_fixed_goal(sim, app=None):
-    """Define the trajectory to generate fixed goal. For the PushRope environment a keyboard listener is added to allow
-    manual control.
+    """Define the trajectory to generate fixed goal.
 
     :param sim: AGX Dynamics simulation object
     :param app: AGX Dynamics application object
     """
     # Add keyboard listener
+    pusher = sim.getRigidBody("pusher_goal")
+    motor_x = sim.getConstraint1DOF("pusher_goal_joint_base_x").getMotor1D()
+    motor_y = sim.getConstraint1DOF("pusher_goal_joint_base_y").getMotor1D()
+    motor_z = sim.getConstraint1DOF("pusher_goal_joint_base_z").getMotor1D()
+
+    # Define trajectory waypoints
+    initial_position = to_numpy_array(pusher.getPosition())
+    second_position = initial_position.copy()
+    second_position[2] = PUSHER_HEIGHT
+    third_position = second_position.copy()
+    third_position[0] = GROUND_LENGTH_X / 2 + RADIUS * 4
+    fourth_position = third_position.copy()
+    fourth_position[2] = initial_position[2]
+    fifth_position = fourth_position.copy()
+    fifth_position[0] = - GROUND_LENGTH_X / 2 + RADIUS * 2
+    waypoints = [initial_position, second_position, third_position, fourth_position, fifth_position, initial_position]
+    time_scales = np.array([1, 8, 1, 8, 12])
+
+    n_seconds = np.sum(time_scales)
+    n_time_steps = int(n_seconds / (TIMESTEP * N_SUBSTEPS))
+    t = sim.getTimeStamp()
+    start_time = t
+    velocities = np.zeros([n_time_steps, 3])
+    for i in range(n_time_steps):
+        if app:
+            app.executeOneStepWithGraphics()
+        velocity = polynomial_trajectory(t, start_time, waypoints, time_scales, degree=5)
+        velocities[i, :] = velocity
+        motor_x.setSpeed(velocity[0])
+        motor_y.setSpeed(velocity[1])
+        motor_z.setSpeed(velocity[2])
+
+        t = sim.getTimeStamp()
+        t_0 = t
+        while t < t_0 + TIMESTEP * N_SUBSTEPS:
+            sim.stepForward()
+            t = sim.getTimeStamp()
+
+    # reset timestamp, after simulation
+    sim.setTimeStamp(0)
+    print(pusher.getPosition())
+
+    # Trajectory limits:
+    max_velocity = np.max(np.max(abs(velocities)))
+    accelerations = np.gradient(velocities, (TIMESTEP * N_SUBSTEPS), axis=0)
+    max_acceleration = np.max(np.max(abs(accelerations)))
+    print('Max velocity: ' + str(max_velocity))
+    print('Max acceleration: ' + str(max_acceleration))
+
+    # Save trajectory
+    np.save('push_rope_traj.npy', velocities)
+
+
+def sample_fixed_goal_keyboard(sim, app=None):
+    """Define the trajectory to generate fixed goal. For the PushRope environment a keyboard listener is added to allow
+    manual control. (legacy)
+
+    :param sim: AGX Dynamics simulation object
+    :param app: AGX Dynamics application object
+    """
+    # Add keyboard listener
+    pusher = sim.getRigidBody("pusher_goal")
     motor_x = sim.getConstraint1DOF("pusher_goal_joint_base_x").getMotor1D()
     motor_y = sim.getConstraint1DOF("pusher_goal_joint_base_y").getMotor1D()
     motor_z = sim.getConstraint1DOF("pusher_goal_joint_base_z").getMotor1D()
@@ -267,8 +327,8 @@ def sample_fixed_goal(sim, app=None):
                      agxSDK.GuiEventListener.KEY_Down: (motor_y, -0.05),
                      agxSDK.GuiEventListener.KEY_Right: (motor_x, 0.05),
                      agxSDK.GuiEventListener.KEY_Left: (motor_x, -0.05),
-                     65365: (motor_z, 0.05),
-                     65366: (motor_z, -0.05)}
+                     65365: (motor_z, 0.05),  # page up
+                     65366: (motor_z, -0.05)}  # page down
     sim.add(KeyboardMotorHandler(key_motor_map))
 
     n_seconds = 30
@@ -290,6 +350,14 @@ def sample_fixed_goal(sim, app=None):
 
     # reset timestamp, after simulation
     sim.setTimeStamp(0)
+    print(pusher.getPosition())
+
+    # Trajectory limits:
+    max_velocity = np.max(np.max(abs(velocities)))
+    accelerations = np.gradient(velocities, (TIMESTEP * N_SUBSTEPS), axis=0)
+    max_acceleration = np.max(np.max(abs(accelerations)))
+    print('Max velocity: ' + str(max_velocity))
+    print('Max acceleration: ' + str(max_acceleration))
 
     # Save trajectory
     np.save('push_rope_traj.npy', velocities)
@@ -503,10 +571,6 @@ def main(args):
 
     # 4) Build random goal simulation object (without DLO)
     random_goal_sim = build_simulation(goal=True, rope=False)
-
-    file_directory = os.path.dirname(os.path.abspath(__file__))
-    package_directory = os.path.split(file_directory)[0]
-    print(os.path.join(package_directory, 'envs/assets'))
 
     success = save_simulation(random_goal_sim, FILE_NAME + "_goal_random")
     if not success:
